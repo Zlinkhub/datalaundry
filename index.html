@@ -46,15 +46,14 @@
                 <div id="main-absen-box" class="card shadow-sm mb-3">
                     <div class="card-body p-3 text-center">
                         <h6 class="fw-bold mb-3">Klik Namamu Untuk Masuk / Pulang</h6>
-                        <div id="area-tombol-karyawan" class="d-flex flex-wrap justify-content-center">
-                            </div>
+                        <div id="area-tombol-karyawan" class="d-flex flex-wrap justify-content-center"></div>
                     </div>
                 </div>
 
                 <h6 class="fw-bold">Status Kerja Hari Ini</h6>
                 <div class="table-responsive bg-white rounded shadow-sm mb-4">
                     <table class="table table-sm small text-center mb-0" id="tabel-absensi-hari-ini">
-                        <thead class="table-dark"><tr><th>Nama</th><th>Masuk</th><th>Pulang</th><th>Status</th></tr></thead>
+                        <thead class="table-dark"><tr><th>Nama</th><th>Masuk</th><th>Pulang</th><th>Status / Gaji</th></tr></thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -117,12 +116,12 @@
                                     <h6 class="fw-bold">Daftar Karyawan & Gaji</h6>
                                     <form id="form-karyawan">
                                         <div class="mb-2"><input type="text" id="kar-nama" class="form-control form-control-sm" placeholder="Nama Karyawan" required></div>
-                                        <div class="mb-2"><input type="number" id="kar-gaji" class="form-control form-control-sm" placeholder="Gaji Standar Per Hari" required></div>
+                                        <div class="mb-2"><input type="number" id="kar-gaji" class="form-control form-control-sm" placeholder="Gaji Per Jam (Default: 10000)" value="10000" required></div>
                                         <button type="submit" class="btn btn-secondary btn-sm w-100">Daftarkan Karyawan</button>
                                     </form>
                                     <div class="table-responsive bg-white rounded shadow-sm mt-3" style="max-height: 200px;">
                                         <table class="table table-sm small text-center mb-0" id="tabel-master-karyawan">
-                                            <thead class="table-dark"><tr><th>Nama</th><th>Gaji/Hari</th><th>Aksi</th></tr></thead>
+                                            <thead class="table-dark"><tr><th>Nama</th><th>Gaji/Jam</th><th>Aksi</th></tr></thead>
                                             <tbody></tbody>
                                         </table>
                                     </div>
@@ -165,7 +164,6 @@
     <script>
         const URL_CLOUD = "URL_APPLIKASI_WEB_GOOGLE_KAMU";
 
-        // Sistem Kunci Keamanan Default
         let passAdminSistem = localStorage.getItem('pass_admin') || "123";
         let kodeTokoSistem = localStorage.getItem('kode_toko') || "567";
         let loginKaryawanSukses = localStorage.getItem('login_kar_sukses') || "tidak";
@@ -173,19 +171,17 @@
         let dataMasterBarang = JSON.parse(localStorage.getItem('laundry_mst_brg')) || [];
         let dataOps = JSON.parse(localStorage.getItem('laundry_ops')) || [];
         let dataKaryawan = JSON.parse(localStorage.getItem('laundry_kar')) || [];
-        let dataAbsenLog = JSON.parse(localStorage.getItem('laundry_abs_log')) || []; // Menyimpan jam masuk & pulang rincian
+        let dataAbsenLog = JSON.parse(localStorage.getItem('laundry_abs_log')) || []; 
 
         const hariIni = new Date().toISOString().split('T')[0];
         document.getElementById('ops-tanggal').value = hariIni;
         document.getElementById('filter-bulan').value = hariIni.substring(0, 7);
 
-        // Render Header Tanggal 1-31
         const headerRow = document.getElementById('matriks-header');
         for (let d = 1; d <= 31; d++) { let th = document.createElement('th'); th.innerText = d; headerRow.appendChild(th); }
         let thTotal = document.createElement('th'); thTotal.innerText = "Total"; headerRow.appendChild(thTotal);
         let thJumlah = document.createElement('th'); thJumlah.innerText = "Jumlah"; headerRow.appendChild(thJumlah);
 
-        // --- SISTEM LOGIN/HAK AKSES KARYAWAN ---
         function cekAksesKaryawan() {
             if (loginKaryawanSukses === "ya") {
                 document.getElementById('login-karyawan-box').classList.add('d-none');
@@ -196,6 +192,7 @@
                 document.getElementById('main-absen-box').classList.add('d-none');
             }
         }
+        cekAksesKaryawan(); // Jalankan otomatis saat web dibuka
 
         function simpanLoginKaryawan() {
             let input = document.getElementById('kode-toko').value;
@@ -212,13 +209,12 @@
             if(dataKaryawan.length === 0) { container.innerHTML = "<p class='text-muted small'>Belum ada data karyawan. Hubungi Admin.</p>"; return; }
             
             dataKaryawan.forEach(k => {
-                // Periksa apakah karyawan ini sudah absen masuk hari ini dan belum pulang
                 let absenHariIni = dataAbsenLog.find(a => a.karyawan_id === k.id && a.tanggal === hariIni);
                 let warnaTombol = "btn-outline-primary";
                 
                 if (absenHariIni) {
-                    if (absenHariIni.jam_masuk && !absenHariIni.jam_pulang) { warnaTombol = "btn-danger"; } // Sedang kerja, klik untuk pulang
-                    else if (absenHariIni.jam_masuk && absenHariIni.jam_pulang) { warnaTombol = "btn-success disabled"; } // Selesai kerja hari ini
+                    if (absenHariIni.jam_masuk && !absenAbsenPulangSelesai(absenHariIni)) { warnaTombol = "btn-danger"; } 
+                    else { warnaTombol = "btn-success disabled"; } 
                 }
 
                 let btn = document.createElement('button');
@@ -230,15 +226,17 @@
             tampilkanAbsenHariIni();
         }
 
-        // --- PROSES ABSEN DENGAN COCOK JAM OTOMATIS ---
+        function absenAbsenPulangSelesai(absenObj) {
+            return absenObj.jam_pulang !== null && absenObj.jam_pulang !== undefined;
+        }
+
+        // --- PROSES ABSEN DAN HITUNG SELISIH JAM OTOMATIS ---
         function prosesAbsenSatuKlik(id, nama) {
             let waktuSekarang = new Date();
-            let jamMenit = waktuSekarang.toTimeString().split(' ')[0].substring(0, 5); // Ambil HH:MM
-            
+            let jamMenit = waktuSekarang.toTimeString().split(' ')[0].substring(0, 5); 
             let indeksAbsen = dataAbsenLog.findIndex(a => a.karyawan_id === id && a.tanggal === hariIni);
 
             if (indeksAbsen === -1) {
-                // AKSI 1: Belum ada data, otomatis catat JAM MASUK
                 if (confirm(`Konfirmasi: Karyawan ${nama} masuk kerja pukul ${jamMenit}?`)) {
                     dataAbsenLog.push({
                         karyawan_id: id,
@@ -254,29 +252,36 @@
                 }
             } else {
                 let absenData = dataAbsenLog[indeksAbsen];
-                if (absenData.jam_masuk && !absenData.jam_pulang) {
-                    // AKSI 2: Sudah masuk, sekarang konfirmasi JAM PULANG
+                if (absenData.jam_masuk && !absenAbsenPulangSelesai(absenData)) {
                     if (confirm(`Konfirmasi: Karyawan ${nama} ingin pulang pada pukul ${jamMenit}?`)) {
-                        let statusShift = prompt("Masukkan Status Kerja Karyawan:\nKetik '1' untuk Kerja Penuh (100% Gaji)\nKetik '2' untuk Setengah Hari (50% Gaji)", "1");
                         
-                        let karyawanObj = dataKaryawan.find(k => k.id === id);
-                        let statusTeks = "Penuh";
-                        let gajiFinal = karyawanObj.gaji;
+                        // 1. Hitung Selisih Jam Kerja Nyata
+                        let [jamMasuk, menitMasuk] = absenData.jam_masuk.split(':').map(Number);
+                        let [jamPulang, menitPulang] = jamMenit.split(':').map(Number);
+                        
+                        let totalMenitMasuk = (jamMasuk * 60) + menitMasuk;
+                        let totalMenitPulang = (jamPulang * 60) + menitPulang;
+                        let selisihMenit = totalMenitPulang - totalMenitMasuk;
+                        
+                        // Konversi ke satuan jam desimal (contoh: 6 jam 30 menit = 6.5 jam)
+                        let totalJamKerja = parseFloat((selisihMenit / 60).toFixed(2));
+                        if(totalJamKerja < 0) totalJamKerja = 0; // Menghindari error ganti hari
 
-                        if (statusShift === "2") {
-                            statusTeks = "Setengah Hari";
-                            gajiFinal = karyawanObj.gaji / 2;
-                        }
+                        // 2. Ambil data tarif gaji per jam dari master data karyawan
+                        let karyawanObj = dataKaryawan.find(k => k.id === id);
+                        let tarifPerJam = karyawanObj ? parseInt(karyawanObj.gaji) : 10000; 
+
+                        // 3. Rumus Utama: Gaji = Total Jam Kerja * Tarif Per Jam
+                        let gajiFinal = Math.round(totalJamKerja * tarifPerJam);
 
                         absenData.jam_pulang = jamMenit;
-                        absenData.status = statusTeks;
+                        absenData.status = `${totalJamKerja} Jam Kerja`;
                         absenData.gaji = gajiFinal;
 
                         localStorage.setItem('laundry_abs_log', JSON.stringify(dataAbsenLog));
                         renderTombolKaryawan();
                         
-                        // Kirim log absen ke Google Sheets Cloud
-                        kirimKeCloud({ jenis: "absensi", nama: nama, status: statusTeks, gaji: gajiFinal, tanggal: hariIni });
+                        alert(`Absen Pulang Berhasil!\nTotal Kerja: ${totalJamKerja} jam.\nGaji hari ini: Rp ${gajiFinal.toLocaleString('id-ID')}`);
                     }
                 }
             }
@@ -286,12 +291,12 @@
             let html = '';
             let logHariIni = dataAbsenLog.filter(a => a.tanggal === hariIni);
             logHariIni.forEach(item => {
-                html += `<tr><td>${item.nama}</td><td>${item.jam_masuk}</td><td>${item.jam_pulang || '-'}</td><td><span class="badge bg-secondary">${item.status}</span></td></tr>`;
+                let infoGaji = item.gaji > 0 ? ` (Rp ${item.gaji.toLocaleString('id-ID')})` : '';
+                html += `<tr><td>${item.nama}</td><td>${item.jam_masuk}</td><td>${item.jam_pulang || '-'}</td><td><span class="badge bg-secondary">${item.status}${infoGaji}</span></td></tr>`;
             });
             document.querySelector('#tabel-absensi-hari-ini tbody').innerHTML = html || '<tr><td colspan="4" class="text-muted">Belum ada aktivitas absen hari ini</td></tr>';
         }
 
-        // --- PANEL ADMIN (PASSWORD SECURITY) ---
         function cekAksesAdmin() {
             document.getElementById('login-admin-box').classList.remove('d-none');
             document.getElementById('konten-admin').classList.add('d-none');
@@ -306,6 +311,7 @@
                 tampilkanMasterBarang();
                 tampilkanMasterKaryawan();
                 muatLaporanMatriks();
+                perbaruiPilihanBarang();
             } else { alert("Password Admin Salah!"); }
         }
 
@@ -318,7 +324,7 @@
             cekAksesAdmin();
         }
 
-        // --- EDIT & HAPUS BARANG (HANYA DI PANEL ADMIN) ---
+        // --- MANAGEMENT MASTER BARANG & KARYAWAN ---
         document.getElementById('form-master-barang').addEventListener('submit', function(e){
             e.preventDefault();
             dataMasterBarang.push({ id: Date.now(), nama: document.getElementById('mst-nama').value, harga: parseInt(document.getElementById('mst-harga').value), tanggal_tambah: hariIni });
@@ -330,7 +336,7 @@
 
         function tampilkanMasterBarang() {
             let html = '';
-            dataMasterBarang.forEach((item, index) => {
+            dataMasterBarang.forEach((item) => {
                 html += `<tr><td>${item.nama}</td><td>Rp ${item.harga.toLocaleString('id-ID')}</td>
                 <td><button class="btn btn-danger btn-xs py-0 px-1" onclick="hapusBarang(${item.id})">Hapus</button></td></tr>`;
             });
@@ -338,7 +344,7 @@
         }
 
         function hapusBarang(id) {
-            if(confirm("Hapus barang ini dari daftar harga?")) {
+            if(confirm("Hapus barang ini?")) {
                 dataMasterBarang = dataMasterBarang.filter(b => b.id !== id);
                 localStorage.setItem('laundry_mst_brg', JSON.stringify(dataMasterBarang));
                 tampilkanMasterBarang();
@@ -347,123 +353,116 @@
         }
 
         function perbaruiPilihanBarang() {
-            let html = '<option value="">-- Pilih Barang --</option>';
-            dataMasterBarang.forEach(b => { html += `<option value="${b.id}">${b.nama} (@Rp ${b.harga.toLocaleString('id-ID')})</option>`; });
-            document.getElementById('ops-barang').innerHTML = html;
+            let select = document.getElementById('ops-barang');
+            select.innerHTML = '<option value="">-- Pilih Barang --</option>';
+            dataMasterBarang.forEach(b => {
+                let opt = document.createElement('option');
+                opt.value = b.nama;
+                opt.innerText = b.nama;
+                select.appendChild(opt);
+            });
         }
 
-        // --- MASTER DATA KARYAWAN & HAPUS ---
         document.getElementById('form-karyawan').addEventListener('submit', function(e){
             e.preventDefault();
             dataKaryawan.push({ id: Date.now(), nama: document.getElementById('kar-nama').value, gaji: parseInt(document.getElementById('kar-gaji').value) });
             localStorage.setItem('laundry_kar', JSON.stringify(dataKaryawan));
             this.reset();
+            document.getElementById('kar-gaji').value = "10000";
             tampilkanMasterKaryawan();
-            renderTombolKaryawan();
         });
 
         function tampilkanMasterKaryawan() {
             let html = '';
-            dataKaryawan.forEach(item => {
-                html += `<tr><td>${item.nama}</td><td>Rp ${item.gaji.toLocaleString('id-ID')}</td>
+            dataKaryawan.forEach((item) => {
+                html += `<tr><td>${item.nama}</td><td>Rp ${item.gaji.toLocaleString('id-ID')}/jam</td>
                 <td><button class="btn btn-danger btn-xs py-0 px-1" onclick="hapusKaryawan(${item.id})">Hapus</button></td></tr>`;
             });
             document.querySelector('#tabel-master-karyawan tbody').innerHTML = html || '<tr><td colspan="3" class="text-muted">Kosong</td></tr>';
         }
 
         function hapusKaryawan(id) {
-            if(confirm("Hapus karyawan ini dari daftar?")) {
+            if(confirm("Hapus karyawan ini?")) {
                 dataKaryawan = dataKaryawan.filter(k => k.id !== id);
                 localStorage.setItem('laundry_kar', JSON.stringify(dataKaryawan));
                 tampilkanMasterKaryawan();
-                renderTombolKaryawan();
             }
         }
 
-        // --- INPUT OPERASIONAL ---
-        document.getElementById('form-pengeluaran').addEventListener('submit', function(e){
-            e.preventDefault();
-            let barangId = document.getElementById('ops-barang').value;
-            let jumlahBeli = parseInt(document.getElementById('ops-jumlah').value);
-            let barangTerpilih = dataMasterBarang.find(b => b.id == barangId);
-            if(!barangTerpilih) return;
-            
-            let totalBiaya = barangTerpilih.harga * jumlahBeli; 
-            let dataBaru = { jenis: "pengeluaran", nama: barangTerpilih.nama, harga_satuan: barangTerpilih.harga, jumlah: jumlahBeli, biaya: totalBiaya, tanggal: document.getElementById('ops-tanggal').value };
-
-            dataOps.push(dataBaru);
-            localStorage.setItem('laundry_ops', JSON.stringify(dataOps));
-            tampilkanOps();
-            this.reset();
-            document.getElementById('ops-tanggal').value = hariIni;
-            kirimKeCloud(dataBaru);
-        });
-
-        function tampilkanOps() {
-            let html = '';
-            dataOps.slice().reverse().slice(0,5).forEach(item => {
-                html += `<tr><td>${item.tanggal.substring(5)}</td><td>${item.nama}</td><td>${item.jumlah}</td><td>Rp ${item.biaya.toLocaleString('id-ID')}</td></tr>`;
-            });
-            document.querySelector('#tabel-pengeluaran tbody').innerHTML = html || '<tr><td colspan="4" class="text-muted">Kosong</td></tr>';
-        }
-
-        // --- CLOUD SINKRONISASI ---
-        function kirimKeCloud(data) {
-            if(URL_CLOUD === "URL_APPLIKASI_WEB_GOOGLE_KAMU") return;
-            fetch(URL_CLOUD, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }).catch(e => console.log(e));
-        }
-
-        // --- REPORT MATRIKS BULANAN ---
+        // --- SISTEM LAPORAN MATRIKS ---
         function muatLaporanMatriks() {
-            let bulanPilihan = document.getElementById('filter-bulan').value;
+            let bulanPilihan = document.getElementById('filter-bulan').value; // format YYYY-MM
             let tbody = document.querySelector('#matriks-inventory tbody');
             tbody.innerHTML = '';
+            
+            let totalPengeluaranBulanIni = 0;
 
-            let totalSeluruhGaji = dataAbsenLog.filter(item => item.tanggal.startsWith(bulanPilihan)).reduce((sum, item) => sum + item.gaji, 0);
-            let totalSeluruhOps = 0;
-
-            if (dataMasterBarang.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="35" class="text-center text-muted p-3">Tidak ada data barang.</td></tr>';
-                document.getElementById('rep-total').innerText = `Rp ${totalSeluruhGaji.toLocaleString('id-ID')}`;
-                return;
-            }
-
-            dataMasterBarang.forEach(barang => {
+            // Render baris untuk barang belanjaan
+            dataMasterBarang.forEach(b => {
                 let tr = document.createElement('tr');
-                let tdNama = document.createElement('td'); tdNama.className = "col-nama fw-bold"; tdNama.innerText = barang.nama; tr.appendChild(tdNama);
-                let tdHarga = document.createElement('td'); tdHarga.innerText = barang.harga.toLocaleString('id-ID'); tr.appendChild(tdHarga);
-
-                let totalQtyBarangIni = 0;
+                tr.innerHTML = `<td class="col-nama text-start">${b.nama}</td><td>${b.harga}</td>`;
+                
+                let totalQty = 0;
                 for (let d = 1; d <= 31; d++) {
-                    let tdTanggal = document.createElement('td');
-                    let tanggalString = `${bulanPilihan}-${String(d).padStart(2, '0')}`;
-                    let hitungBelanja = dataOps.filter(item => item.nama === barang.nama && item.tanggal === tanggalString);
+                    let tglPad = d < 10 ? '0'+d : d;
+                    let tglCari = `${bulanPilihan}-${tglPad}`;
+                    let belanja = dataOps.filter(o => o.barang === b.nama && o.tanggal === tglCari);
+                    let qtyHariIni = belanja.reduce((acc, curr) => acc + parseInt(curr.jumlah), 0);
                     
-                    if (hitungBelanja.length > 0) {
-                        let qtyHariIni = hitungBelanja.reduce((sum, item) => sum + item.jumlah, 0);
-                        tdTanggal.innerText = `+${qtyHariIni}`;
-                        tdTanggal.className = "table-warning fw-bold text-danger";
-                        totalQtyBarangIni += qtyHariIni;
-                    } else { tdTanggal.innerText = '-'; tdTanggal.className = "text-muted opacity-50"; }
-                    tr.appendChild(tdTanggal);
+                    let td = document.createElement('td');
+                    td.innerText = qtyHariIni > 0 ? qtyHariIni : '';
+                    tr.appendChild(td);
+                    totalQty += qtyHariIni;
                 }
+                
+                let totalBiayaBarang = totalQty * b.harga;
+                totalPengeluaranBulanIni += totalBiayaBarang;
 
-                let jumlahBiayaBarangIni = totalQtyBarangIni * barang.harga;
-                totalSeluruhOps += jumlahBiayaBarangIni;
-
-                let tdTotalQty = document.createElement('td'); tdTotalQty.innerText = totalQtyBarangIni; tdTotalQty.className = "fw-bold table-secondary"; tr.appendChild(tdTotalQty);
-                let tdJumlahRupiah = document.createElement('td'); tdJumlahRupiah.innerText = `Rp ${jumlahBiayaBarangIni.toLocaleString('id-ID')}`; tdJumlahRupiah.className = "fw-bold table-success text-success"; tr.appendChild(tdJumlahRupiah);
-
+                let tdTotal = document.createElement('td'); tdTotal.innerText = "Rp " + totalBiayaBarang.toLocaleString('id-ID'); tr.appendChild(tdTotal);
+                let tdJumlah = document.createElement('td'); tdJumlah.innerText = totalQty; tr.appendChild(tdJumlah);
                 tbody.appendChild(tr);
             });
 
-            document.getElementById('rep-total').innerText = `Rp ${(totalSeluruhOps + totalSeluruhGaji).toLocaleString('id-ID')}`;
+            // Tambahan: Baris Total Gaji Karyawan di dalam Matriks
+            let trGaji = document.createElement('tr');
+            trGaji.className = "table-warning fw-bold";
+            trGaji.innerHTML = `<td class="col-nama text-start">Gaji Karyawan</td><td>-</td>`;
+            
+            let totalSemuaGaji = 0;
+            for (let d = 1; d <= 31; d++) {
+                let tglPad = d < 10 ? '0'+d : d;
+                let tglCari = `${bulanPilihan}-${tglPad}`;
+                let logGajiHariIni = dataAbsenLog.filter(a => a.tanggal === tglCari);
+                let jumlahGajiHariIni = logGajiHariIni.reduce((acc, curr) => acc + curr.gaji, 0);
+                
+                let td = document.createElement('td');
+                td.innerText = jumlahGajiHariIni > 0 ? jumlahGajiHariIni.toLocaleString('id-ID') : '';
+                trGaji.appendChild(td);
+                totalSemuaGaji += jumlahGajiHariIni;
+            }
+            totalPengeluaranBulanIni += totalSemuaGaji;
+
+            let tdTotalGaji = document.createElement('td'); tdTotalGaji.innerText = "Rp " + totalSemuaGaji.toLocaleString('id-ID'); trGaji.appendChild(tdTotalGaji);
+            let tdJumlahGaji = document.createElement('td'); tdJumlahGaji.innerText = "-"; trGaji.appendChild(tdJumlahGaji);
+            tbody.appendChild(trGaji);
+
+            document.getElementById('rep-total').innerText = "Rp " + totalPengeluaranBulanIni.toLocaleString('id-ID');
         }
 
-        // Jalankan Pengecekan Awal
-        cekAksesKaryawan();
-        perbaruiPilihanBarang();
-        tampilkanOps();
+        // Input Pengeluaran Belanja
+        document.getElementById('form-pengeluaran').addEventListener('submit', function(e){
+            e.preventDefault();
+            dataOps.push({
+                barang: document.getElementById('ops-barang').value,
+                jumlah: document.getElementById('ops-jumlah').value,
+                tanggal: document.getElementById('ops-tanggal').value
+            });
+            localStorage.setItem('laundry_ops', JSON.stringify(dataOps));
+            this.reset();
+            document.getElementById('ops-tanggal').value = hariIni;
+            alert("Pengeluaran berhasil dicatat!");
+            muatLaporanMatriks();
+        });
     </script>
 </body>
 </html>
