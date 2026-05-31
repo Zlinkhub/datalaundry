@@ -1,793 +1,235 @@
-<!--z
-  index.html
-  - Versi: Form Azayaka Laundry + Admin panel untuk update config.json di GitHub repo
-  - Tujuan: Menyimpan config (logo, nama, warna, layanan) ke file config.json di repo:
-      owner: Zlinkhub
-      repo: orderhere
-  - Cara pakai singkat:
-    1) Push file ini ke repo (branch yang dipakai oleh GitHub Pages).
-    2) Buka halaman: https://Zlinkhub.github.io/orderhere/
-    3) Klik "🔐 Admin" -> login (username: admin, password: 1234)
-    4) Isi Personal Access Token (PAT) yang dibuat di GitHub dengan scope repo contents (read/write).
-    5) Edit logo (upload atau paste URL), nama, warna, layanan -> Save to GitHub.
-    6) Setelah save, file config.json di repo akan diperbarui; perubahan terlihat untuk semua pengunjung.
--->
-
 <!DOCTYPE html>
 <html lang="id">
-  
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Azayaka Laundry - Order</title>
-  <meta name="description" content="Form pemesanan cepat Azayaka Laundry via WhatsApp. Pilih layanan, atur waktu jemput atau antar, dan pesan langsung!" />
-  <style>
-    /* --- Styles mostly preserved from original version --- */
-    * { box-sizing: border-box; }
-    :root {
-      --accent: #ffa93a;
-      --accent-2: #ff8c00;
-    }
-    <link rel="stylesheet" href="assets/css/style.css">
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 420px;
-      margin: 30px auto;
-      background: linear-gradient(to bottom, #000000, var(--accent-2));
-      padding: 25px;
-      border-radius: 15px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.3);
-      color: white;
-      position: relative;
-      animation: fadeIn 0.8s ease-in-out;
-    }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0);} }
-   
-.browser-top {
-  
-  position: fixed;
-  top: 3px;
-  right: 4%;
-  transform: translateX(-0.000000000012%);
-  background-color: rgba(255, 255, 255, 0.08); /* transparan lembut */
-  color: #fff ; /* teks putih agar kontras */
-  padding: 10px 20px;
-  border: 0.5px solid rgba(255, 255, 255, 0.2); /* garis tipis */
-  border-radius: 10px;
-  backdrop-filter: blur(4px); /* efek kaca buram elegan */
-  font-size: 5px;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
-  z-index: 9999;
-}
-
-.browser-top:hover {
-  background-color: rgba(255, 255, 255, 0.15); /* sedikit lebih terang saat hover */
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
-  opacity: 0.7;
-}
-
-    .logo { text-align: center; margin-bottom: 15px; }
-    .logo img { width: 160px; border-radius: 10px; }
-
-    h2 { text-align: center; color: var(--accent); margin-bottom: 8px; }
-    label { font-weight: bold; display: block; margin-top: 10px; transition: opacity 0.3s ease; }
-
-    input, select, textarea, button {  width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; transition: 0.3s; }
-    input, select, textarea { color: #000; }
-    input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); background: #fff8ee; }
-    .required { border: 2px solid #ff3b3b !important; }
-
-    .location-row { display: flex; align-items: center; gap: 8px; }
-    .loc-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background-color: var(--accent); color: white; font-size: 18px; cursor: pointer; transition:0.3s; }
-    .loc-btn:hover { background-color: #ffb347; }
-
-    .note { font-size: 9px; color: #fff4d6; margin-top: 10px; margin-bottom: 10px; }
-
-    button { font-weight: bold; border: none; margin-top: 15px; cursor: pointer; transition: 0.2s; }
-    button:hover { opacity: 0.95; transform: scale(1.02); }
-
-    .admin-btn { background-color: #25d366; color: black; }
-    .kurir-btn { background-color: var(--accent-2); color: black; }
-    .grup-btn { background-color: #444; color: white; }
-
-    .wa-note { text-align: center ; font-size: 12px; margin-top: 6px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 10px; color: #fff4d6; }
-    footer { text-align:center; font-size:12px; margin-top:15px; color: #fff4d6; }
-
-    .service-section { display:flex; gap:10px; margin-top:10px; }
-    .col { flex:1; }
-    .col label.title { display:block; font-weight:bold; color:#ffd27f; margin-bottom:6px; }
-    .btn-group { display:flex; flex-direction:column; gap:6px; }
-    .btn { background: rgba(255,255,255,0.1); border:1px solid var(--accent); color: white; padding:8px; border-radius:8px; text-align:center; cursor:pointer; transition:0.3s; font-size:13px; }
-    .btn.active { background: var(--accent); color: #000; font-weight:bold; }
-
-    #toast { visibility: hidden; min-width: 280px; background-color: rgba(0,0,0,0.85); color:#fff; text-align:center; border-radius:25px; padding:12px; position:fixed; left:50%; bottom:20px; transform:translateX(-50%); font-size:14px; z-index:1000; }
-    #toast.show { visibility:visible; animation: fadeinToast 0.5s, fadeoutToast 4.5s 2s; }
-    @keyframes fadeinToast { from { bottom:0; opacity:0;} to { bottom:20px; opacity:1; } }
-    @keyframes fadeoutToast { from { bottom:20px; opacity:1;} to { bottom:0; opacity:0; } }
-
-    /* Admin small panel (hidden by default) */
-    #adminToggle { margin-top: 8px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.06); padding:8px; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer; }
-    #adminPanelWrap { display:none; margin-top:12px; background: rgba(0,0,0,0.3); padding:12px; border-radius:10px; }
-
-    .admin-row { display:flex; gap:8px; align-items:left; }
-    .small { font-size:13px; padding:8px; border-radius:6px; }
-
-    @media (max-width:400px) { body { padding:15px; } .logo img{ width:120px; } }
-
-<link rel="stylesheet" href="assets/css/style.css">
-    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Operasional & Gaji Laundry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
-<body>
-  
-  <div class="browser-top" id="browserTop" onclick="bukaBrowser()">🌐 Buka di Browser</div>
+<body class="bg-light text-dark">
 
-  <div class="logo">
-    <img id="logoImg" src="https://static.1010dry.id/pesanlaundry/images/5f486d5d5fb3cbf0ab6dc2278ee9a997.png" alt="Logo Azayaka Laundry">
-  </div>
+    <div class="container py-3" style="max-width: 500px;">
+        <h3 class="text-center mb-3">🧺 Laundry Pro-Mobile</h3>
+        <p class="text-center text-muted small">Aplikasi Inventory, Absensi, & Laporan Bulanan</p>
 
-  <h2 id="siteTitle"> Azayaka Laundry</h2>
-  <p style="text-align:center;">Form pemesanan cepat via WhatsApp 💬</p>
+        <ul class="nav nav-pills nav-fill mb-3 bg-white p-2 rounded shadow-sm" id="pills-tab" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active small" id="tab-operasional" data-bs-toggle="pill" data-bs-target="#operasional">📦 Biaya</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link small" id="tab-absensi" data-bs-toggle="pill" data-bs-target="#absensi">👥 Absen</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link small" id="tab-laporan" data-bs-toggle="pill" data-bs-target="#laporan" onclick="muatLaporan()">📊 Laporan</button>
+            </li>
+        </ul>
 
-  <form id="laundryForm" onsubmit="event.preventDefault();">
-    <label for="nama">👤 Nama Customer:</label>
-    <input type="text" id="nama" placeholder="Tulis nama anda" required>*
-    
-   <input type="hidden" id="noCustomer">
+        <div class="tab-content" id="pills-tabContent">
+            
+            <div class="tab-pane fade show active" id="operasional">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold">Catat Pengeluaran Operasional</h6>
+                        <form id="form-pengeluaran">
+                            <div class="mb-2"><input type="text" id="ops-nama" class="form-control form-control-sm" placeholder="Nama Barang (ex: Detergen)" required></div>
+                            <div class="mb-2"><input type="number" id="ops-biaya" class="form-control form-control-sm" placeholder="Biaya (Rp)" required></div>
+                            <div class="mb-2"><input type="date" id="ops-tanggal" class="form-control form-control-sm" required></div>
+                            <button type="submit" class="btn btn-primary btn-sm w-100">Simpan Pengeluaran</button>
+                        </form>
+                    </div>
+                </div>
+                <h6 class="fw-bold">Riwayat Pengeluaran</h6>
+                <div class="table-responsive bg-white rounded shadow-sm mb-4">
+                    <table class="table table-sm small text-center mb-0" id="tabel-pengeluaran">
+                        <thead class="table-dark"><tr><th>Tgl</th><th>Barang</th><th>Biaya</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
 
+            <div class="tab-pane fade" id="absensi">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold">Master Data Karyawan</h6>
+                        <form id="form-karyawan" class="row g-2">
+                            <div class="col-7"><input type="text" id="kar-nama" class="form-control form-control-sm" placeholder="Nama Karyawan" required></div>
+                            <div class="col-5"><input type="number" id="kar-gaji" class="form-control form-control-sm" placeholder="Gaji/Hari" required></div>
+                            <div class="col-12"><button type="submit" class="btn btn-success btn-sm w-100">Daftarkan Karyawan</button></div>
+                        </form>
+                    </div>
+                </div>
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold">Input Absen Harian</h6>
+                        <form id="form-absensi">
+                            <div class="mb-2">
+                                <select id="abs-karyawan" class="form-select form-select-sm" required>
+                                    <option value="">-- Pilih Karyawan --</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <select id="abs-status" class="form-select form-select-sm" required>
+                                    <option value="Penuh">Kerja Penuh (100% Gaji)</option>
+                                    <option value="Setengah Hari">Setengah Hari (50% Gaji)</option>
+                                </select>
+                            </div>
+                            <div class="mb-2"><input type="date" id="abs-tanggal" class="form-control form-control-sm" required></div>
+                            <button type="submit" class="btn btn-info text-white btn-sm w-100">Simpan Absen</button>
+                        </form>
+                    </div>
+                </div>
+                <h6 class="fw-bold">Riwayat Gaji & Absensi</h6>
+                <div class="table-responsive bg-white rounded shadow-sm mb-4">
+                    <table class="table table-sm small text-center mb-0" id="tabel-absensi">
+                        <thead class="table-dark"><tr><th>Nama</th><th>Shift</th><th>Gaji</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
 
-    <div class="service-section">
-      <div class="col">
-        <label class="title">Jenis Laundry</label>
-        <div class="btn-group" id="jenisGroup">
-          <div class="btn" onclick="pilihJenis('Kiloan', this)">Kiloan</div>
-          <div class="btn" onclick="pilihJenis('Satuan', this)">Satuan</div>
+            <div class="tab-pane fade" id="laporan">
+                <div class="card shadow-sm mb-3 bg-dark text-white">
+                    <div class="card-body p-3 text-center">
+                        <h6 class="mb-2">Pilih Bulan Laporan</h6>
+                        <input type="month" id="filter-bulan" class="form-control form-control-sm w-70 mx-auto mb-2" onchange="muatLaporan()">
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="p-2 bg-danger text-white rounded text-center small shadow-sm">
+                            <span>Total Ops (Beli Barang)</span>
+                            <div class="fw-bold id" id="rep-ops">Rp 0</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 bg-warning text-dark rounded text-center small shadow-sm">
+                            <span>Total Gaji Karyawan</span>
+                            <div class="fw-bold" id="rep-gaji">Rp 0</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 bg-secondary text-white rounded text-center shadow-sm">
+                            <h5>Total Pengeluaran Bulan Ini</h5>
+                            <h3 class="fw-bold text-warning" id="rep-total">Rp 0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
-      </div>
-
-      <div class="col">
-        <label class="title">Pilihan Layanan</label>
-        <div class="btn-group" id="layananGroup">
-          <!-- layanan akan diisi otomatis dari config / default -->
-        </div>*
-      </div>
     </div>
 
-    <label for="estimasi">⏱️ Estimasi Service:</label>
-    <select id="estimasi">
-      <option value="Reguler (3 hari)">Reguler (3 hari)</option>
-      <option value="Express (1 hari)">Express (1 hari)</option>
-      <option value="Sameday">Sameday</option>
-    </select>*
-
-    <label for="delivery">🚚 Delivery:</label>
-    <select id="delivery" onchange="updateDeliveryLabels()">
-      <option value="Jemput">Jemput</option>
-      <option value="Antar">Antar</option>
-      <option value="Jemput & Antar">Jemput & Antar</option>
-    </select>
-
-    <label id="labelWaktu" for="waktu">🕒 Waktu Penjemputan:</label>
-<p class="note" id="notewaktu">
-  🕒 Untuk menentukan waktu pesanan sudah bisa dipickup, masuk daftar antrian <b>delivery</b>.</p>
-    <input type="time" id="waktu" required>
-    *
-
-    <label id="labelLokasi" for="lokasi">🗺️ Lokasi Penjemputan:</label>
-    <p class="note" id="noteLokasi">📍 Gunakan browser seperti <b>Chrome</b> agar fitur lokasi berfungsi dengan baik.</p>
-    <div class="location-row">
-      <input type="text" id="lokasi" placeholder="Klik 📍 untuk ambil lokasi otomatis" readonly>
-      <button type="button" class="loc-btn" aria-label="Ambil lokasi otomatis" onclick="ambilLokasi()">📍</button>
-    </div>
-
-
-    <label for="alamat">🏠 Alamat/blok/no.rumah: </label>
-    <input type="text" id="alamat" placeholder="Contoh: i01/38 (opsional) jika sudah tag lokasi" required>
-    
-  <label for="note">📝 Catatan: </label>
-    <input type="text" id="note" placeholder="Contoh: request parfume / drop off / dsb (opsional)" required>
-
-    <button type="button" class="admin-btn" onclick="kirimPesan('admin')">✉️ Kirim ke Admin</button>
-    <button type="button" class="kurir-btn" onclick="kirimPesan('kurir')">🚚 Kirim ke Kurir</button>
-
-    <div class="wa-note">💡 Pastikan WhatsApp Anda aktif sebelum mengirim pesan agar orderan terkirim dengan lancar.</div>
-
-    <!-- Admin toggle kecil, tidak mengubah tampilan form utama -->
-    <div style="text-align:center; margin-top:8px;">
-      <button type="button" id="adminToggle" class="small" onclick="toggleAdminPanel()">🔐 Admin</button>
-    </div>
-
-    <!-- Admin panel: login & settings (hidden by default) -->
-    <div id="adminPanelWrap">
-      <div id="adminLogin" style="display:block;">
-        <label>Admin Login</label>
-        <input type="text" id="adminUser" placeholder="Username" />
-        <input type="password" id="adminPass" placeholder="Password" />
-        <label style="margin-left:8px;">GitHub Personal Access Token (PAT)</label>
-        <input type="password" id="githubToken" placeholder="Masukkan PAT (aman disimpan di session)" />
-        <small style="display:block; color:#fff4d6; margin-top:4px;">Token diperlukan hanya untuk menyimpan perubahan ke repo. Buat token di: github.com/settings/tokens (repo contents read/write).</small>
-        <button type="button" class="btn" onclick="adminLogin()">Login</button>
-      </div>
-
-      <div id="adminPanel" style="display:none;">
-        <h3 style="margin-top:0;">⚙️ Pengaturan (Admin)</h3>
-
-<!-- Masukkan ke dalam <div id="adminPanel"> ... -->
-<label>Nomor WhatsApp Admin</label>
-<input type="tel" id="adminPhone" class="small" placeholder="adminPhone" />
-
-<label>Nomor WhatsApp Kurir</label>
-<input type="tel" id="kurirPhone" class="small" placeholder="kurirPhone" />
-
-<div style="margin-top:8px;" class="admin-row">
-  <button type="button" class="small" onclick="previewLocalChanges()">Preview (local)</button>
-  <button type="button" class="small" onclick="saveAdminNumbersLocal()" style="background:#2b6;">Simpan Lokal</button>
-  <button type="button" class="small" onclick="saveConfigToGitHub()" style="background:#0a84ff">Save to GitHub</button>
-</div>
-<div id="adminMsg" style="margin-top:10px; color:#fff4d6;"></div>
-
-
-
-
-        <label>Logo (upload atau paste URL)</label>
-        <input type="file" id="logoUpload" accept="image/*" onchange="handleLogoUpload(event)" />
-        <input type="text" id="logoUrl" placeholder="Atau tempel URL logo di sini" onblur="setLogoFromUrl()" />
-
-        <label>Nama Laundry</label>
-        <input type="text" id="adminNama" placeholder="Nama laundry" />
-
-        <label>Warna Tema</label>
-        <input type="color" id="adminWarna" value="#ff8c00" />
-
-        <label>Daftar Layanan Satuan (pisahkan koma)</label>
-        <textarea id="adminLayanan" placeholder="Contoh: Dry Clean, Bedcover, Sepatu, Karpet" style="height:80px"></textarea>
-
-        <label style="margin-top:8px;">Pengaturan repo (otomatis terisi)</label>
-        <div class="admin-row">
-          <input type="text" id="ghOwner" class="small" placeholder="Owner" />
-          <input type="text" id="ghRepo" class="small" placeholder="Repo" />
-        </div>
-        <div style="margin-top:6px;" class="admin-row">
-          <input type="text" id="ghBranch" class="small" placeholder="Branch (default: main)" />
-          <button type="button" class="btn" onclick="saveConfigToGitHub()">Save to GitHub</button>
-        </div>
-
-        <div style="margin-top:6px;" class="admin-row">
-          <button type="button" onclick="previewLocalChanges()" class="small">Preview (local)</button>
-          <button type="button" onclick="logoutAdmin()" class="small" style="background:#444">Logout</button>
-        </div>
-
-        <div id="adminMsg" style="margin-top:10px; color:#fff4d6;"></div>
-      </div>
-    </div>
-  </form>
-
-  <footer>© <span id="year">2025</span> <span id="footerName">Azayaka Laundry</span> | Shiny, Fresh, & Clean ✨</footer>
-
-  <div id="toast"></div>
-
-<script>
-/* =======================
-   Main site behavior + load config.json from GitHub
-   ======================= */
-
-const DEFAULT_CONFIG = {
-  namaLaundry: "Azayaka Laundry",
-  logo: "https://static.1010dry.id/pesanlaundry/images/5f486d5d5fb3cbf0ab6dc2278ee9a997.png",
-  warna: "#ff8c00",
-  layananSatuan: ["Dry Clean","Pakaian","Bedcover","Sepatu","Karpet"]
-};
-
-// prefilled repo from your provided URL:
-const DEFAULT_OWNER = "Zlinkhub";
-const DEFAULT_REPO = "orderhere";
-const DEFAULT_BRANCH = "main"; // gunakan 'main' default; ubah di admin jika repo pakai branch lain
-const CONFIG_PATH = "config.json";
-
-let config = null;
-let lokasiTeks = "" ;
-let jenisDipilih = "";
-let layananDipilih = "";
-
-/* --- helper toast --- */
-function showToast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.className = "show";
-  setTimeout(()=> t.className = t.className.replace("show",""), 4000);
-}
-
-/* --- load config.json from GitHub via API (GET contents) --- */
-async function loadConfigFromGitHub(owner=DEFAULT_OWNER, repo=DEFAULT_REPO, branch=DEFAULT_BRANCH) {
-  try {
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${CONFIG_PATH}?ref=${branch}`;
-    const res = await fetch(url);
-    if (!res.ok) {
-      // if not found or error, fallback to raw or default
-      console.warn("Tidak dapat ambil config via API. status:", res.status);
-      // try raw.githubusercontent (public repo)
-      const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${CONFIG_PATH}`;
-      const resRaw = await fetch(rawUrl);
-      if (resRaw.ok) {
-        const data = await resRaw.json();
-        return data;
-      } else {
-        return DEFAULT_CONFIG;
-      }
-    }
-    const j = await res.json();
-    // content is base64
-    const content = JSON.parse(atob(j.content.replace(/\n/g,'')));
-    return content;
-  } catch (err) {
-    console.error("loadConfig error", err);
-    return DEFAULT_CONFIG;
-  }
-}
-
-/* --- apply config to UI --- */
-function applyConfig(c) {
-  config = Object.assign({}, DEFAULT_CONFIG, c || {});
-  // logo
-  document.getElementById("logoImg").src = config.logo;
-  // site title & footer
-  document.getElementById("siteTitle").textContent = "🧺 " + config.namaLaundry;
-  document.getElementById("footerName").textContent = config.namaLaundry;
-  // theme color
-  document.documentElement.style.setProperty('--accent', shadeHex(config.warna, -5) || "#ffa93a");
-  document.documentElement.style.setProperty('--accent-2', config.warna || "#ff8c00");
-  // layanan: fill layananGroup buttons (kiloan + satuan)
-  populateLayanan(config.layananSatuan || []);
-}
-
-/* --- populate layanan into layananGroup, preserving Kiloan/Satuan structure minimal --- */
-function populateLayanan(satuanList) {
-  // Clear existing
-  const layananGroup = document.getElementById("layananGroup");
-  layananGroup.innerHTML = "";
-  // For simplicity, keep a few kiloan defaults + satuan from config
-  const kiloan = ["Cuci & Setrika","Setrika Saja","Cuci Kering Lipat"];
-  kiloan.forEach(item => {
-    const d = document.createElement("div");
-    d.className = "btn layanan-btn kiloan";
-    d.textContent = item;
-    d.onclick = ()=> pilihLayanan(item, d);
-    layananGroup.appendChild(d);
-  });
-  (satuanList || []).forEach(item => {
-    const d = document.createElement("div");
-    d.className = "btn layanan-btn satuan";
-    d.textContent = item;
-    d.onclick = ()=> pilihLayanan(item, d);
-    layananGroup.appendChild(d);
-  });
-  // hide layanan satuan until user picks jenis
-  document.querySelectorAll('.layanan-btn').forEach(btn => btn.style.display = "none");
-}
-
-/* --- shade helper for minor color tweak --- */
-function shadeHex(hex, percent) {
-  try {
-    hex = hex.replace('#','');
-    let R = parseInt(hex.substring(0,2),16);
-    let G = parseInt(hex.substring(2,4),16);
-    let B = parseInt(hex.substring(4,6),16);
-    R = parseInt(R * (100+percent) / 100);
-    G = parseInt(G * (100+percent) / 100);
-    B = parseInt(B * (100+percent) / 100);
-    R = (R<255)?R:255; G = (G<255)?G:255; B = (B<255)?B:255;
-    const rr = (R.toString(16).length==1)?"0"+R.toString(16):R.toString(16);
-    const gg = (G.toString(16).length==1)?"0"+G.toString(16):G.toString(16);
-    const bb = (B.toString(16).length==1)?"0"+B.toString(16):B.toString(16);
-    return "#"+rr+gg+bb;
-  } catch(e) { return null; }
-}
-
-/* --- Location capture --- */
-function ambilLokasi() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(pos => {
-      const lat = pos.coords.latitude, lon = pos.coords.longitude;
-      lokasiTeks = `https://www.google.com/maps?q=${lat},${lon}`;
-      document.getElementById("lokasi").value = "Lokasi berhasil diambil ✅";
-      showToast("📍 Lokasi berhasil ditandai untuk jemput/antar.");
-    }, () => showToast("⚠️ Aktifkan izin lokasi agar kami dapat menjemput pesanan Anda."));
-  } else showToast("❌ Browser Anda tidak mendukung fitur lokasi.");
-}
-
-/* --- Delivery labels update --- */
-function updateDeliveryLabels() {
-  const delivery = document.getElementById("delivery").value;
-  const labelWaktu = document.getElementById("labelWaktu");
-  const labelLokasi = document.getElementById("labelLokasi");
-  const lokasiInput = document.getElementById("lokasi");
-  const noteLokasi = document.getElementById("noteLokasi");
-  labelWaktu.style.opacity = 0; labelLokasi.style.opacity = 0; noteLokasi.style.opacity = 0;
-  setTimeout(()=> {
-    if (delivery === "Antar") {
-      labelWaktu.textContent = "🕒 Waktu Pengantaran:";
-      labelLokasi.textContent = "📍 Lokasi Pengantaran:";
-      lokasiInput.placeholder = "Tulis lokasi antar atau klik 📍";
-      noteLokasi.innerHTML = "📍 Pastikan alamat tujuan antar sudah benar sebelum dikirim.";
-    } else if (delivery === "Jemput & Antar") {
-      labelWaktu.textContent = "🕒 Waktu Jemput & Antar:";
-      labelLokasi.textContent = "📍 Lokasi Jemput & Antar:";
-      lokasiInput.placeholder = "Klik 📍 untuk ambil lokasi utama";
-      noteLokasi.innerHTML = "📍 Lokasi ini akan digunakan untuk jemput dan antar pesanan.";
-    } else {
-      labelWaktu.textContent = "🕒 Waktu Penjemputan:";
-      labelLokasi.textContent = "📍 Lokasi Penjemputan:";
-      lokasiInput.placeholder = "Klik 📍 untuk ambil lokasi otomatis";
-      noteLokasi.innerHTML = "📍 Aktifkan lokasi & gunakan browser seperti <b>Chrome</b> agar fitur lokasi berfungsi dengan baik.";
-    }
-    labelWaktu.style.opacity = 1; labelLokasi.style.opacity = 1; noteLokasi.style.opacity = 1;
-  }, 150);
-}
-
-/* --- layanan / jenis --- */
-function pilihJenis(jenis, el) {
-  jenisDipilih = jenis;
-  document.querySelectorAll('#jenisGroup .btn').forEach(btn => btn.classList.remove('active'));
-  el.classList.add('active');
-  document.querySelectorAll('.layanan-btn').forEach(btn => {
-    btn.style.display = btn.classList.contains(jenis.toLowerCase()) ? "block" : "none";
-    btn.classList.remove('active');
-  });
-  layananDipilih = "";
-}
-function pilihLayanan(layanan, el) {
-  document.querySelectorAll('.layanan-btn').forEach(btn => btn.classList.remove('active'));
-  el.classList.add('active');
-  layananDipilih = layanan;
-}
-
-/* --- WhatsApp open helper (mobile vs web) --- */
-function bukaWhatsApp(target, encoded) {
-  // deteksi perangkat
-  const userAgent = navigator.userAgent.toLowerCase();
-  let waLink = "";
-
-  // kalau di HP, pakai wa.me langsung
-  if (/android|iphone|ipad|mobile/i.test(userAgent)) {
-    waLink = `https://wa.me/${target}?text=${encoded}`;
-  } 
-  // kalau di desktop, arahkan ke web.whatsapp
-  else {
-    waLink = `https://web.whatsapp.com/send?phone=${target}&text=${encoded}`;
-  }
-
-  // buka di tab baru
-  window.open(waLink, "_blank");
-}
-
-/* --- kirim pesan --- */
-function kirimPesan(tujuan) {
-  const nama = document.getElementById("nama");
-  const waktu = document.getElementById("waktu");
-  const alamat = document.getElementById("alamat");
-  const delivery = document.getElementById("delivery").value;
-  let valid = true;
-  [nama, waktu, alamat].forEach(el => el.classList.remove("required"));
-  if (!nama.value.trim()) { nama.classList.add("required"); valid = false; }
-  if (!jenisDipilih) { showToast("⚠️ Pilih jenis laundry terlebih dahulu."); valid = false; }
-  if (!layananDipilih) { showToast("⚠️ Pilih layanan laundry terlebih dahulu."); valid = false; }
-  if (!waktu.value.trim()) { waktu.classList.add("required"); valid = false; }
-  if (!lokasiTeks && !alamat.value.trim()) { alamat.classList.add("required"); valid = false; }
-  if (!valid) { showToast("⚠️ Mohon lengkapi kolom yang ditandai merah."); return; }
-
-  const estimasi = document.getElementById("estimasi").value;
-  const tanggal = new Date().toLocaleString("id-ID", { dateStyle: "full", timeStyle: "short" });
-
-  const pesanObj = {
-    tanggal, nama: nama.value, jenis: jenisDipilih, layanan: layananDipilih,
-    estimasi, delivery, waktu: waktu.value, alamat: alamat.value || "-", lokasi: lokasiTeks || "Tidak terdeteksi"
-  };
-
-  const pesanText = `🧺 *PESAN LAUNDRY* 🧺
-*${document.getElementById("siteTitle").textContent}*
-
-📅 _${pesanObj.tanggal}_
-
-👤 Nama: ${pesanObj.nama}
-🧥 Jenis: ${pesanObj.jenis}
-🧼 Layanan: ${pesanObj.layanan}
-⏳ Estimasi: ${pesanObj.estimasi}
-🚚 Delivery: ${pesanObj.delivery}
-🕓 Waktu: ${pesanObj.waktu}
-🏠 Alamat: ${pesanObj.alamat}
-📍 Lokasi: ${pesanObj.lokasi}
-
-_Terima kasih sudah memesan di ${document.getElementById("siteTitle").textContent}_`;
-
-  const nomorAdmin = "6287853561541";
-  const nomorKurir = "6285246756360";
-  const encoded = encodeURIComponent(pesanText);
-  const target = tujuan === "admin" ? nomorAdmin : nomorKurir;
-  bukaWhatsApp(target, encoded);
-}
-
-/* =======================
-   Admin: login, preview, save config.json to GitHub via API
-   ======================= */
-
-function toggleAdminPanel() {
-  const wrap = document.getElementById("adminPanelWrap");
-  if (wrap.style.display === "block") wrap.style.display = "none";
-  else wrap.style.display = "block";
-}
-
-/* simple admin credential (static) */
-const ADMIN_USER = "Zlink";
-const ADMIN_PASS = "1234";
-
-function adminLogin() {
-  const u = document.getElementById("adminUser").value.trim();
-  const p = document.getElementById("adminPass").value.trim();
-  const token = document.getElementById("githubToken").value.trim();
-  if (u !== ADMIN_USER || p !== ADMIN_PASS) { alert("Username / password admin salah."); return; }
-  if (!token) { if(!confirm("PAT kosong. Untuk menyimpan ke GitHub, masukkan PAT. Lanjut preview saja?")) return; }
-  // show admin panel
-  document.getElementById("adminLogin").style.display = "none";
-  document.getElementById("adminPanel").style.display = "block";
-  // prefill repo owner/repo with your site info
-  document.getElementById("ghOwner").value = "<?=placeholder?>";
-  document.getElementById("ghRepo").value = "<?=placeholder?>";
-  // we set actual defaults from provided repo: Zlinkhub / azayaka-laundry
-  document.getElementById("ghOwner").value = "Zlinkhub";
-  document.getElementById("ghRepo").value = "orderhere";
-  document.getElementById("ghBranch").value = "main";
-  // fill admin inputs from current config
-  document.getElementById("adminNama").value = config?.namaLaundry || DEFAULT_CONFIG.namaLaundry;
-  document.getElementById("adminWarna").value = config?.warna || DEFAULT_CONFIG.warna;
-  document.getElementById("adminLayanan").value = (config?.layananSatuan || DEFAULT_CONFIG.layananSatuan).join(", ");
-  document.getElementById("logoUrl").value = config?.logo || DEFAULT_CONFIG.logo;
-  document.getElementById("adminMsg").textContent = "Admin login berhasil. Isi perubahan lalu klik 'Save to GitHub' (butuh PAT).";
-}
-
-/* handle logo upload -> convert to base64 and preview, but since we want persistent asset in repo,
-   we store logo as URL in config.json. For convenience we support dataURL (base64) in config too. */
-function handleLogoUpload(evt) {
-  const file = evt.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById("logoUrl").value = e.target.result; // data URL
-    document.getElementById("logoImg").src = e.target.result;
-    document.getElementById("adminMsg").textContent = "Logo siap (dataURL). Jika ingin agar logo tersimpan secara permanen di repo, gunakan URL yang di-host.";
-  };
-  reader.readAsDataURL(file);
-}
-function setLogoFromUrl() {
-  const url = document.getElementById("logoUrl").value.trim();
-  if (url) document.getElementById("logoImg").src = url;
-}
-
-
-
-// ====== FUNGSI PENYAMARAN NOMOR ======
-function maskPhoneNumber(number) {
-  if (!number) return '';
-  if (number.length <= 6) return number;
-  const visibleStart = number.slice(0, 5);
-  const visibleEnd = number.slice(-3);
-  return `${visibleStart}xxx${visibleEnd}`;
-}
-
-// ====== TAMPIL NOMOR DISAMARKAN SAAT LOAD AWAL ======
-function tampilkanNomorDisamarkan(config) {
-  document.getElementById('waAdmin').value = maskPhoneNumber(config.whatsappAdmin);
-  document.getElementById('waKurir').value = maskPhoneNumber(config.whatsappKurir);
-  document.getElementById('waAdmin').setAttribute('readonly', true);
-  document.getElementById('waKurir').setAttribute('readonly', true);
-}
-
-// ====== TAMPIL NOMOR ASLI SETELAH LOGIN ======
-function tampilkanNomorAsli(config) {
-  document.getElementById('waAdmin').value = config.whatsappAdmin;
-  document.getElementById('waKurir').value = config.whatsappKurir;
-  document.getElementById('waAdmin').removeAttribute('readonly');
-  document.getElementById('waKurir').removeAttribute('readonly');
-}
-
-// ====== LOAD CONFIG.JS DARI GITHUB ======
-let currentConfig = {};
-
-fetch('config.json')
-  .then(res => res.json())
-  .then(config => {
-    currentConfig = config;
-    tampilkanNomorDisamarkan(config);
-  })
-  .catch(err => console.error('Gagal memuat config.json:', err));
-
-// ====== LOGIN ADMIN ======
-function loginAdmin() {
-  const user = document.getElementById('adminUser').value;
-  const pass = document.getElementById('adminPass').value;
-
-  if (user === 'Zlink' && pass === '1234') {
-    alert('✅ Login berhasil!');
-    tampilkanNomorAsli(currentConfig);
-    document.getElementById('adminPanel').style.display = 'block';
-  } else {
-    alert('❌ Username atau password salah!');
-  }
-}
-
-// ====== SIMPAN KE GITHUB ======
-async function saveToGitHub() {
-  const token = document.getElementById('githubToken').value.trim();
-  const repoOwner = document.getElementById('repoOwner').value.trim();
-  const repoName = document.getElementById('repoName').value.trim();
-  const filePath = 'config.json';
-
-  if (!token || !repoOwner || !repoName) {
-    alert('⚠️ Pastikan token, repo owner, dan repo name sudah terisi.');
-    return;
-  }
-
-  // Update konfigurasi berdasarkan input admin
-  currentConfig.whatsappAdmin = document.getElementById('waAdmin').value.trim();
-  currentConfig.whatsappKurir = document.getElementById('waKurir').value.trim();
-  currentConfig.namaLaundry = document.getElementById('namaLaundry').value.trim();
-  currentConfig.footerText = document.getElementById('footerText').value.trim();
-  currentConfig.sosmed1 = document.getElementById('sosmed1').value.trim();
-  currentConfig.sosmed2 = document.getElementById('sosmed2').value.trim();
-  currentConfig.themeColor = document.getElementById('themeColor').value.trim();
-
-  try {
-    // Ambil sha file config.json dari GitHub
-    const shaResponse = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
-      headers: { Authorization: `token ${token}` },
-    });
-    const shaData = await shaResponse.json();
-    const sha = shaData.sha;
-
-    // Kirim PUT request ke GitHub API
-    const updateResponse = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `token ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: 'Update config.json via Admin Panel',
-        content: btoa(unescape(encodeURIComponent(JSON.stringify(currentConfig, null, 2)))),
-        sha: sha,
-      }),
-    });
-
-    if (updateResponse.ok) {
-      alert('✅ Perubahan berhasil disimpan ke GitHub!');
-    } else {
-      alert('❌ Gagal menyimpan ke GitHub. Periksa token atau izin repo.');
-    }
-  } catch (err) {
-    console.error('Error saat menyimpan ke GitHub:', err);
-    alert('⚠️ Terjadi kesalahan saat menghubungi GitHub API.');
-  }
-}
-
-
-
-
-
-
-
-/* preview local changes without saving to GitHub */
-function previewLocalChanges() {
-  const newCfg = {
-    namaLaundry: document.getElementById("adminNama").value.trim() || DEFAULT_CONFIG.namaLaundry,
-    logo: document.getElementById("logoUrl").value.trim() || DEFAULT_CONFIG.logo,
-    warna: document.getElementById("adminWarna").value || DEFAULT_CONFIG.warna,
-    layananSatuan: (document.getElementById("adminLayanan").value || "").split(",").map(s=>s.trim()).filter(Boolean)
-  };
-  applyConfig(newCfg);
-  document.getElementById("adminMsg").textContent = "Preview lokal diterapkan (belum tersimpan ke GitHub). Klik Save to GitHub untuk menyimpan.";
-}
-
-/* Logout admin: reload page to clear PAT from memory */
-function logoutAdmin() {
-  location.reload();
-}
-
-/* --- GitHub API: getFileSha (optional) & put file --- */
-async function getConfigFileSha(owner, repo, path, branch, token) {
-  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
-  const headers = token ? { Authorization: `token ${token}` } : {};
-  const res = await fetch(url, { headers });
-  if (!res.ok) return null;
-  const j = await res.json();
-  return j.sha;
-}
-
-async function saveConfigToGitHub() {
-  const owner = document.getElementById("ghOwner").value.trim() || DEFAULT_OWNER;
-  const repo = document.getElementById("ghRepo").value.trim() || DEFAULT_REPO;
-  const branch = document.getElementById("ghBranch").value.trim() || DEFAULT_BRANCH;
-  const token = document.getElementById("githubToken").value.trim();
-  if (!token) { if(!confirm("Anda belum memasukkan PAT. Tanpa PAT, file tidak bisa ditulis. Tetap simpan ke repo publik secara anonim? (tidak disarankan)")) return; }
-
-  const newCfg = {
-    namaLaundry: document.getElementById("adminNama").value.trim() || DEFAULT_CONFIG.namaLaundry,
-    logo: document.getElementById("logoUrl").value.trim() || DEFAULT_CONFIG.logo,
-    warna: document.getElementById("adminWarna").value || DEFAULT_CONFIG.warna,
-    layananSatuan: (document.getElementById("adminLayanan").value || "").split(",").map(s=>s.trim()).filter(Boolean)
-  };
-
-  // prepare content
-  const contentStr = JSON.stringify(newCfg, null, 2);
-  const contentBase64 = btoa(unescape(encodeURIComponent(contentStr)));
-
-  // attempt get sha
-  document.getElementById("adminMsg").textContent = "Mencoba menyimpan ke GitHub...";
-  try {
-    const sha = await getConfigFileSha(owner, repo, CONFIG_PATH, branch, token);
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${CONFIG_PATH}`;
-    const body = {
-      message: `Update config.json via admin panel`,
-      content: contentBase64,
-      branch: branch
-    };
-    if (sha) body.sha = sha; // update
-    const headers = {
-      "Content-Type": "application/json",
-      Authorization: `token ${token}`
-    };
-    const res = await fetch(url, { method: "PUT", headers, body: JSON.stringify(body) });
-    if (!res.ok) {
-      const txt = await res.text();
-      document.getElementById("adminMsg").textContent = `Gagal menyimpan: ${res.status} ${res.statusText}. Cek token & izin repo.`;
-      console.error("GitHub save error:", res.status, txt);
-      return;
-    }
-    const j = await res.json();
-    document.getElementById("adminMsg").textContent = "Berhasil tersimpan ke GitHub! Perubahan akan terlihat pada semua pengunjung.";
-    // reload config from repo to ensure canonical
-    const newLoaded = await loadConfigFromGitHub(owner, repo, branch);
-    applyConfig(newLoaded);
-  } catch (err) {
-    console.error(err);
-    document.getElementById("adminMsg").textContent = "Terjadi error saat menyimpan. Lihat console.";
-  }
-}
-
-/* --- On load: fetch config and apply --- */
-(async function init(){
-  // load config from repo (owner/repo default)
-  const loaded = await loadConfigFromGitHub(DEFAULT_OWNER, DEFAULT_REPO, DEFAULT_BRANCH);
-  applyConfig(loaded);
-  // set year
-  document.getElementById("year").textContent = new Date().getFullYear();
-  // initialize layanan button hiding
-  document.querySelectorAll('.layanan-btn').forEach(btn => btn.style.display = "none");
-  // show browser top if inside webview (same logic as before)
-  const ua = navigator.userAgent.toLowerCase();
-  if (ua.includes("wv") || ua.includes("micromessenger") || ua.includes("miui") || ua.includes("fb") || ua.includes("instagram")) {
-    setTimeout(()=> document.getElementById("browserTop").style.display = "block", 7000);
-  }
-})();
-
-/* --- Fungsi buka di browser (untuk webview seperti WhatsApp/Instagram) --- */
-function bukaBrowser() {
-  const urlSekarang = window.location.href;
-  showToast("🔗 Membuka di browser bawaan...");
-  setTimeout(() => {
-    window.open(urlSekarang, "_blank");
-  }, 800);
-}
-
-
-
-</script>
-
-</script>
-  <script src="assets/js/main.js"></script>
-<script src="assets/js/admin.js"></script>
+    <script>
+        // Mengambil data dari penyimpanan Lokal HP (LocalStorage) atau buat baru jika kosong
+        let dataOps = JSON.parse(localStorage.getItem('laundry_ops')) || [];
+        let dataKaryawan = JSON.parse(localStorage.getItem('laundry_kar')) || [];
+        let dataAbsen = JSON.parse(localStorage.getItem('laundry_abs')) || [];
+
+        // Set default tanggal hari ini pada form agar tidak repot mengetik
+        const hariIni = new Date().toISOString().split('T')[0];
+        document.getElementById('ops-tanggal').value = hariIni;
+        document.getElementById('abs-tanggal').value = hariIni;
+        document.getElementById('filter-bulan').value = hariIni.substring(0, 7);
+
+        // 1. Logika Pengeluaran Operasional
+        document.getElementById('form-pengeluaran').addEventListener('submit', function(e){
+            e.preventDefault();
+            dataOps.push({
+                nama: document.getElementById('ops-nama').value,
+                biaya: parseInt(document.getElementById('ops-biaya').value),
+                tanggal: document.getElementById('ops-tanggal').value
+            });
+            localStorage.setItem('laundry_ops', JSON.stringify(dataOps));
+            this.reset();
+            document.getElementById('ops-tanggal').value = hariIni;
+            tampilkanOps();
+        });
+
+        function tampilkanOps() {
+            let html = '';
+            // Tampilkan 5 data terakhir
+            dataOps.slice().reverse().slice(0,5).forEach(item => {
+                html += `<tr><td>${item.tanggal.substring(5)}</td><td>${item.nama}</td><td>Rp ${item.biaya.toLocaleString('id-ID')}</td></tr>`;
+            });
+            document.querySelector('#tabel-pengeluaran tbody').innerHTML = html || '<tr><td colspan="3" class="text-muted">Belum ada data</td></tr>';
+        }
+
+        // 2. Logika Master Karyawan & Absensi
+        document.getElementById('form-karyawan').addEventListener('submit', function(e){
+            e.preventDefault();
+            dataKaryawan.push({
+                id: Date.now(),
+                nama: document.getElementById('kar-nama').value,
+                gaji: parseInt(document.getElementById('kar-gaji').value)
+            });
+            localStorage.setItem('laundry_kar', JSON.stringify(dataKaryawan));
+            this.reset();
+            perbaruiPilihanKaryawan();
+        });
+
+        function perbaruiPilihanKaryawan() {
+            let html = '<option value="">-- Pilih Karyawan --</option>';
+            dataKaryawan.forEach(k => {
+                html += `<option value="${k.id}">${k.nama} (Rp ${k.gaji.toLocaleString('id-ID')})</option>`;
+            });
+            document.getElementById('abs-karyawan').innerHTML = html;
+        }
+
+        document.getElementById('form-absensi').addEventListener('submit', function(e){
+            e.preventDefault();
+            let karId = parseInt(document.getElementById('abs-karyawan').value);
+            let status = document.getElementById('abs-status').value;
+            let karyawan = dataKaryawan.find(k => k.id === karId);
+            
+            // Logika Matematika Potong Gaji Setengah Hari (50%)
+            let gajiDibayar = status === 'Setengah Hari' ? karyawan.gaji / 2 : karyawan.gaji;
+
+            dataAbsen.push({
+                nama: karyawan.nama,
+                status: status,
+                gaji: gajiDibayar,
+                tanggal: document.getElementById('abs-tanggal').value
+            });
+
+            localStorage.setItem('laundry_abs', JSON.stringify(dataAbsen));
+            tampilkanAbsen();
+        });
+
+        function tampilkanAbsen() {
+            let html = '';
+            dataAbsen.slice().reverse().slice(0,5).forEach(item => {
+                let warnaBadge = item.status === 'Penuh' ? 'bg-success' : 'bg-warning text-dark';
+                html += `<tr><td>${item.nama}</td><td><span class="badge ${warnaBadge}">${item.status}</span></td><td>Rp ${item.gaji.toLocaleString('id-ID')}</td></tr>`;
+            });
+            document.querySelector('#tabel-absensi tbody').innerHTML = html || '<tr><td colspan="3" class="text-muted">Belum ada absen</td></tr>';
+        }
+
+        // 3. Logika Filter Laporan Bulanan Otomatis
+        function muatLaporan() {
+            let bulanPilihan = document.getElementById('filter-bulan').value; // format: YYYY-MM
+            
+            // Filter pengeluaran berdasarkan bulan terpilih
+            let totalOps = dataOps.filter(item => item.tanggal.startsWith(bulanPilihan))
+                                  .reduce((sum, item) => sum + item.biaya, 0);
+
+            // Filter gaji karyawan berdasarkan bulan terpilih
+            let totalGaji = dataAbsen.filter(item => item.tanggal.startsWith(bulanPilihan))
+                                    .reduce((sum, item) => sum + item.gaji, 0);
+
+            let totalPengeluaranSemua = totalOps + totalGaji;
+
+            // Tampilkan hasil ke layar HP
+            document.getElementById('rep-ops').innerText = `Rp ${totalOps.toLocaleString('id-ID')}`;
+            document.getElementById('rep-gaji').innerText = `Rp ${totalGaji.toLocaleString('id-ID')}`;
+            document.getElementById('rep-total').innerText = `Rp ${totalPengeluaranSemua.toLocaleString('id-ID')}`;
+        }
+
+        // Jalankan fungsi otomatis saat web dibuka pertama kali
+        tampilkanOps();
+        perbaruiPilihanKaryawan();
+        tampilkanAbsen();
+    </script>
 </body>
 </html>
-</body>
-</html>
-
