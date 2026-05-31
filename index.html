@@ -6,13 +6,38 @@
     <title>Sistem Laundry UMKM Pro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        /* Gaya khusus agar tabel matriks 1-31 bisa digeser di HP seperti spreadsheet */
+        .table-responsive-matrix {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table-matrix th, .table-matrix td {
+            min-width: 40px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 11px;
+        }
+        .table-matrix .col-nama {
+            min-width: 140px;
+            text-align: left;
+            position: sticky;
+            left: 0;
+            background-color: #fff;
+            z-index: 2;
+        }
+        .table-matrix thead th.col-nama {
+            background-color: #212529;
+        }
+    </style>
 </head>
 <body class="bg-light text-dark">
 
-    <div class="container py-3" style="max-width: 300px;">
+    <div class="container py-3" style="max-width: 100%;">
         <h3 class="text-center mb-1">🧺 Laundry Pro-Cloud</h3>
-        <p class="text-center text-muted small mb-3">Inventory Otomatis & Laporan Bulanan</p>
+        <p class="text-center text-muted small mb-3">Inventory Otomatis & Laporan Matriks Bulanan</p>
 
+        <!-- NAVIGASI TAB MENU -->
         <ul class="nav nav-pills nav-fill mb-3 bg-white p-2 rounded shadow-sm" id="pills-tab" role="tablist">
             <li class="nav-item">
                 <button class="nav-link active small" id="tab-operasional" data-bs-toggle="pill" data-bs-target="#operasional">📦 Belanja</button>
@@ -24,13 +49,14 @@
                 <button class="nav-link small" id="tab-absensi" data-bs-toggle="pill" data-bs-target="#absensi">👥 Absen</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link small" id="tab-laporan" data-bs-toggle="pill" data-bs-target="#laporan" onclick="muatLaporan()">📊 Laporan</button>
+                <button class="nav-link small" id="tab-laporan" data-bs-toggle="pill" data-bs-target="#laporan" onclick="muatLaporanMatriks()">📊 Laporan</button>
             </li>
         </ul>
 
         <div class="tab-content" id="pills-tabContent">
             
-            <div class="tab-pane fade show active" id="operasional">
+            <!-- 1. TAB INPUT BELANJA OPERASIONAL -->
+            <div class="tab-pane fade show active" id="operasional" style="max-width: 500px; margin: auto;">
                 <div class="card shadow-sm mb-3">
                     <div class="card-body p-3">
                         <h6 class="fw-bold">Input Belanja Operasional</h6>
@@ -41,7 +67,7 @@
                                 </select>
                             </div>
                             <div class="mb-2">
-                                <input type="number" id="ops-jumlah" class="form-control form-control-sm" placeholder="Jumlah / Kuantitas yang dibeli" min="1" required>
+                                <input type="number" id="ops-jumlah" class="form-control form-control-sm" placeholder="Jumlah / Kuantitas Beli" min="1" required>
                             </div>
                             <div class="mb-2">
                                 <input type="date" id="ops-tanggal" class="form-control form-control-sm" required>
@@ -50,7 +76,7 @@
                         </form>
                     </div>
                 </div>
-                <h6 class="fw-bold">Riwayat Belanja Bulan Ini</h6>
+                <h6 class="fw-bold">Riwayat Belanja Terakhir</h6>
                 <div class="table-responsive bg-white rounded shadow-sm mb-4">
                     <table class="table table-sm small text-center mb-0" id="tabel-pengeluaran">
                         <thead class="table-dark"><tr><th>Tgl</th><th>Barang</th><th>Qty</th><th>Total</th></tr></thead>
@@ -59,14 +85,14 @@
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="master">
+            <!-- 2. TAB MASTER DATA BARANG & HARGA -->
+            <div class="tab-pane fade" id="master" style="max-width: 500px; margin: auto;">
                 <div class="card shadow-sm mb-3">
                     <div class="card-body p-3">
                         <h6 class="fw-bold">Tambah List Barang & Harga Satuan</h6>
                         <form id="form-master-barang">
-                            <div class="mb-2"><input type="text" id="mst-nama" class="form-control form-control-sm" placeholder="Nama Barang (ex: Detergen 1l)" required></div>
+                            <div class="mb-2"><input type="text" id="mst-nama" class="form-control form-control-sm" placeholder="Nama Barang (ex: Ukuran 30, Detergen 5 lt)" required></div>
                             <div class="mb-2"><input type="number" id="mst-harga" class="form-control form-control-sm" placeholder="Harga Satuan (Rp)" required></div>
-                            <div class="mb-2"><span class="small text-muted">Waktu ditambahkan: Otomatis hari ini</span></div>
                             <button type="submit" class="btn btn-success btn-sm w-100">Simpan ke List</button>
                         </form>
                     </div>
@@ -80,7 +106,8 @@
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="absensi">
+            <!-- 3. TAB ABSENSI & GAJI KARYAWAN -->
+            <div class="tab-pane fade" id="absensi" style="max-width: 500px; margin: auto;">
                 <div class="card shadow-sm mb-3">
                     <div class="card-body p-3">
                         <h6 class="fw-bold">Daftarkan Karyawan Baru</h6>
@@ -116,33 +143,35 @@
                 </div>
             </div>
 
+            <!-- 4. TAB LAPORAN REPLIKA MATRIKS (Sesuai image.png) -->
             <div class="tab-pane fade" id="laporan">
-                <div class="card shadow-sm mb-3 bg-dark text-white">
+                <div class="card shadow-sm mb-3 bg-dark text-white" style="max-width: 500px; margin: auto;">
                     <div class="card-body p-3 text-center">
-                        <h6 class="mb-2">Pilih Bulan Laporan</h6>
-                        <input type="month" id="filter-bulan" class="form-control form-control-sm w-70 mx-auto mb-2" onchange="muatLaporan()">
+                        <h6 class="mb-2">Pilih Bulan Laporan Matriks</h6>
+                        <input type="month" id="filter-bulan" class="form-control form-control-sm w-70 mx-auto mb-2" onchange="muatLaporanMatriks()">
                     </div>
                 </div>
 
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <div class="p-2 bg-danger text-white rounded text-center small shadow-sm">
-                            <span>Total Ops (Qty × Harga)</span>
-                            <div class="fw-bold" id="rep-ops">Rp 0</div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="p-2 bg-warning text-dark rounded text-center small shadow-sm">
-                            <span>Total Gaji Karyawan</span>
-                            <div class="fw-bold" id="rep-gaji">Rp 0</div>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="p-3 bg-success text-white rounded text-center shadow-sm">
-                            <h5>Total Pengeluaran Bulan Ini</h5>
-                            <h3 class="fw-bold text-white" id="rep-total">Rp 0</h3>
-                        </div>
-                    </div>
+                <div class="card shadow-sm mb-3 bg-secondary text-white text-center py-2" style="max-width: 500px; margin: auto;">
+                    <span class="small">Total Pengeluaran Bulan Ini (Gaji + Inventory)</span>
+                    <h4 class="fw-bold text-warning" id="rep-total">Rp 0</h4>
+                </div>
+
+                <h6 class="fw-bold mt-3">📊 Matriks Inventory Bulanan (Sesuai image.png)</h6>
+                <div class="table-responsive-matrix bg-white rounded shadow-sm border">
+                    <table class="table table-bordered table-sm table-matrix mb-0" id="matriks-inventory">
+                        <thead class="table-dark">
+                            <tr id="matriks-header">
+                                <th class="col-nama">Item</th>
+                                <th style="min-width: 60px;">Harga</th>
+                                <!-- Kolom tanggal 1-31 akan diisi otomatis oleh JavaScript -->
+                                <!-- Kolom Total & Jumlah -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Baris data barang akan diisi otomatis oleh JavaScript -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -162,6 +191,16 @@
         document.getElementById('ops-tanggal').value = hariIni;
         document.getElementById('abs-tanggal').value = hariIni;
         document.getElementById('filter-bulan').value = hariIni.substring(0, 7);
+
+        // Inisialisasi Header Tabel Matriks Tanggal 1 sampai 31
+        const headerRow = document.getElementById('matriks-header');
+        for (let d = 1; d <= 31; d++) {
+            let th = document.createElement('th');
+            th.innerText = d;
+            headerRow.appendChild(th);
+        }
+        let thTotal = document.createElement('th'); thTotal.innerText = "Total"; thTotal.style.min_width = "50px"; headerRow.appendChild(thTotal);
+        let thJumlah = document.createElement('th'); thJumlah.innerText = "Jumlah"; thJumlah.style.min_width = "80px"; headerRow.appendChild(thJumlah);
 
         // 1. Logika Master Data Barang & Harga
         document.getElementById('form-master-barang').addEventListener('submit', function(e){
@@ -194,14 +233,12 @@
             document.getElementById('ops-barang').innerHTML = html;
         }
 
-        // 2. Logika Belanja Operasional (Otomatis Mengalikan Qty x Harga Satuan)
+        // 2. Logika Belanja Operasional
         document.getElementById('form-pengeluaran').addEventListener('submit', function(e){
             e.preventDefault();
             let barangId = parseInt(document.getElementById('ops-barang').value);
             let jumlahBeli = parseInt(document.getElementById('ops-jumlah').value);
             let barangTerpilih = dataMasterBarang.find(b => b.id === barangId);
-            
-            // Perhitungan perkalian otomatis matematika keuangan
             let totalBiaya = barangTerpilih.harga * jumlahBeli; 
 
             let dataBaru = {
@@ -218,7 +255,6 @@
             tampilkanOps();
             this.reset();
             document.getElementById('ops-tanggal').value = hariIni;
-
             kirimKeCloud(dataBaru);
         });
 
@@ -268,33 +304,89 @@
             document.querySelector('#tabel-absensi tbody').innerHTML = html || '<tr><td colspan="3" class="text-muted">Belum ada absen</td></tr>';
         }
 
-        // 4. Logika Cloud Sync
         function kirimKeCloud(data) {
             if(URL_CLOUD === "URL_APPLIKASI_WEB_GOOGLE_KAMU") return;
             fetch(URL_CLOUD, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) })
             .catch(err => console.error("Cloud Error: ", err));
         }
 
-        // 5. Total Otomatis Akhir Bulan
-        function muatLaporan() {
+        // 4. KUNCI LOGIKA: PEMBUATAN TABEL MATRIKS BULANAN (REPLIKA image.png)
+        function muatLaporanMatriks() {
             let bulanPilihan = document.getElementById('filter-bulan').value; // Format: YYYY-MM
-            
-            // Otomatis memfilter & menjumlahkan belanja barang pada bulan yang dipilih
-            let totalOps = dataOps.filter(item => item.tanggal.startsWith(bulanPilihan))
-                                  .reduce((sum, item) => sum + item.biaya, 0);
+            let tbody = document.querySelector('#matriks-inventory tbody');
+            tbody.innerHTML = '';
 
-            // Otomatis memfilter & menjumlahkan total gaji karyawan pada bulan yang dipilih
-            let totalGaji = dataAbsen.filter(item => item.tanggal.startsWith(bulanPilihan))
-                                    .reduce((sum, item) => sum + item.gaji, 0);
+            let totalSeluruhGaji = dataAbsen.filter(item => item.tanggal.startsWith(bulanPilihan)).reduce((sum, item) => sum + item.gaji, 0);
+            let totalSeluruhOps = 0;
 
-            let totalPengeluaranSemua = totalOps + totalGaji;
+            if (dataMasterBarang.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="35" class="text-center text-muted p-3">Belum ada data barang di tab list barang.</td></tr>';
+                document.getElementById('rep-total').innerText = `Rp ${totalSeluruhGaji.toLocaleString('id-ID')}`;
+                return;
+            }
 
-            document.getElementById('rep-ops').innerText = `Rp ${totalOps.toLocaleString('id-ID')}`;
-            document.getElementById('rep-gaji').innerText = `Rp ${totalGaji.toLocaleString('id-ID')}`;
-            document.getElementById('rep-total').innerText = `Rp ${totalPengeluaranSemua.toLocaleString('id-ID')}`;
+            // Lakukan perulangan untuk setiap barang yang ada di Master List
+            dataMasterBarang.forEach(barang => {
+                let tr = document.createElement('tr');
+                
+                // Kolom Nama Barang (Sticky)
+                let tdNama = document.createElement('td');
+                tdNama.className = "col-nama fw-bold";
+                tdNama.innerText = barang.nama;
+                tr.appendChild(tdNama);
+
+                // Kolom Harga Satuan
+                let tdHarga = document.createElement('td');
+                tdHarga.innerText = barang.harga.toLocaleString('id-ID');
+                tr.appendChild(tdHarga);
+
+                let totalQtyBarangIni = 0;
+
+                // Loop Tanggal 1 sampai 31
+                for (let d = 1; d <= 31; d++) {
+                    let tdTanggal = document.createElement('td');
+                    let tanggalString = `${bulanPilihan}-${String(d).padStart(2, '0')}`;
+                    
+                    // Cari apakah ada transaksi untuk barang ini di tanggal ini
+                    let hitungBelanja = dataOps.filter(item => item.nama === barang.nama && item.tanggal === tanggalString);
+                    
+                    if (hitungBelanja.length > 0) {
+                        let qtyHariIni = hitungBelanja.reduce((sum, item) => sum + item.jumlah, 0);
+                        tdTanggal.innerText = `+${qtyHariIni}`;
+                        tdTanggal.className = "table-warning fw-bold text-danger";
+                        totalQtyBarangIni += qtyHariIni;
+                    } else {
+                        tdTanggal.innerText = '-';
+                        tdTanggal.className = "text-muted opacity-50";
+                    }
+                    tr.appendChild(tdTanggal);
+                }
+
+                // Hitung total matematika perkalian otomatis di akhir bulan
+                let jumlahBiayaBarangIni = totalQtyBarangIni * barang.harga;
+                totalSeluruhOps += jumlahBiayaBarangIni;
+
+                // Kolom Total Qty
+                let tdTotalQty = document.createElement('td');
+                tdTotalQty.innerText = totalQtyBarangIni > 0 ? totalQtyBarangIni : '0';
+                tdTotalQty.className = "fw-bold table-secondary";
+                tr.appendChild(tdTotalQty);
+
+                // Kolom Jumlah Rupiah (Hasil Perkalian Otomatis)
+                let tdJumlahRupiah = document.createElement('td');
+                tdJumlahRupiah.innerText = jumlahBiayaBarangIni > 0 ? `Rp ${jumlahBiayaBarangIni.toLocaleString('id-ID')}` : 'Rp 0';
+                tdJumlahRupiah.className = "fw-bold table-success text-success";
+                tr.appendChild(tdJumlahRupiah);
+
+                tbody.appendChild(tr);
+            });
+
+            // Hitung Total Pengeluaran Akhir Bulan (Gaji + Semua Hasil Perkalian Inventory)
+            let grandTotal = totalSeluruhOps + totalSeluruhGaji;
+            document.getElementById('rep-total').innerText = `Rp ${grandTotal.toLocaleString('id-ID')}`;
         }
 
-        // Menjalankan fungsi bawaan saat halaman dimuat
+        // Jalankan fungsi bawaan
         tampilkanMasterBarang();
         perbaruiPilihanBarang();
         tampilkanOps();
