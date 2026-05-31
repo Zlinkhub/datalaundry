@@ -135,11 +135,14 @@
                                         <div class="mb-2"><input type="text" id="kar-nama" class="form-control form-control-sm" placeholder="Nama Karyawan" required></div>
                                         <div class="mb-2">
                                             <select id="kar-tipe" class="form-select form-select-sm" onchange="sesuaikanPlaceholderGaji()">
-                                                <option value="harian">Pekerja Harian (6 Jam Kerja)</option>
                                                 <option value="full">Karyawan Full (12 Jam Kerja)</option>
+                                                <option value="harian">Pekerja Harian (6 Jam Kerja)</option>
                                             </select>
                                         </div>
-                                        <div class="mb-2"><input type="number" id="kar-gaji" class="form-control form-control-sm" placeholder="Gaji Per Jam (Rp)" value="10000" required></div>
+                                        <div class="mb-2">
+                                            <label class="form-label small text-muted mb-1 fw-bold">Input Gaji Bulanan (Sistem Otomatis Konversi ke Rate/Jam):</label>
+                                            <input type="number" id="kar-gaji-bulanan" class="form-control form-control-sm" placeholder="Gaji Bulanan (Rp)" value="1800000" required>
+                                        </div>
                                         <button type="submit" class="btn btn-secondary btn-sm w-100">Daftarkan Karyawan</button>
                                     </form>
                                     <div class="table-responsive bg-white rounded shadow-sm mt-3" style="max-height: 180px;">
@@ -234,7 +237,6 @@
         const hariIni = new Date().toISOString().split('T')[0];
         document.getElementById('ops-tanggal').value = hariIni;
         document.getElementById('filter-bulan').value = hariIni.substring(0, 7);
-        // Field dikunci agar selalu mengambil tanggal hari ini realtime
         if(document.getElementById('calc-tanggal')) {
             document.getElementById('calc-tanggal').value = hariIni;
         }
@@ -263,7 +265,7 @@
                         dataAbsenLog[idx].status_lembur = "Disetujui Owner " + jamTambahan + " Jam";
                         if(dataAbsenLog[idx].jam_pulang) {
                             dataAbsenLog[idx].status = `${dataAbsenLog[idx].batas_jam_kerja} Jam Kerja`;
-                            dataAbsenLog[idx].gaji = Math.round(dataAbsenLog[idx].batas_jam_kerja * (karObj ? karObj.gaji : 10000));
+                            dataAbsenLog[idx].gaji = Math.round(dataAbsenLog[idx].batas_jam_kerja * (karObj ? karObj.gaji : 5769));
                         }
                         localStorage.setItem('laundry_abs_log', JSON.stringify(dataAbsenLog));
                         alert("Izin lembur berhasil dimasukkan!");
@@ -285,13 +287,11 @@
 
         function sesuaikanPlaceholderGaji() {
             let tipe = document.getElementById('kar-tipe').value;
-            let inputGaji = document.getElementById('kar-gaji');
+            let inputGajiBulanan = document.getElementById('kar-gaji-bulanan');
             if(tipe === 'full') {
-                inputGaji.placeholder = "Gaji per Jam (Rp) - Standard 12 Jam";
-                inputGaji.value = "15000";
+                inputGajiBulanan.value = "1800000";
             } else {
-                inputGaji.placeholder = "Gaji per Jam (Rp) - Standard 6 Jam";
-                inputGaji.value = "10000";
+                inputGajiBulanan.value = "1000000";
             }
         }
 
@@ -405,10 +405,8 @@
                 let selisihJam = parseFloat((((skrg.getHours()*60)+skrg.getMinutes()) - ((jM*60)+mM))/60);
                 if(selisihJam < 0) selisihJam = 0;
                 
-                // Set batas jam kerja default berdasarkan tipe karyawan
                 let batasDefault = (kObj.tipe === 'full') ? 12 : 6;
                 
-                // Jika kerja melebihi batas default tanpa approval lembur, kunci di batas default
                 if (selisihJam > batasDefault && !abs.status_lembur) {
                     selisihJam = batasDefault;
                 }
@@ -480,7 +478,7 @@
                     let selisihJam = parseFloat((((jP*60)+mP) - ((jM*60)+mM))/60);
                     let karObj = dataKaryawan.find(k => k.id === abs.karyawan_id);
                     abs.status = `${selisihJam < 0 ? 0 : selisihJam.toFixed(2)} Jam Kerja`;
-                    abs.gaji = Math.round((selisihJam < 0 ? 0 : selisihJam) * (karObj ? karObj.gaji : 10000));
+                    abs.gaji = Math.round((selisihJam < 0 ? 0 : selisihJam) * (karObj ? karObj.gaji : 5769));
                 } else { abs.status = "Sedang Kerja"; abs.gaji = 0; }
                 localStorage.setItem('laundry_abs_log', JSON.stringify(dataAbsenLog));
                 alert("Berhasil diperbarui!"); tampilkanTabelEditorAbsenAdmin(); muatLaporanMatriks();
@@ -501,10 +499,8 @@
             
             if(!tglInput || isNaN(omzet)) { alert("Lengkapi input data nominal kotor!"); return; }
 
-            // Ambil tanggal realtime hari ini dari system client
             let tglHariIniRealtime = new Date().toISOString().split('T')[0];
 
-            // VALIDASI UTAMA MUTLAK: Perubahan omset hanya bisa dirubah pada hari yang sama sebelum jam 00.00
             if (tglInput !== tglHariIniRealtime) {
                 alert("❌ GAGAL: Omzet hanya dapat diisi atau diubah pada hari yang sama sebelum jam 00.00 pergantian hari!");
                 return;
@@ -579,13 +575,27 @@
             document.querySelector('#tabel-master-barang tbody').innerHTML = html || '<tr><td colspan="3">Kosong</td></tr>';
         }
 
+        /* PERBAIKAN UTAMA: KONVERSI OTOMATIS GAJI BULANAN KE RATE PER JAM */
         document.getElementById('form-karyawan').addEventListener('submit', function(e){
             e.preventDefault();
             let tipe = document.getElementById('kar-tipe').value;
-            let inputGaji = parseInt(document.getElementById('kar-gaji').value);
-            dataKaryawan.push({ id: Date.now(), nama: document.getElementById('kar-nama').value, tipe: tipe, gaji: inputGaji, pin: "1234" });
+            let gajiBulanan = parseInt(document.getElementById('kar-gaji-bulanan').value);
+            
+            // Perhitungan: Asumsi 26 hari kerja sebulan
+            let totalJamKerjaSebulan = (tipe === 'full') ? (26 * 12) : (26 * 6);
+            let ratePerJamPilihan = Math.round(gajiBulanan / totalJamKerjaSebulan);
+
+            dataKaryawan.push({ 
+                id: Date.now(), 
+                nama: document.getElementById('kar-nama').value, 
+                tipe: tipe, 
+                gaji: ratePerJamPilihan, // Menyimpan tarif per jam hasil konversi
+                pin: "1234" 
+            });
+            
             localStorage.setItem('laundry_kar', JSON.stringify(dataKaryawan));
             this.reset(); sesuaikanPlaceholderGaji(); tampilkanMasterKaryawan();
+            alert("Karyawan Terdaftar! Tarif per jam berhasil dikalkulasi otomatis.");
         });
 
         function tampilkanMasterKaryawan() {
