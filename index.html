@@ -135,8 +135,8 @@
                                         <div class="mb-2"><input type="text" id="kar-nama" class="form-control form-control-sm" placeholder="Nama Karyawan" required></div>
                                         <div class="mb-2">
                                             <select id="kar-tipe" class="form-select form-select-sm" onchange="sesuaikanPlaceholderGaji()">
-                                                <option value="part-time">Part Time (Hitung per Jam)</option>
-                                                <option value="tetap">Karyawan Tetap (Gaji Bulanan)</option>
+                                                <option value="harian">Pekerja Harian (6 Jam Kerja)</option>
+                                                <option value="full">Karyawan Full (12 Jam Kerja)</option>
                                             </select>
                                         </div>
                                         <div class="mb-2"><input type="number" id="kar-gaji" class="form-control form-control-sm" placeholder="Gaji Per Jam (Rp)" value="10000" required></div>
@@ -181,9 +181,9 @@
 
                     <div class="card shadow-sm mb-3 border-primary">
                         <div class="card-body p-3">
-                            <h6 class="fw-bold text-primary">💰 Input Omzet (Pendapatan Kotor) Harian</h6>
+                            <h6 class="fw-bold text-primary">💰 Input Omzet (Pendapatan Kotor) Harian <span class="badge bg-warning text-dark small">Hari Ini Only</span></h6>
                             <div class="row g-2">
-                                <div class="col-md-4"><input type="date" id="calc-tanggal" class="form-control form-control-sm" required></div>
+                                <div class="col-md-4"><input type="date" id="calc-tanggal" class="form-control form-control-sm" required readonly></div>
                                 <div class="col-md-5"><input type="number" id="calc-omzet" class="form-control form-control-sm" placeholder="Total Pendapatan Kotor (Rp)" required></div>
                                 <div class="col-md-3"><button type="button" class="btn btn-primary btn-sm w-100" onclick="simpanOmzetHarian()">Simpan Omzet</button></div>
                             </div>
@@ -234,7 +234,10 @@
         const hariIni = new Date().toISOString().split('T')[0];
         document.getElementById('ops-tanggal').value = hariIni;
         document.getElementById('filter-bulan').value = hariIni.substring(0, 7);
-        if(document.getElementById('calc-tanggal')) document.getElementById('calc-tanggal').value = hariIni;
+        // Field dikunci agar selalu mengambil tanggal hari ini realtime
+        if(document.getElementById('calc-tanggal')) {
+            document.getElementById('calc-tanggal').value = hariIni;
+        }
 
         setInterval(() => {
             let skrg = new Date();
@@ -253,11 +256,13 @@
                 if(jamTambahan && !isNaN(jamTambahan)) {
                     let idx = dataAbsenLog.findIndex(a => a.karyawan_id === idKar && a.tanggal === tglKerja);
                     if(idx !== -1) {
-                        dataAbsenLog[idx].batas_jam_kerja = 6 + parseFloat(jamTambahan);
+                        let karObj = dataKaryawan.find(k => k.id === idKar);
+                        let basisJam = (karObj && karObj.tipe === 'full') ? 12 : 6;
+                        
+                        dataAbsenLog[idx].batas_jam_kerja = basisJam + parseFloat(jamTambahan);
                         dataAbsenLog[idx].status_lembur = "Disetujui Owner " + jamTambahan + " Jam";
                         if(dataAbsenLog[idx].jam_pulang) {
                             dataAbsenLog[idx].status = `${dataAbsenLog[idx].batas_jam_kerja} Jam Kerja`;
-                            let karObj = dataKaryawan.find(k => k.id === idKar);
                             dataAbsenLog[idx].gaji = Math.round(dataAbsenLog[idx].batas_jam_kerja * (karObj ? karObj.gaji : 10000));
                         }
                         localStorage.setItem('laundry_abs_log', JSON.stringify(dataAbsenLog));
@@ -281,11 +286,11 @@
         function sesuaikanPlaceholderGaji() {
             let tipe = document.getElementById('kar-tipe').value;
             let inputGaji = document.getElementById('kar-gaji');
-            if(tipe === 'tetap') {
-                inputGaji.placeholder = "Gaji Bersih per Bulan (Rp)";
-                inputGaji.value = "2500000";
+            if(tipe === 'full') {
+                inputGaji.placeholder = "Gaji per Jam (Rp) - Standard 12 Jam";
+                inputGaji.value = "15000";
             } else {
-                inputGaji.placeholder = "Gaji per Jam (Rp)";
+                inputGaji.placeholder = "Gaji per Jam (Rp) - Standard 6 Jam";
                 inputGaji.value = "10000";
             }
         }
@@ -374,7 +379,7 @@
             kontainer.innerHTML = `
                 <div class="karyawan-card p-3">
                     <h5 class="fw-bold mb-1 text-center">${karyawan.nama}</h5>
-                    <p class="text-muted text-center small mb-3">Tipe: ${karyawan.tipe === 'tetap' ? 'Tetap (Bulanan)' : 'Part Time'} <br> Rate Efektif: Rp ${Math.round(karyawan.gaji).toLocaleString('id-ID')}/jam</p>
+                    <p class="text-muted text-center small mb-3">Tipe: ${karyawan.tipe === 'full' ? 'Full Kerja (12 Jam)' : 'Harian (6 Jam)'} <br> Rate Efektif: Rp ${Math.round(karyawan.gaji).toLocaleString('id-ID')}/jam</p>
                     ${btnAksi}
                 </div>
             `;
@@ -396,9 +401,19 @@
             if(idx !== -1 && kObj) {
                 let abs = dataAbsenLog[idx];
                 let [jM, mM] = abs.jam_masuk.split(':').map(Number);
-                let selisihJam = parseFloat((((new Date().getHours()*60)+new Date().getMinutes()) - ((jM*60)+mM))/60);
+                let skrg = new Date();
+                let selisihJam = parseFloat((((skrg.getHours()*60)+skrg.getMinutes()) - ((jM*60)+mM))/60);
                 if(selisihJam < 0) selisihJam = 0;
-                abs.jam_pulang = new Date().toTimeString().split(' ')[0]; 
+                
+                // Set batas jam kerja default berdasarkan tipe karyawan
+                let batasDefault = (kObj.tipe === 'full') ? 12 : 6;
+                
+                // Jika kerja melebihi batas default tanpa approval lembur, kunci di batas default
+                if (selisihJam > batasDefault && !abs.status_lembur) {
+                    selisihJam = batasDefault;
+                }
+
+                abs.jam_pulang = skrg.toTimeString().split(' ')[0]; 
                 abs.status = `${selisihJam.toFixed(2)} Jam Kerja`; 
                 abs.gaji = Math.round(selisihJam * kObj.gaji);
                 localStorage.setItem('laundry_abs_log', JSON.stringify(dataAbsenLog));
@@ -479,17 +494,34 @@
             });
         }
 
-        // --- FINANSIAL: OMZET & LOG BOOK KALKULATOR PENDAPATAN BERSIH ---
+        // --- FINANSIAL: OMZET REALTIME DENGAN VALIDASI HARI YANG SAMA ---
         function simpanOmzetHarian() {
-            let tgl = document.getElementById('calc-tanggal').value;
+            let tglInput = document.getElementById('calc-tanggal').value;
             let omzet = parseInt(document.getElementById('calc-omzet').value);
-            if(!tgl || isNaN(omzet)) { alert("Lengkapi input data nominal kotor!"); return; }
-            let idx = dataOmzetHarian.findIndex(o => o.tanggal === tgl);
-            if(idx !== -1) { dataOmzetHarian[idx].nominal = omzet; } 
-            else { dataOmzetHarian.push({ tanggal: tgl, nominal: omzet }); }
+            
+            if(!tglInput || isNaN(omzet)) { alert("Lengkapi input data nominal kotor!"); return; }
+
+            // Ambil tanggal realtime hari ini dari system client
+            let tglHariIniRealtime = new Date().toISOString().split('T')[0];
+
+            // VALIDASI UTAMA MUTLAK: Perubahan omset hanya bisa dirubah pada hari yang sama sebelum jam 00.00
+            if (tglInput !== tglHariIniRealtime) {
+                alert("❌ GAGAL: Omzet hanya dapat diisi atau diubah pada hari yang sama sebelum jam 00.00 pergantian hari!");
+                return;
+            }
+
+            let idx = dataOmzetHarian.findIndex(o => o.tanggal === tglInput);
+            if(idx !== -1) { 
+                dataOmzetHarian[idx].nominal = omzet; 
+            } else { 
+                dataOmzetHarian.push({ tanggal: tglInput, nominal: omzet }); 
+            }
+            
             localStorage.setItem('laundry_omzet', JSON.stringify(dataOmzetHarian));
-            alert("Omzet Harian Disimpan!"); document.getElementById('calc-omzet').value = '';
-            tampilkanLogbookOwnerRealtime(); muatLaporanMatriks();
+            alert("✅ Omzet Harian Berhasil Disimpan/Diperbarui!"); 
+            document.getElementById('calc-omzet').value = '';
+            tampilkanLogbookOwnerRealtime(); 
+            muatLaporanMatriks();
         }
 
         function tampilkanLogbookOwnerRealtime() {
@@ -551,9 +583,7 @@
             e.preventDefault();
             let tipe = document.getElementById('kar-tipe').value;
             let inputGaji = parseInt(document.getElementById('kar-gaji').value);
-            let upahPerJam = inputGaji;
-            if(tipe === 'tetap') { upahPerJam = inputGaji / (26 * 8); } // Rumus: Gaji / (26 hari kerja * 8 jam)
-            dataKaryawan.push({ id: Date.now(), nama: document.getElementById('kar-nama').value, tipe: tipe, gaji: upahPerJam, pin: "1234" });
+            dataKaryawan.push({ id: Date.now(), nama: document.getElementById('kar-nama').value, tipe: tipe, gaji: inputGaji, pin: "1234" });
             localStorage.setItem('laundry_kar', JSON.stringify(dataKaryawan));
             this.reset(); sesuaikanPlaceholderGaji(); tampilkanMasterKaryawan();
         });
@@ -561,7 +591,8 @@
         function tampilkanMasterKaryawan() {
             let html = '';
             dataKaryawan.forEach((item) => {
-                html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='tetap'?'bg-dark':'bg-secondary'}">${item.tipe}</span></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); localStorage.setItem('laundry_kar', JSON.stringify(dataKaryawan)); tampilkanMasterKaryawan(); })">Hapus</button></td></tr>`;
+                let labelTipe = item.tipe === 'full' ? 'Full (12j)' : 'Harian (6j)';
+                html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); localStorage.setItem('laundry_kar', JSON.stringify(dataKaryawan)); tampilkanMasterKaryawan(); })">Hapus</button></td></tr>`;
             });
             document.querySelector('#tabel-master-karyawan tbody').innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
         }
@@ -636,7 +667,8 @@
             // 3. Render Baris Gaji Karyawan
             dataKaryawan.forEach(k => {
                 let tr = document.createElement('tr'); tr.className = "table-info";
-                tr.innerHTML = `<td class="col-nama text-start">💰 ${k.nama} (${k.tipe==='tetap'?'Tetap':'Part'})</td><td>Rate</td>`;
+                let labelTipe = k.tipe === 'full' ? 'Full' : 'Harian';
+                tr.innerHTML = `<td class="col-nama text-start">💰 ${k.nama} (${labelTipe})</td><td>Rate</td>`;
                 let totalGajiKaryawan = 0;
                 for (let d = 1; d <= 31; d++) {
                     let gajiHariIni = dataAbsenLog.filter(a => a.karyawan_id === k.id && a.tanggal === `${bulanPilihan}-${d<10?'0'+d:d}`).reduce((acc, curr) => acc + curr.gaji, 0);
