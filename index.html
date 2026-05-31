@@ -89,23 +89,11 @@
                     </div>
                 </div>
 
-                <div id="konten-admin" class="d-none">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <div class="card shadow-sm">
-                                <div class="card-body p-3">
-                                    <h6 class="fw-bold">Manajemen List Barang & Harga</h6>
-                                    <form id="form-master-barang">
-                                        <div class="mb-2"><input type="text" id="mst-nama" class="form-control form-control-sm" placeholder="Nama Barang" required></div>
-                                        <div class="mb-2"><input type="number" id="mst-harga" class="form-control form-control-sm" placeholder="Harga Satuan (Rp)" required></div>
-                                        <button type="submit" class="btn btn-success btn-sm w-100">Tambah Barang</button>
-                                    </form>
-                                    <div class="table-responsive bg-white rounded shadow-sm mt-3" style="max-height: 200px;">
-                                        <table class="table table-sm small text-center mb-0" id="tabel-master-barang">
-                                            <thead class="table-dark"><tr><th>Barang</th><th>Harga</th><th>Aksi</th></tr></thead>
-                                            <tbody></tbody>
-                                        </table>
-                                    </div>
+                <!-- Tambahkan tombol ini tepat di bawah <div id="konten-admin" class="d-none"> -->
+<div class="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded border">
+    <span class="fw-bold text-success">🔓 Mode Admin Aktif</span>
+    <button type="button" class="btn btn-danger btn-sm" onclick="logoutAdmin()">🔒 Keluar dari Admin</button>
+</div>
                                 </div>
                             </div>
                         </div>
@@ -297,10 +285,55 @@
             document.querySelector('#tabel-absensi-hari-ini tbody').innerHTML = html || '<tr><td colspan="4" class="text-muted">Belum ada aktivitas absen hari ini</td></tr>';
         }
 
-        function cekAksesAdmin() {
-            document.getElementById('login-admin-box').classList.remove('d-none');
-            document.getElementById('konten-admin').classList.add('d-none');
-            document.getElementById('pass-admin').value = '';
+        // 1. Modifikasi Fungsi Cek Akses Admin (Mengecek apakah admin sudah pernah login sebelumnya)
+function cekAksesAdmin() {
+    let statusLoginAdmin = localStorage.getItem('login_admin_sukses') || "tidak";
+
+    if (statusLoginAdmin === "ya") {
+        // Jika sudah pernah login, langsung buka panel tanpa minta password
+        document.getElementById('login-admin-box').classList.add('d-none');
+        document.getElementById('konten-admin').classList.remove('d-none');
+        tampilkanMasterBarang();
+        tampilkanMasterKaryawan();
+        muatLaporanMatriks();
+        if(typeof perbaruiPilihanBarang === "function") perbaruiPilihanBarang();
+    } else {
+        // Jika belum login, tampilkan kotak password
+        document.getElementById('login-admin-box').classList.remove('d-none');
+        document.getElementById('konten-admin').classList.add('d-none');
+        document.getElementById('pass-admin').value = '';
+    }
+}
+
+// 2. Modifikasi Fungsi Verifikasi Admin (Menyimpan status login ke perangkat)
+function verifikasiAdmin() {
+    let input = document.getElementById('pass-admin').value;
+    if (input === passAdminSistem) {
+        // Simpan status login "ya" ke dalam perangkat luar (localStorage)
+        localStorage.setItem('login_admin_sukses', "ya");
+        
+        document.getElementById('login-admin-box').classList.add('d-none');
+        document.getElementById('konten-admin').classList.remove('d-none');
+        tampilkanMasterBarang();
+        tampilkanMasterKaryawan();
+        muatLaporanMatriks();
+        if(typeof perbaruiPilihanBarang === "function") perbaruiPilihanBarang();
+    } else { 
+        alert("Password Admin Salah!"); 
+    }
+}
+
+// 3. Tambahkan Fungsi Baru: Logout Admin (Untuk mengunci kembali perangkat)
+function logoutAdmin() {
+    if (confirm("Apakah Anda yakin ingin keluar dari Panel Admin dan mengunci kembali halaman ini?")) {
+        // Ubah status login menjadi "tidak" di perangkat
+        localStorage.setItem('login_admin_sukses', "tidak");
+        
+        // Panggil kembali fungsi cekAksesAdmin untuk menyembunyikan data
+        cekAksesAdmin();
+    }
+}
+
         }
 
         function verifikasiAdmin() {
