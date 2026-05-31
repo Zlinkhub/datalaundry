@@ -402,7 +402,51 @@
                 headerRow.innerHTML += `<th>Total</th><th>Jumlah</th>`;
             }
         }
+// --- MANAJEMEN PORTAL LOGIN PRIVATE KARYAWAN ---
+        function perbaruiDropdownLoginKaryawan() {
+            let select = document.getElementById('login-select-karyawan');
+            select.innerHTML = '<option value="">-- Pilih Namamu --</option>';
+            dataKaryawan.forEach(k => {
+                let opt = document.createElement('option'); opt.value = k.id; opt.innerText = k.nama; select.appendChild(opt);
+            });
+        }
 
+        function cekStatusTampilanAbsen() {
+            perbaruiDropdownLoginKaryawan();
+            if (idKaryawanSesiAktif) {
+                let karyawanObj = dataKaryawan.find(k => k.id === parseInt(idKaryawanSesiAktif));
+                if (!karyawanObj) { logoutKaryawan(); return; }
+
+                if (karyawanObj.pin === undefined || karyawanObj.pin === "1234") {
+                    document.getElementById('login-karyawan-portal').classList.add('d-none');
+                    document.getElementById('ganti-pin-box').classList.remove('d-none');
+                    document.getElementById('area-kartu-private').classList.add('d-none');
+                } else {
+                    document.getElementById('login-karyawan-portal').classList.add('d-none');
+                    document.getElementById('ganti-pin-box').classList.add('d-none');
+                    document.getElementById('area-kartu-private').classList.remove('d-none');
+                    document.getElementById('nama-sesi-aktif').innerText = karyawanObj.nama;
+                    buatKartuKaryawanPrivate(karyawanObj);
+                }
+            } else {
+                document.getElementById('login-karyawan-portal').classList.remove('d-none');
+                document.getElementById('ganti-pin-box').classList.add('d-none');
+                document.getElementById('area-kartu-private').classList.add('d-none');
+            }
+        }
+
+        function prosesLoginKaryawan() {
+            let idPilihan = document.getElementById('login-select-karyawan').value;
+            let pinInput = document.getElementById('login-pin-karyawan').value;
+            if(!idPilihan) { alert("Silakan pilih nama!"); return; }
+            let karyawanObj = dataKaryawan.find(k => k.id === parseInt(idPilihan));
+            if (pinInput === (karyawanObj.pin || "1234")) {
+                idKaryawanSesiAktif = idPilihan;
+                localStorage.setItem('sesi_id_karyawan', idPilihan);
+                document.getElementById('login-pin-karyawan').value = "";
+                cekStatusTampilanAbsen();
+            } else { alert("PIN Salah!"); }
+        }
         function perbaruiDropdownLoginKaryawan() {
             let select = document.getElementById('login-select-karyawan');
             if(!select) return;
