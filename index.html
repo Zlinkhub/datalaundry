@@ -3,490 +3,776 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Laundry UMKM Pro</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <title>Sistem Absensi, Inventory & Keuangan Digital</title>
     <style>
-        .table-responsive-matrix { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .table-matrix th, .table-matrix td { min-width: 40px; text-align: center; vertical-align: middle; font-size: 11px; }
-        .table-matrix .col-nama { min-width: 140px; text-align: left; position: sticky; left: 0; background-color: #fff; z-index: 2; }
-        .table-matrix thead th.col-nama { background-color: #212529; }
-        .btn-karyawan { min-width: 100px; margin: 5px; }
+        :root {
+            --primary: #2c3e50;
+            --secondary: #16a085;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #c0392b;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f7;
+            color: var(--dark);
+            padding-bottom: 60px;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: var(--primary);
+            border-left: 4px solid var(--secondary);
+            padding-left: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 15px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--secondary);
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 15px;
+            transition: background 0.2s;
+            color: white;
+        }
+
+        .btn-success { background-color: var(--success); }
+        .btn-success:hover { background-color: #219150; }
+        .btn-danger { background-color: var(--danger); }
+        .btn-danger:hover { background-color: #a63124; }
+        .btn-primary { background-color: var(--primary); }
+        .btn-primary:hover { background-color: #1a252f; }
+        .btn-warning { background-color: var(--warning); }
+        .btn-warning:hover { background-color: #d68910; }
+        .btn-secondary { background-color: var(--secondary); }
+        .btn-secondary:hover { background-color: #117a65; }
+
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .status-box {
+            background-color: #e8f8f5;
+            border: 1px solid #a3e4d7;
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .status-working {
+            background-color: #fef9e7;
+            border-color: #f9e79f;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        th, td {
+            border: 1px solid #d2d7d9;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f4f4;
+            color: var(--dark);
+        }
+
+        .text-center { text-align: center; }
+        .hidden { display: none !important; }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #bdc3c7;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #7f8c8d;
+        }
+
+        .tab.active {
+            color: var(--secondary);
+            border-bottom: 3px solid var(--secondary);
+            margin-bottom: -2px;
+        }
+
+        .badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+        }
+        .bg-success { background-color: var(--success); }
+        .bg-warning { background-color: var(--warning); }
+        .bg-danger { background-color: var(--danger); }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9f9;
+            border: 1px solid #e5e8e8;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 5px;
+            color: var(--primary);
+        }
     </style>
 </head>
-<body class="bg-light text-dark">
+<body>
 
-    <div class="container py-3" style="max-width: 100%;">
-        <h3 class="text-center mb-1">🧺 Laundry Pro-Secure</h3>
-        <p class="text-center text-muted small mb-3">Sistem Absensi Karyawan & Panel Admin</p>
+    <header>
+        <h1>Sistem Internal Terintegrasi</h1>
+        <p>Absensi, Lembur, Inventory & Laporan Keuangan</p>
+    </header>
 
-        <ul class="nav nav-pills nav-fill mb-3 bg-white p-2 rounded shadow-sm" id="pills-tab" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link active small" id="tab-absensi" data-bs-toggle="pill" data-bs-target="#absensi">👥 Absen Karyawan</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link small" id="tab-operasional" data-bs-toggle="pill" data-bs-target="#operasional">📦 Belanja</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link small" id="tab-admin" data-bs-toggle="pill" data-bs-target="#admin" onclick="cekAksesAdmin()">⚙️ Panel Admin</button>
-            </li>
-        </ul>
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('karyawan-panel')">Panel Karyawan</div>
+            <div class="tab" onclick="switchTab('admin-panel')">Panel Admin / Owner</div>
+        </div>
 
-        <div class="tab-content" id="pills-tabContent">
-            
-            <div class="tab-pane fade show active" id="absensi" style="max-width: 500px; margin: auto;">
-                <div id="login-karyawan-box" class="card shadow-sm mb-3 d-none">
-                    <div class="card-body p-3 text-center">
-                        <h6 class="fw-bold">Aktivasi Akses Karyawan Toko</h6>
-                        <input type="password" id="kode-toko" class="form-control form-control-sm mb-2 text-center" placeholder="Masukkan Kode Akses Toko">
-                        <button type="button" class="btn btn-primary btn-sm w-100" onclick="simpanLoginKaryawan()">Aktifkan</button>
-                    </div>
+        <div id="karyawan-panel" class="tab-content">
+            <div id="register-card" class="card hidden">
+                <div class="card-title">Pendaftaran Perangkat Karyawan</div>
+                <p style="font-size: 14px; margin-bottom: 15px; color: #7f8c8d;">
+                    Masukkan nama Anda untuk mengunci aplikasi absensi di HP ini. Nama tidak dapat diubah secara bebas untuk menghindari kesalahan penekanan identitas rekan kerja.
+                </p>
+                <div class="form-group">
+                    <label>Nama Lengkap Karyawan:</label>
+                    <input type="text" id="reg-nama" placeholder="Contoh: Budi Susanto">
+                </div>
+                <button class="btn-secondary" style="width: 100%;" onclick="daftarNama()">Kunci Identitas Nama</button>
+            </div>
+
+            <div id="absen-card" class="card hidden">
+                <div class="card-title">
+                    <span>Selamat Datang, <strong id="display-nama" style="color: var(--secondary);">-</strong></span>
+                    <button class="btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="resetPerangkat()">Reset Perangkat</button>
                 </div>
 
-                <div id="main-absen-box" class="card shadow-sm mb-3">
-                    <div class="card-body p-3 text-center">
-                        <h6 class="fw-bold mb-3">Klik Namamu Untuk Masuk / Pulang</h6>
-                        <div id="area-tombol-karyawan" class="d-flex flex-wrap justify-content-center"></div>
-                    </div>
+                <div id="status-kerja" class="status-box">
+                    Status saat ini: <strong>Belum Masuk Kerja</strong>
                 </div>
 
-                <h6 class="fw-bold">Status Kerja Hari Ini</h6>
-                <div class="table-responsive bg-white rounded shadow-sm mb-4">
-                    <table class="table table-sm small text-center mb-0" id="tabel-absensi-hari-ini">
-                        <thead class="table-dark"><tr><th>Nama</th><th>Masuk</th><th>Pulang</th><th>Status / Gaji</th></tr></thead>
-                        <tbody></tbody>
-                    </table>
+                <div class="btn-group">
+                    <button id="btn-masuk" class="btn-success" onclick="absenMasuk()">Masuk Kerja</button>
+                    <button id="btn-pulang" class="btn-danger" onclick="absenPulang()" disabled>Pulang Kerja</button>
+                </div>
+
+                <div id="lembur-section" class="hidden" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #bdc3c7;">
+                    <p style="font-size: 14px; margin-bottom: 10px; color: #7f8c8d;">
+                        Jam kerja utama (6 Jam) sedang berjalan atau telah selesai. Klik tombol di bawah untuk meminta izin lembur ke Owner via WhatsApp:
+                    </p>
+                    <button class="btn-warning" style="width: 100%;" onclick="ajukanLembur()">Ajukan Lembur Kerja Ke Owner</button>
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="operasional" style="max-width: 500px; margin: auto;">
-                <div class="card shadow-sm mb-3">
-                    <div class="card-body p-3">
-                        <h6 class="fw-bold">Input Belanja Operasional</h6>
-                        <form id="form-pengeluaran">
-                            <div class="mb-2"><select id="ops-barang" class="form-select form-select-sm" required><option value="">-- Pilih Barang --</option></select></div>
-                            <div class="mb-2"><input type="number" id="ops-jumlah" class="form-control form-control-sm" placeholder="Jumlah / Kuantitas Beli" min="1" required></div>
-                            <div class="mb-2"><input type="date" id="ops-tanggal" class="form-control form-control-sm" required></div>
-                            <button type="submit" class="btn btn-primary btn-sm w-100">Simpan Pengeluaran</button>
-                        </form>
-                    </div>
+            <div id="history-card" class="card hidden">
+                <div class="card-title">
+                    <span>Matriks Kehadiran Bulanan Anda</span>
+                    <button class="btn-primary" style="padding: 6px 12px; font-size: 13px;" onclick="toggleHistoryTable()">Tampilkan / Sembunyikan Matrix</button>
                 </div>
-                <h6 class="fw-bold">Riwayat Belanja Terakhir</h6>
-                <div class="table-responsive bg-white rounded shadow-sm mb-4">
-                    <table class="table table-sm small text-center mb-0" id="tabel-pengeluaran">
-                        <thead class="table-dark"><tr><th>Tgl</th><th>Barang</th><th>Qty</th><th>Total</th></tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="admin">
-                <div id="login-admin-box" class="card shadow-sm mb-3 mx-auto" style="max-width: 400px;">
-                    <div class="card-body p-3 text-center">
-                        <h6 class="fw-bold">Gembok Keamanan Pemilik (Admin)</h6>
-                        <input type="password" id="pass-admin" class="form-control form-control-sm mb-2 text-center" placeholder="Masukkan Password Admin">
-                        <button type="button" class="btn btn-danger btn-sm w-100" onclick="verifikasiAdmin()">Buka Kunci Panel</button>
-                    </div>
-                </div>
-
-                <div id="konten-admin" class="d-none">
-                    <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded border">
-                        <span class="fw-bold text-success">🔓 Mode Admin Aktif</span>
-                        <button type="button" class="btn btn-danger btn-sm" onclick="logoutAdmin()">🔒 Keluar dari Admin</button>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <div class="card shadow-sm">
-                                <div class="card-body p-3">
-                                    <h6 class="fw-bold">Manajemen List Barang & Harga</h6>
-                                    <form id="form-master-barang">
-                                        <div class="mb-2"><input type="text" id="mst-nama" class="form-control form-control-sm" placeholder="Nama Barang" required></div>
-                                        <div class="mb-2"><input type="number" id="mst-harga" class="form-control form-control-sm" placeholder="Harga Satuan (Rp)" required></div>
-                                        <button type="submit" class="btn btn-success btn-sm w-100">Tambah Barang</button>
-                                    </form>
-                                    <div class="table-responsive bg-white rounded shadow-sm mt-3" style="max-height: 200px;">
-                                        <table class="table table-sm small text-center mb-0" id="tabel-master-barang">
-                                            <thead class="table-dark"><tr><th>Barang</th><th>Harga</th><th>Aksi</th></tr></thead>
-                                            <tbody></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4 mb-3">
-                            <div class="card shadow-sm">
-                                <div class="card-body p-3">
-                                    <h6 class="fw-bold">Daftar Karyawan & Gaji</h6>
-                                    <form id="form-karyawan">
-                                        <div class="mb-2"><input type="text" id="kar-nama" class="form-control form-control-sm" placeholder="Nama Karyawan" required></div>
-                                        <div class="mb-2"><input type="number" id="kar-gaji" class="form-control form-control-sm" placeholder="Gaji Per Jam (Default: 10000)" value="10000" required></div>
-                                        <button type="submit" class="btn btn-secondary btn-sm w-100">Daftarkan Karyawan</button>
-                                    </form>
-                                    <div class="table-responsive bg-white rounded shadow-sm mt-3" style="max-height: 200px;">
-                                        <table class="table table-sm small text-center mb-0" id="tabel-master-karyawan">
-                                            <thead class="table-dark"><tr><th>Nama</th><th>Gaji/Jam</th><th>Aksi</th></tr></thead>
-                                            <tbody></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4 mb-3">
-                            <div class="card shadow-sm bg-dark text-white">
-                                <div class="card-body p-3">
-                                    <h6 class="fw-bold">Atur Kata Sandi</h6>
-                                    <div class="mb-2"><input type="password" id="set-pass-admin" class="form-control form-control-sm" placeholder="Password Admin Baru (Default: 123)"></div>
-                                    <div class="mb-2"><input type="password" id="set-kode-toko" class="form-control form-control-sm" placeholder="Kode Akses Karyawan Baru (Default: 567)"></div>
-                                    <button type="button" class="btn btn-warning btn-sm w-100 fw-bold" onclick="simpanKunciBaru()">Perbarui Kunci</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card shadow-sm mb-3 bg-dark text-white text-center py-2">
-                        <h6 class="mb-2">Pilih Bulan Laporan Matriks</h6>
-                        <input type="month" id="filter-bulan" class="form-control form-control-sm w-50 mx-auto mb-2" onchange="muatLaporanMatriks()">
-                        <span class="small">Total Pengeluaran Bulan Ini (Gaji + Inventory)</span>
-                        <h4 class="fw-bold text-warning" id="rep-total">Rp 0</h4>
-                    </div>
-
-                    <h6 class="fw-bold">📊 Matriks Inventory Bulanan (Sesuai Kertas Logbook)</h6>
-                    <div class="table-responsive-matrix bg-white rounded shadow-sm border mb-5">
-                        <table class="table table-bordered table-sm table-matrix mb-0" id="matriks-inventory">
-                            <thead class="table-dark"><tr id="matriks-header"><th class="col-nama">Item</th><th>Harga</th></tr></thead>
-                            <tbody></tbody>
+                
+                <div id="history-table-container" class="hidden">
+                    <p style="font-size: 12px; color: #7f8c8d; margin-bottom: 5px;">* Checklist (✓) menandakan kehadiran sah dengan pelacakan GPS lokal.</p>
+                    <div style="overflow-x: auto;">
+                        <table id="table-history">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th class="text-center">Hadir</th>
+                                    <th>Jam Masuk</th>
+                                    <th>Jam Selesai (+6j)</th>
+                                    <th>Lembur</th>
+                                    <th>Total Jam</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-history">
+                                </tbody>
                         </table>
                     </div>
+                    <button class="btn-secondary" style="width: 100%; margin-top: 15px;" onclick="exportDataString()">Salin Kode Data Laporan untuk Admin</button>
                 </div>
             </div>
+        </div>
 
+        <div id="admin-panel" class="tab-content hidden">
+            <div id="admin-login-card" class="card">
+                <div class="card-title">Autentikasi Owner / Admin</div>
+                <div class="form-group">
+                    <label>Masukkan PIN Akses Admin:</label>
+                    <input type="password" id="admin-pin" placeholder="Masukkan PIN Default: 1234">
+                </div>
+                <button class="btn-primary" style="width: 100%;" onclick="loginAdmin()">Buka Panel Utama Admin</button>
+            </div>
+
+            <div id="admin-dashboard-card" class="card hidden">
+                <div class="card-title">Dasbor Pemantauan Bisnis Global</div>
+                
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <label>Total Omset Toko</label>
+                        <div class="stat-val" id="lbl-omset" style="color: var(--success);">Rp 0</div>
+                    </div>
+                    <div class="stat-card">
+                        <label>Pengeluaran Operasional</label>
+                        <div class="stat-val" id="lbl-operasional" style="color: var(--danger);">Rp 0</div>
+                    </div>
+                    <div class="stat-card">
+                        <label>Total Gaji Karyawan</label>
+                        <div class="stat-val" id="lbl-total-gaji" style="color: var(--warning);">Rp 0</div>
+                    </div>
+                    <div class="stat-card" style="background-color: #eafaf1; border-color: #27ae60;">
+                        <label>Pendapatan Bersih</label>
+                        <div class="stat-val" id="lbl-bersih" style="color: var(--success); font-size: 22px;">Rp 0</div>
+                    </div>
+                </div>
+
+                <div style="background: #f4f6f7; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
+                    <h4 style="margin-bottom: 8px; font-size: 14px;">Sinkronisasi Data Absensi / Gaji Karyawan</h4>
+                    <p style="font-size: 12px; color: #7f8c8d; margin-bottom: 10px;">Tempelkan (Paste) string data laporan yang dikirim oleh karyawan via WhatsApp untuk mengalkulasi upah mereka secara otomatis.</p>
+                    <div class="form-group">
+                        <input type="text" id="import-string" placeholder="Tempel kode laporan di sini...">
+                    </div>
+                    <button class="btn-success" style="padding: 8px 15px; font-size: 13px;" onclick="importKaryawanData()">Proses & Hitung Akurat</button>
+                </div>
+
+                <h3 style="font-size: 16px; margin-bottom: 10px; color: var(--primary);">1. Rekapitulasi Presensi & Penggajian Karyawan</h3>
+                <div style="overflow-x: auto; margin-bottom: 25px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Karyawan</th>
+                                <th class="text-center">Hari Hadir</th>
+                                <th class="text-center">Total Jam Kerja</th>
+                                <th class="text-center">Total Lembur</th>
+                                <th>Kalkulasi Gaji (Rp 15.000 / Jam)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-tbody-gaji">
+                            <tr><td colspan="5" class="text-center" style="color:#7f8c8d;">Belum ada data disinkronkan. Gunakan modul string di atas.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 style="font-size: 16px; margin-bottom: 10px; color: var(--primary);">2. Panel Inventaris (Inventory Stok & Restock)</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="inv-nama" placeholder="Nama Barang (cth: Kopi Susu)">
+                    <input type="number" id="inv-stok" placeholder="Jumlah Stok">
+                    <input type="number" id="inv-harga" placeholder="Harga Modal per Unit">
+                </div>
+                <button class="btn-secondary" style="width: 100%; margin-bottom: 15px;" onclick="tambahInventory()">Tambah / Update Item Barang</button>
+                
+                <div style="overflow-x: auto; margin-bottom: 25px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Item</th>
+                                <th class="text-center">Sisa Stok</th>
+                                <th>Harga Modal</th>
+                                <th>Total Nilai Aset</th>
+                                <th class="text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-tbody-inventory">
+                            </tbody>
+                    </table>
+                </div>
+
+                <h3 style="font-size: 16px; margin-bottom: 10px; color: var(--primary);">3. Manajemen Omset Harian & Biaya Tambahan</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div>
+                        <label>Input Omset Harian Baru (Rp):</label>
+                        <input type="number" id="input-omset" placeholder="cth: 2500000">
+                    </div>
+                    <div>
+                        <label>Input Biaya Operasional Toko (Rp):</label>
+                        <input type="number" id="input-operasional" placeholder="cth: 400000">
+                    </div>
+                </div>
+                <button class="btn-primary" style="width: 100%;" onclick="updateKeuangan()">Simpan & Korelasikan Laporan Keuangan</button>
+            </div>
         </div>
     </div>
 
     <script>
-        const URL_CLOUD = "URL_APPLIKASI_WEB_GOOGLE_KAMU";
+        // TARIF KONSTAN UNTUK GAJI KARYAWAN PER JAM
+        const TARIF_PER_JAM = 15000;
+        const NOMOR_OWNER = "6287853561541";
 
-        // Konfigurasi Kunci Keamanan & Data Utama
-        let passAdminSistem = localStorage.getItem('pass_admin') || "123";
-        let kodeTokoSistem = localStorage.getItem('kode_toko') || "567";
-        let loginKaryawanSukses = localStorage.getItem('login_kar_sukses') || "tidak";
+        // Global State Admin
+        let dataGlobalKaryawan = {};
+        let dataInventory = JSON.parse(localStorage.getItem('inv_data')) || [];
+        let dataOmset = parseFloat(localStorage.getItem('fin_omset')) || 0;
+        let dataOperasional = parseFloat(localStorage.getItem('fin_op')) || 0;
 
-        let dataMasterBarang = JSON.parse(localStorage.getItem('laundry_mst_brg')) || [];
-        let dataOps = JSON.parse(localStorage.getItem('laundry_ops')) || [];
-        let dataKaryawan = JSON.parse(localStorage.getItem('laundry_kar')) || [];
-        let dataAbsenLog = JSON.parse(localStorage.getItem('laundry_abs_log')) || []; 
+        window.onload = function() {
+            initKaryawanPanel();
+            // Cek jika halaman dibuka oleh Owner dari Link Konfirmasi Lembur Whatsapp
+            checkUrlParameters();
+        };
 
-        const hariIni = new Date().toISOString().split('T')[0];
-        document.getElementById('ops-tanggal').value = hariIni;
-        document.getElementById('filter-bulan').value = hariIni.substring(0, 7);
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.remove('hidden');
 
-        // Render Header Tanggal 1-31 di Tabel Matriks
-        const headerRow = document.getElementById('matriks-header');
-        for (let d = 1; d <= 31; d++) { let th = document.createElement('th'); th.innerText = d; headerRow.appendChild(th); }
-        let thTotal = document.createElement('th'); thTotal.innerText = "Total"; headerRow.appendChild(thTotal);
-        let thJumlah = document.createElement('th'); thJumlah.innerText = "Jumlah"; headerRow.appendChild(thJumlah);
-
-        // --- SISTEM AKSES KARYAWAN ---
-        function cekAksesKaryawan() {
-            if (loginKaryawanSukses === "ya") {
-                document.getElementById('login-karyawan-box').classList.add('d-none');
-                document.getElementById('main-absen-box').classList.remove('d-none');
-                renderTombolKaryawan();
-            } else {
-                document.getElementById('login-karyawan-box').classList.remove('d-none');
-                document.getElementById('main-absen-box').classList.add('d-none');
+            if(tabId === 'admin-panel') {
+                renderInventory();
+                hitungKeuanganGlobal();
             }
         }
 
-        function simpanLoginKaryawan() {
-            let input = document.getElementById('kode-toko').value;
-            if (input === kodeTokoSistem) {
-                loginKaryawanSukses = "ya";
-                localStorage.setItem('login_kar_sukses', "ya");
-                cekAksesKaryawan();
-            } else { alert("Kode Akses Toko Salah!"); }
+        // ==================== LOGIKA KARYAWAN ====================
+        function initKaryawanPanel() {
+            let nama = localStorage.getItem('karyawan_nama');
+            if(!nama) {
+                document.getElementById('register-card').classList.remove('hidden');
+                document.getElementById('absen-card').classList.add('hidden');
+                document.getElementById('history-card').classList.add('hidden');
+            } else {
+                document.getElementById('register-card').classList.add('hidden');
+                document.getElementById('absen-card').classList.remove('hidden');
+                document.getElementById('history-card').classList.remove('hidden');
+                document.getElementById('display-nama').innerText = nama;
+                updateStatusKerjaUI();
+                renderHistoryTable();
+            }
         }
 
-        function renderTombolKaryawan() {
-            let container = document.getElementById('area-tombol-karyawan');
-            container.innerHTML = '';
-            if(dataKaryawan.length === 0) { container.innerHTML = "<p class='text-muted small'>Belum ada data karyawan. Hubungi Admin.</p>"; return; }
+        function daftarNama() {
+            let namaInput = document.getElementById('reg-nama').value.trim();
+            if(!namaInput) return alert("Nama tidak boleh kosong!");
+            localStorage.setItem('karyawan_nama', namaInput);
+            localStorage.setItem('karyawan_history', JSON.stringify([]));
+            initKaryawanPanel();
+        }
+
+        function resetPerangkat() {
+            if(confirm("Apakah Anda yakin ingin mereset data nama di perangkat ini?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        function updateStatusKerjaUI() {
+            let aktif = localStorage.getItem('absen_aktif');
+            let statusBox = document.getElementById('status-kerja');
+            let btnMasuk = document.getElementById('btn-masuk');
+            let btnPulang = document.getElementById('btn-pulang');
+            let lemburSection = document.getElementById('lembur-section');
+
+            if(aktif) {
+                let data = JSON.parse(aktif);
+                let jamMasuk = new Date(data.jamMasuk);
+                let limitSelesai = new Date(jamMasuk.getTime() + (6 * 60 * 60 * 1000));
+                let sekarang = new Date();
+
+                // Hitung Sisa Waktu Kerja Regulasi 6 Jam
+                if (sekarang >= limitSelesai) {
+                    // Otomatis Selesai 6 Jam Terlampaui
+                    statusBox.innerHTML = `Status: <span class="badge bg-success">Selesai Kerja Otomatis (6 Jam Terpenuhi)</span><br>Masuk: ${jamMasuk.toLocaleTimeString('id-ID')} WIB.<br>Sistem menghentikan perhitungan otomatis pada jam kerja reguler.`;
+                    btnMasuk.disabled = false;
+                    btnPulang.disabled = true;
+                    lemburSection.classList.remove('hidden');
+                } else {
+                    // Masih dalam rentang waktu 6 jam kerja
+                    statusBox.className = "status-box status-working";
+                    statusBox.innerHTML = `Status: <span class="badge bg-warning">Sedang Bekerja (6 Jam Kerja Maks)</span><br>Masuk Sejak: <strong>${jamMasuk.toLocaleTimeString('id-ID')} WIB</strong><br>Selesai Otomatis Pada: ${limitSelesai.toLocaleTimeString('id-ID')} WIB.`;
+                    btnMasuk.disabled = true;
+                    btnPulang.disabled = false;
+                    lemburSection.classList.remove('hidden');
+                }
+            } else {
+                statusBox.className = "status-box";
+                statusBox.innerHTML = "Status saat ini: <strong>Belum Mulai Kerja</strong>";
+                btnMasuk.disabled = false;
+                btnPulang.disabled = true;
+                lemburSection.classList.add('hidden');
+            }
+        }
+
+        function absenMasuk() {
+            // Mengaktifkan GPS Real-Time Internal untuk Validasi Lokasi HP
+            if(!navigator.geolocation) return alert("Browser HP Anda tidak mendukung sistem pelacakan Geolocation GPS!");
             
-            dataKaryawan.forEach(k => {
-                let absenHariIni = dataAbsenLog.find(a => a.karyawan_id === k.id && a.tanggal === hariIni);
-                let warnaTombol = "btn-outline-primary";
+            alert("Sistem sedang mengunci lokasi GPS Anda secara real-time. Mohon izinkan akses lokasi jika muncul permintaan.");
+            
+            navigator.geolocation.getCurrentPosition(function(position) {
+                let waktuSekarang = new Date();
+                let objekAbsen = {
+                    tanggal: waktuSekarang.toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit', year: 'numeric'}),
+                    jamMasuk: waktuSekarang.toISOString(),
+                    lemburJam: 0
+                };
+
+                localStorage.setItem('absen_aktif', JSON.stringify(objekAbsen));
+                updateStatusKerjaUI();
+                alert("Absen MASUK Berhasil divalidasi via GPS perangkat & matriks jam mulai diaktifkan!");
+            }, function(error) {
+                alert("Gagal memvalidasi lokasi! Absen ditolak. Pastikan GPS HP aktif dan Anda memilih 'Allow Location Access'.");
+            }, { enableHighAccuracy: true });
+        }
+
+        function absenPulang() {
+            let aktif = localStorage.getItem('absen_aktif');
+            if(!aktif) return;
+            
+            let data = JSON.parse(aktif);
+            let history = JSON.parse(localStorage.getItem('karyawan_history')) || [];
+            
+            let waktuMasuk = new Date(data.jamMasuk);
+            let waktuPulang = new Date();
+            
+            let selisihMilidetik = waktuPulang - waktuMasuk;
+            let jamKerjaNyata = selisihMilidetik / (1000 * 60 * 60);
+            
+            if (jamKerjaNyata > 6) {
+                jamKerjaNyata = 6; 
+            }
+
+            data.jamSelesai = waktuPulang.toISOString();
+            data.totalJam = parseFloat(jamKerjaNyata.toFixed(2)) + parseFloat(data.lemburJam);
+            
+            history.push(data);
+            localStorage.setItem('karyawan_history', JSON.stringify(history));
+            localStorage.removeItem('absen_aktif');
+            
+            updateStatusKerjaUI();
+            renderHistoryTable();
+            alert("Absensi pulang tercatat otomatis di matriks perangkat Anda!");
+        }
+
+        function ajukanLembur() {
+            let nama = localStorage.getItem('karyawan_nama');
+            let aktif = localStorage.getItem('absen_aktif');
+            if(!aktif) return alert("Anda harus melakukan Absen Masuk Terlebih Dahulu!");
+            
+            let currentUrl = window.location.href.split('?')[0];
+            let linkKonfirmasiOwner = `${currentUrl}?konfirmasi=true&karyawan=${encodeURIComponent(nama)}`;
+            
+            let isiPesan = `Halo Owner, saya ${nama} ingin meminta perizinan untuk mengambil kerja lembur hari ini.\\n\\nSilakan klik tautan di bawah ini untuk mengonfirmasi jumlah durasi jam lembur yang Anda izinkan:\\n${linkKonfirmasiOwner}`;
+            
+            let waUrl = `https://wa.me/${NOMOR_OWNER}?text=${encodeURIComponent(isiPesan)}`;
+            window.open(waUrl, '_blank');
+        }
+
+        function toggleHistoryTable() {
+            document.getElementById('history-table-container').classList.toggle('hidden');
+        }
+
+        function renderHistoryTable() {
+            let history = JSON.parse(localStorage.getItem('karyawan_history')) || [];
+            let tbody = document.getElementById('tbody-history');
+            tbody.innerHTML = "";
+
+            if(history.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="color:#7f8c8d;">Belum ada riwayat absensi bulan ini.</td></tr>`;
+                return;
+            }
+
+            history.forEach(row => {
+                let jMasuk = new Date(row.jamMasuk).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+                let jSelesai = row.jamSelesai ? new Date(row.jamSelesai).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : "Berjalan...";
                 
-                if (absenHariIni) {
-                    if (absenHariIni.jam_masuk && !absenHariIni.jam_pulang) { warnaTombol = "btn-danger"; } 
-                    else if (absenHariIni.jam_masuk && absenHariIni.jam_pulang) { warnaTombol = "btn-success disabled"; } 
-                }
-
-                let btn = document.createElement('button');
-                btn.className = `btn btn-sm ${warnaTombol} btn-karyawan fw-bold`;
-                btn.innerText = k.nama;
-                btn.onclick = () => prosesAbsenSatuKlik(k.id, k.nama);
-                container.appendChild(btn);
-            });
-            tampilkanAbsenHariIni();
-        }
-
-        // --- PROSES ABSEN & PERHITUNGAN GAJI OTOMATIS (TARIF JAM KERJA) ---
-        function prosesAbsenSatuKlik(id, nama) {
-            let waktuSekarang = new Date();
-            let jamMenit = waktuSekarang.toTimeString().split(' ')[0].substring(0, 5); 
-            let indeksAbsen = dataAbsenLog.findIndex(a => a.karyawan_id === id && a.tanggal === hariIni);
-
-            if (indeksAbsen === -1) {
-                if (confirm(`Konfirmasi: Karyawan ${nama} masuk kerja pukul ${jamMenit}?`)) {
-                    dataAbsenLog.push({
-                        karyawan_id: id,
-                        nama: nama,
-                        tanggal: hariIni,
-                        jam_masuk: jamMenit,
-                        jam_pulang: null,
-                        status: "Sedang Kerja",
-                        gaji: 0
-                    });
-                    localStorage.setItem('laundry_abs_log', JSON.stringify(dataAbsenLog));
-                    renderTombolKaryawan();
-                }
-            } else {
-                let absenData = dataAbsenLog[indeksAbsen];
-                if (absenData.jam_masuk && !absenData.jam_pulang) {
-                    if (confirm(`Konfirmasi: Karyawan ${nama} ingin pulang pada pukul ${jamMenit}?`)) {
-                        
-                        // 1. Hitung Selisih Jam Kerja Nyata
-                        let [jamMasuk, menitMasuk] = absenData.jam_masuk.split(':').map(Number);
-                        let [jamPulang, menitPulang] = jamMenit.split(':').map(Number);
-                        
-                        let totalMenitMasuk = (jamMasuk * 60) + menitMasuk;
-                        let totalMenitPulang = (jamPulang * 60) + menitPulang;
-                        let selisihMenit = totalMenitPulang - totalMenitMasuk;
-                        
-                        let totalJamKerja = parseFloat((selisihMenit / 60).toFixed(2));
-                        if(totalJamKerja < 0) totalJamKerja = 0; 
-
-                        // 2. Ambil data tarif per jam
-                        let karyawanObj = dataKaryawan.find(k => k.id === id);
-                        let tarifPerJam = karyawanObj ? parseInt(karyawanObj.gaji) : 10000; 
-
-                        // 3. Hitung Gaji Final
-                        let gajiFinal = Math.round(totalJamKerja * tarifPerJam);
-
-                        absenData.jam_pulang = jamMenit;
-                        absenData.status = `${totalJamKerja} Jam Kerja`;
-                        absenData.gaji = gajiFinal;
-
-                        localStorage.setItem('laundry_abs_log', JSON.stringify(dataAbsenLog));
-                        renderTombolKaryawan();
-                        
-                        alert(`Absen Pulang Berhasil!\nTotal Kerja: ${totalJamKerja} jam.\nGaji hari ini: Rp ${gajiFinal.toLocaleString('id-ID')}`);
-                    }
-                }
-            }
-        }
-
-        function tampilkanAbsenHariIni() {
-            let html = '';
-            let logHariIni = dataAbsenLog.filter(a => a.tanggal === hariIni);
-            logHariIni.forEach(item => {
-                let infoGaji = item.gaji > 0 ? ` (Rp ${item.gaji.toLocaleString('id-ID')})` : '';
-                html += `<tr><td>${item.nama}</td><td>${item.jam_masuk}</td><td>${item.jam_pulang || '-'}</td><td><span class="badge bg-secondary">${item.status}${infoGaji}</span></td></tr>`;
-            });
-            document.querySelector('#tabel-absensi-hari-ini tbody').innerHTML = html || '<tr><td colspan="4" class="text-muted">Belum ada aktivitas absen hari ini</td></tr>';
-        }
-
-        // --- PANEL ADMIN (CEK AKSES & SEBUAH KALI LOGIN) ---
-        function cekAksesAdmin() {
-            let statusLoginAdmin = localStorage.getItem('login_admin_sukses') || "tidak";
-
-            if (statusLoginAdmin === "ya") {
-                // SEMBUNYIKAN box login, TAMPILKAN isi panel
-                document.getElementById('login-admin-box').classList.add('d-none');
-                document.getElementById('konten-admin').classList.remove('d-none');
-                tampilkanMasterBarang();
-                tampilkanMasterKaryawan();
-                muatLaporanMatriks();
-                perbaruiPilihanBarang();
-            } else {
-                // TAMPILKAN box login, SEMBUNYIKAN isi panel
-                document.getElementById('login-admin-box').classList.remove('d-none');
-                document.getElementById('konten-admin').classList.add('d-none');
-                document.getElementById('pass-admin').value = '';
-            }
-        }
-
-        function verifikasiAdmin() {
-            let input = document.getElementById('pass-admin').value;
-            if (input === passAdminSistem) {
-                // Simpan status login di perangkat agar cukup sekali login
-                localStorage.setItem('login_admin_sukses', "ya");
-                cekAksesAdmin(); 
-            } else { alert("Password Admin Salah!"); }
-        }
-
-        function logoutAdmin() {
-            if (confirm("Apakah Anda yakin ingin keluar dan mengunci kembali Panel Admin?")) {
-                localStorage.setItem('login_admin_sukses', "tidak");
-                cekAksesAdmin(); 
-            }
-        }
-
-        function simpanKunciBaru() {
-            let pBaru = document.getElementById('set-pass-admin').value;
-            let kTokoBaru = document.getElementById('set-kode-toko').value;
-            if(pBaru) { passAdminSistem = pBaru; localStorage.setItem('pass_admin', pBaru); }
-            if(kTokoBaru) { kodeTokoSistem = kTokoBaru; localStorage.setItem('kode_toko', kTokoBaru); }
-            alert("Sandi keamanan berhasil diperbarui!");
-            cekAksesAdmin();
-        }
-
-        // --- MANAJEMEN MASTER BARANG & KARYAWAN ---
-        document.getElementById('form-master-barang').addEventListener('submit', function(e){
-            e.preventDefault();
-            dataMasterBarang.push({ id: Date.now(), nama: document.getElementById('mst-nama').value, harga: parseInt(document.getElementById('mst-harga').value), tanggal_tambah: hariIni });
-            localStorage.setItem('laundry_mst_brg', JSON.stringify(dataMasterBarang));
-            this.reset();
-            tampilkanMasterBarang();
-            perbaruiPilihanBarang();
-        });
-
-        function tampilkanMasterBarang() {
-            let html = '';
-            dataMasterBarang.forEach((item) => {
-                html += `<tr><td>${item.nama}</td><td>Rp ${item.harga.toLocaleString('id-ID')}</td>
-                <td><button class="btn btn-danger btn-xs py-0 px-1" onclick="hapusBarang(${item.id})">Hapus</button></td></tr>`;
-            });
-            document.querySelector('#tabel-master-barang tbody').innerHTML = html || '<tr><td colspan="3" class="text-muted">Kosong</td></tr>';
-        }
-
-        function hapusBarang(id) {
-            if(confirm("Hapus barang ini?")) {
-                dataMasterBarang = dataMasterBarang.filter(b => b.id !== id);
-                localStorage.setItem('laundry_mst_brg', JSON.stringify(dataMasterBarang));
-                tampilkanMasterBarang();
-                perbaruiPilihanBarang();
-            }
-        }
-
-        function perbaruiPilihanBarang() {
-            let select = document.getElementById('ops-barang');
-            if(!select) return;
-            select.innerHTML = '<option value="">-- Pilih Barang --</option>';
-            dataMasterBarang.forEach(b => {
-                let opt = document.createElement('option');
-                opt.value = b.nama;
-                opt.innerText = b.nama;
-                select.appendChild(opt);
-            });
-        }
-
-        document.getElementById('form-karyawan').addEventListener('submit', function(e){
-            e.preventDefault();
-            dataKaryawan.push({ id: Date.now(), nama: document.getElementById('kar-nama').value, gaji: parseInt(document.getElementById('kar-gaji').value) });
-            localStorage.setItem('laundry_kar', JSON.stringify(dataKaryawan));
-            this.reset();
-            document.getElementById('kar-gaji').value = "10000";
-            tampilkanMasterKaryawan();
-        });
-
-        function tampilkanMasterKaryawan() {
-            let html = '';
-            dataKaryawan.forEach((item) => {
-                html += `<tr><td>${item.nama}</td><td>Rp ${item.gaji.toLocaleString('id-ID')}/jam</td>
-                <td><button class="btn btn-danger btn-xs py-0 px-1" onclick="hapusKaryawan(${item.id})">Hapus</button></td></tr>`;
-            });
-            document.querySelector('#tabel-master-karyawan tbody').innerHTML = html || '<tr><td colspan="3" class="text-muted">Kosong</td></tr>';
-        }
-
-        function hapusKaryawan(id) {
-            if(confirm("Hapus karyawan ini?")) {
-                dataKaryawan = dataKaryawan.filter(k => k.id !== id);
-                localStorage.setItem('laundry_kar', JSON.stringify(dataKaryawan));
-                tampilkanMasterKaryawan();
-            }
-        }
-
-        // --- OPERASIONAL & MATRIKS BULANAN ---
-        document.getElementById('form-pengeluaran').addEventListener('submit', function(e){
-            e.preventDefault();
-            dataOps.push({
-                barang: document.getElementById('ops-barang').value,
-                jumlah: document.getElementById('ops-jumlah').value,
-                tanggal: document.getElementById('ops-tanggal').value
-            });
-            localStorage.setItem('laundry_ops', JSON.stringify(dataOps));
-            this.reset();
-            document.getElementById('ops-tanggal').value = hariIni;
-            alert("Pengeluaran berhasil dicatat!");
-            muatLaporanMatriks();
-        });
-
-        function muatLaporanMatriks() {
-            let bulanPilihan = document.getElementById('filter-bulan').value; 
-            let tbody = document.querySelector('#matriks-inventory tbody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-            
-            let totalPengeluaranBulanIni = 0;
-
-            dataMasterBarang.forEach(b => {
                 let tr = document.createElement('tr');
-                tr.innerHTML = `<td class="col-nama text-start">${b.nama}</td><td>${b.harga}</td>`;
-                
-                let totalQty = 0;
-                for (let d = 1; d <= 31; d++) {
-                    let tglPad = d < 10 ? '0'+d : d;
-                    let tglCari = `${bulanPilihan}-${tglPad}`;
-                    let belanja = dataOps.filter(o => o.barang === b.nama && o.tanggal === tglCari);
-                    let qtyHariIni = belanja.reduce((acc, curr) => acc + parseInt(curr.jumlah), 0);
-                    
-                    let td = document.createElement('td');
-                    td.innerText = qtyHariIni > 0 ? qtyHariIni : '';
-                    tr.appendChild(td);
-                    totalQty += qtyHariIni;
-                }
-                
-                let totalBiayaBarang = totalQty * b.harga;
-                totalPengeluaranBulanIni += totalBiayaBarang;
-
-                let tdTotal = document.createElement('td'); tdTotal.innerText = "Rp " + totalBiayaBarang.toLocaleString('id-ID'); tr.appendChild(tdTotal);
-                let tdJumlah = document.createElement('td'); tdJumlah.innerText = totalQty; tr.appendChild(tdJumlah);
+                tr.innerHTML = `
+                    <td>${row.tanggal}</td>
+                    <td class="text-center" style="color:var(--success); font-weight:bold;">✓</td>
+                    <td>${jMasuk} WIB</td>
+                    <td>${jSelesai} WIB</td>
+                    <td class="text-center">${row.lemburJam} Jam</td>
+                    <td class="text-center" style="font-weight:600;">${row.totalJam || 6} Jam</td>
+                `;
                 tbody.appendChild(tr);
             });
-
-            // Baris Total Gaji Karyawan di dalam Matriks Laporan
-            let trGaji = document.createElement('tr');
-            trGaji.className = "table-warning fw-bold";
-            trGaji.innerHTML = `<td class="col-nama text-start">Gaji Karyawan</td><td>-</td>`;
-            
-            let totalSemuaGaji = 0;
-            for (let d = 1; d <= 31; d++) {
-                let tglPad = d < 10 ? '0'+d : d;
-                let tglCari = `${bulanPilihan}-${tglPad}`;
-                let logGajiHariIni = dataAbsenLog.filter(a => a.tanggal === tglCari);
-                let jumlahGajiHariIni = logGajiHariIni.reduce((acc, curr) => acc + curr.gaji, 0);
-                
-                let td = document.createElement('td');
-                td.innerText = jumlahGajiHariIni > 0 ? jumlahGajiHariIni.toLocaleString('id-ID') : '';
-                trGaji.appendChild(td);
-                totalSemuaGaji += jumlahGajiHariIni;
-            }
-            totalPengeluaranBulanIni += totalSemuaGaji;
-
-            let tdTotalGaji = document.createElement('td'); tdTotalGaji.innerText = "Rp " + totalSemuaGaji.toLocaleString('id-ID'); trGaji.appendChild(tdTotalGaji);
-            let tdJumlahGaji = document.createElement('td'); tdJumlahGaji.innerText = "-"; trGaji.appendChild(tdJumlahGaji);
-            tbody.appendChild(trGaji);
-
-            document.getElementById('rep-total').innerText = "Rp " + totalPengeluaranBulanIni.toLocaleString('id-ID');
         }
 
-        // MENJALANKAN FUNGSI OTOMATIS SAAT HALAMAN DIMUAT
-        cekAksesKaryawan();
-        cekAksesAdmin(); 
+        function exportDataString() {
+            let nama = localStorage.getItem('karyawan_nama');
+            let history = localStorage.getItem('karyawan_history');
+            let payload = {
+                namaKaryawan: nama,
+                riwayatData: JSON.parse(history)
+            };
+            let encryptedString = btoa(JSON.stringify(payload));
+            
+            let tempInput = document.createElement('input');
+            document.body.appendChild(tempInput);
+            tempInput.value = encryptedString;
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            
+            alert("String kode enkripsi laporan Anda telah disalin! Silakan kirimkan kode ini ke WhatsApp Admin.");
+        }
+
+        // ==================== LOGIKA LINK KONFIRMASI OWNER ====================
+        function checkUrlParameters() {
+            let params = new URLSearchParams(window.location.search);
+            if(params.has('konfirmasi') && params.has('karyawan')) {
+                let namaKaryawan = params.get('karyawan');
+                let jamLembur = prompt(`Owner Panel: Berapa JAM lembur yang Anda setujui untuk karyawan bernama ${namaKaryawan}?`, "2");
+                
+                if(jamLembur !== null && !isNaN(jamLembur)) {
+                    let jumlahJam = parseInt(jamLembur);
+                    let pesanBalik = `Persetujuan Lembur Owner:\\nPengajuan lembur karyawan atas nama *${namaKaryawan}* telah DISETUJUI oleh Owner sebanyak *${jumlahJam} Jam*. Silakan masukkan kode persetujuan ini ke sistem lokal Anda.`;
+                    
+                    alert("Konfirmasi tersimpan. Mengalihkan ke WhatsApp untuk memberikan token izin lembur kepada karyawan...");
+                    window.location.href = `https://wa.me/?text=${encodeURIComponent(pesanBalik)}`;
+                }
+            }
+        }
+
+        // ==================== LOGIKA ADMIN PANEL ====================
+        function loginAdmin() {
+            let pin = document.getElementById('admin-pin').value;
+            if(pin === "1234") {
+                document.getElementById('admin-login-card').classList.add('hidden');
+                document.getElementById('admin-dashboard-card').classList.remove('hidden');
+                renderInventory();
+                hitungKeuanganGlobal();
+            } else {
+                alert("PIN Pengawas Toko Salah!");
+            }
+        }
+
+        function importKaryawanData() {
+            let str = document.getElementById('import-string').value.trim();
+            if(!str) return alert("Masukkan kode string laporan terlebih dahulu!");
+
+            try {
+                let decoded = JSON.parse(atob(str));
+                let nama = decoded.namaKaryawan;
+                let riwayat = decoded.riwayatData;
+
+                let totalHadir = riwayat.length;
+                let totalJam = 0;
+                let totalLembur = 0;
+
+                riwayat.forEach(item => {
+                    totalJam += item.totalJam || 6;
+                    totalLembur += item.lemburJam || 0;
+                });
+
+                let gajiKalkulasi = totalJam * TARIF_PER_JAM;
+
+                dataGlobalKaryawan[nama] = {
+                    hadir: totalHadir,
+                    jam: totalJam.toFixed(1),
+                    lembur: totalLembur,
+                    gaji: gajiKalkulasi
+                };
+
+                renderKaryawanTable();
+                hitungKeuanganGlobal();
+                alert(`Data absensi & hitungan gaji karyawan: ${nama} berhasil disinkronisasikan!`);
+            } catch(e) {
+                alert("Format kode string data rusak atau tidak valid!");
+            }
+        }
+
+        function renderKaryawanTable() {
+            let tbody = document.getElementById('admin-tbody-gaji');
+            tbody.innerHTML = "";
+
+            let keys = Object.keys(dataGlobalKaryawan);
+            if(keys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:#7f8c8d;">Belum ada data disinkronkan.</td></tr>`;
+                return;
+            }
+
+            keys.forEach(nama => {
+                let k = dataGlobalKaryawan[nama];
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${nama}</strong></td>
+                    <td class="text-center">${k.hadir} Hari</td>
+                    <td class="text-center">${k.jam} Jam</td>
+                    <td class="text-center">${k.lembur} Jam</td>
+                    <td style="font-weight:bold; color:var(--primary)">Rp ${k.gaji.toLocaleString('id-ID')}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- MANAJEMEN INVENTORY ---
+        function tambahInventory() {
+            let nama = document.getElementById('inv-nama').value.trim();
+            let stok = parseInt(document.getElementById('inv-stok').value);
+            let harga = parseFloat(document.getElementById('inv-harga').value);
+
+            if(!nama || isNaN(stok) || isNaN(harga)) return alert("Mohon lengkapi seluruh kolom input inventory!");
+
+            let indexExisting = dataInventory.findIndex(item => item.nama.toLowerCase() === nama.toLowerCase());
+            if(indexExisting >= 0) {
+                dataInventory[indexExisting] = { nama, stok, harga, total: stok * harga };
+            } else {
+                dataInventory.push({ nama, stok, harga, total: stok * harga });
+            }
+
+            localStorage.setItem('inv_data', JSON.stringify(dataInventory));
+            renderInventory();
+            hitungKeuanganGlobal();
+            
+            document.getElementById('inv-nama').value = "";
+            document.getElementById('inv-stok').value = "";
+            document.getElementById('inv-harga').value = "";
+        }
+
+        function hapusInventory(index) {
+            dataInventory.splice(index, 1);
+            localStorage.setItem('inv_data', JSON.stringify(dataInventory));
+            renderInventory();
+            hitungKeuanganGlobal();
+        }
+
+        function renderInventory() {
+            let tbody = document.getElementById('admin-tbody-inventory');
+            tbody.innerHTML = "";
+
+            if(dataInventory.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:#7f8c8d;">Stok gudang kosong.</td></tr>`;
+                return;
+            }
+
+            dataInventory.forEach((item, idx) => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.nama}</td>
+                    <td class="text-center">${item.stok} Unit</td>
+                    <td>Rp ${item.harga.toLocaleString('id-ID')}</td>
+                    <td style="font-weight:500;">Rp ${item.total.toLocaleString('id-ID')}</td>
+                    <td class="text-center"><button class="btn-danger" style="padding: 4px 8px; font-size:12px;" onclick="hapusInventory(${idx})">Hapus</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- MANAJEMEN KEUANGAN & OMSET ---
+        function updateKeuangan() {
+            let omsetIn = parseFloat(document.getElementById('input-omset').value) || 0;
+            let opIn = parseFloat(document.getElementById('input-operasional').value) || 0;
+
+            dataOmset = omsetIn;
+            dataOperasional = opIn;
+
+            localStorage.setItem('fin_omset', dataOmset);
+            localStorage.setItem('fin_op', dataOperasional);
+
+            hitungKeuanganGlobal();
+            alert("Data Omset harian & pengeluaran operasional toko berhasil dikorelasikan!");
+        }
+
+        function hitungKeuanganGlobal() {
+            let totalBebanGaji = 0;
+            Object.keys(dataGlobalKaryawan).forEach(nama => {
+                totalBebanGaji += dataGlobalKaryawan[nama].gaji;
+            });
+
+            let pendapatanBersih = dataOmset - (dataOperasional + totalBebanGaji);
+
+            document.getElementById('lbl-omset').innerText = `Rp ${dataOmset.toLocaleString('id-ID')}`;
+            document.getElementById('lbl-operasional').innerText = `Rp ${dataOperasional.toLocaleString('id-ID')}`;
+            document.getElementById('lbl-total-gaji').innerText = `Rp ${totalBebanGaji.toLocaleString('id-ID')}`;
+            document.getElementById('lbl-bersih').innerText = `Rp ${pendapatanBersih.toLocaleString('id-ID')}`;
+        }
     </script>
 </body>
 </html>
