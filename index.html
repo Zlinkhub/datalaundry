@@ -411,6 +411,31 @@
                 let opt = document.createElement('option'); opt.value = k.id; opt.innerText = k.nama; select.appendChild(opt);
             });
         }
+function prosesLoginKaryawan() {
+    let idKar = document.getElementById('login-select-karyawan').value;
+    let pinInput = document.getElementById('login-pin-karyawan').value;
+    
+    if(!idKar) { alert("Pilih namamu terlebih dahulu!"); return; }
+    
+    let karObj = dataKaryawan.find(k => k.id == idKar);
+    if(karObj && karObj.pin === pinInput) {
+        idKaryawanSesiAktif = idKar;
+        localStorage.setItem('sesi_id_karyawan', idKar);
+        
+        document.getElementById('nama-sesi-aktif').innerText = karObj.nama;
+        document.getElementById('login-karyawan-portal').classList.add('d-none');
+        document.getElementById('area-kartu-private').classList.remove('d-none');
+        
+        if(karObj.pin === "1234") {
+            document.getElementById('ganti-pin-box').classList.remove('d-none');
+        } else {
+            document.getElementById('ganti-pin-box').classList.add('d-none');
+        }
+        // panggil fungsi muat kartu disini...
+    } else {
+        alert("❌ PIN yang Anda masukkan salah!");
+    }
+}
 
         function cekStatusTampilanAbsen() {
             perbaruiDropdownLoginKaryawan();
