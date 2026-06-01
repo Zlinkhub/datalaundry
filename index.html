@@ -629,18 +629,36 @@ projectId: "laundry-pro-69e74",
             let tbody = document.querySelector('#tabel-master-barang tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="3">Kosong</td></tr>';
         }
 
-        document.getElementById('form-karyawan').addEventListener('submit', function(e){
-            e.preventDefault();
-            let tipe = document.getElementById('kar-tipe').value;
-            let gajiBulanan = parseInt(document.getElementById('kar-gaji-bulanan').value);
-            let totalJamKerjaSebulan = (tipe === 'full') ? (26 * 12) : (26 * 6);
-            let ratePerJamPilihan = Math.round(gajiBulanan / totalJamKerjaSebulan);
+        // PERBARUI: Form Tambah Karyawan Baru dengan Benefit
+document.getElementById('form-karyawan').addEventListener('submit', function(e){
+    e.preventDefault();
+    let tipe = document.getElementById('kar-tipe').value;
+    let gajiBulanan = parseInt(document.getElementById('kar-gaji-bulanan').value);
+    let totalJamKerjaSebulan = (tipe === 'full') ? (26 * 12) : (26 * 6);
+    let ratePerJamPilihan = Math.round(gajiBulanan / totalJamKerjaSebulan);
 
-            dataKaryawan.push({ id: Date.now(), nama: document.getElementById('kar-nama').value, tipe: tipe, gaji: ratePerJamPilihan, pin: "1234" });
-            db.ref('laundry_kar').set(dataKaryawan);
-            this.reset(); sesuaikanPlaceholderGaji();
-            alert("Karyawan Baru Terunggah ke Cloud Database!");
-        });
+    // Prompt tambahan untuk benefit (Default value disediakan)
+    let uangMakan = parseInt(prompt("Masukkan Nominal Uang Makan per hari (Jika kerja >= 6 jam):", "15000")) || 0;
+    let uangBensin = parseInt(prompt("Masukkan Nominal Uang Bensin per hari (Jika ada):", "10000")) || 0;
+    let rateLembur = parseInt(prompt("Masukkan Nominal Gaji Lembur per jam:", "15000")) || 0;
+
+    dataKaryawan.push({ 
+        id: Date.now(), 
+        nama: document.getElementById('kar-nama').value, 
+        tipe: tipe, 
+        gaji: ratePerJamPilihan, 
+        pin: "123",
+        benefit: {
+            uang_makan: uangMakan,
+            uang_bensin: uangBensin,
+            rate_lembur: rateLembur
+        }
+    });
+    db.ref('laundry_kar').set(dataKaryawan);
+    this.reset(); sesuaikanPlaceholderGaji();
+    alert("Karyawan Baru Terunggah ke Cloud Lengkap dengan Benefit!");
+});
+
 
         function tampilkanMasterKaryawan() {
     let html = '';
