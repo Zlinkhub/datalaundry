@@ -660,24 +660,67 @@ document.getElementById('form-karyawan').addEventListener('submit', function(e){
 });
 
 
-        function tampilkanMasterKaryawan() {
+        
+        // PERBARUI: Tampilan Tabel Karyawan & Tombol Manajemen Benefit
+function tampilkanMasterKaryawan() {
     let html = '';
     dataKaryawan.forEach((item) => {
         let labelTipe = item.tipe === 'full' ? 'Full (12j)' : 'Harian (6j)';
+        // Ambil data benefit dengan proteksi jika data lama belum punya benefit
+        let uMakan = item.benefit?.uang_makan || 0;
+        let uBensin = item.benefit?.uang_bensin || 0;
+        let rLembur = item.benefit?.rate_lembur || 0;
+
         html += `
             <tr>
-                <td>${item.nama}</td>
+                <td><strong>${item.nama}</strong></td>
                 <td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td>
-                <td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td>
                 <td>
-                    <button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahGajiKaryawanAdmin(${item.id})">✏️ Gaji</button>
-                    <button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button>
+                    <small class="d-block">Pokok: Rp ${Math.round(item.gaji)}/jam</small>
+                    <small class="d-block text-success">Makan: Rp ${uMakan.toLocaleString('id-ID')}</small>
+                    <small class="d-block text-primary">Bensin: Rp ${uBensin.toLocaleString('id-ID')}</small>
+                    <small class="d-block text-danger">Lembur: Rp ${rLembur}/jam</small>
+                </td>
+                <td>
+                    <button class="btn btn-warning btn-xs py-0 px-1 mb-1 w-100" onclick="ubahGajiKaryawanAdmin(${item.id})">✏️ Gaji Pokok</button>
+                    <button class="btn btn-info btn-xs py-0 px-1 mb-1 text-white w-100" onclick="ubahBenefitKaryawan(${item.id})">🎁 Edit Benefit</button>
+                    <button class="btn btn-danger btn-xs py-0 px-1 w-100" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button>
                 </td>
             </tr>`;
     });
     let tbody = document.querySelector('#tabel-master-karyawan tbody'); 
     if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
 }
+
+// FUNGSI BARU: Mengubah Nilai Benefit Karyawan Terpilih
+function ubefitKaryawan(id) {
+    // Fungsi ini bisa dipanggil via tombol "Edit Benefit"
+}
+function ubahBenefitKaryawan(id) {
+    verifikasiSandiAksi(() => {
+        let idx = dataKaryawan.findIndex(k => k.id === id);
+        if (idx !== -1) {
+            let k = dataKaryawan[idx];
+            let saatIniMakan = k.benefit?.uang_makan || 0;
+            let saatIniBensin = k.benefit?.uang_bensin || 0;
+            let saatIniLembur = k.benefit?.rate_lembur || 0;
+
+            let makanBaru = prompt(`[${k.nama}] Uang Makan Baru (Per hari jika kerja >= 6 jam):`, saatIniMakan);
+            let bensinBaru = prompt(`[${k.nama}] Uang Bensin Baru (Per hari):`, saatIniBensin);
+            let lemburBaru = prompt(`[${k.nama}] Gaji Lembur Baru per jam:`, saatIniLembur);
+
+            dataKaryawan[idx].benefit = {
+                uang_makan: parseInt(makanMbaru) || 0,
+                uang_bensin: parseInt(bensinBaru) || 0,
+                rate_lembur: parseInt(lemburBaru) || 0
+            };
+
+            db.ref('laundry_kar').set(dataKaryawan);
+            alert(`✅ Benefit untuk ${k.nama} berhasil diperbarui!`);
+        }
+    });
+}
+        
 
 function ubahGajiKaryawanAdmin(id) {
     verifikasiSandiAksi(() => {
