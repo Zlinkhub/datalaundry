@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Laundry UMKM Pro-Secure</title>
+    <title>Sistem Laundry UMKM Pro-Secure (Cloud Version)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
         .table-responsive-matrix { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .table-matrix th, .table-matrix td { min-width: 40px; text-align: center; vertical-align: middle; font-size: 11px; }
@@ -26,7 +30,7 @@
 
     <div class="container py-3" style="max-width: 100%;">
         <h3 class="text-center mb-1">🧺 Laundry Pro-Secure</h3>
-        <p class="text-center text-muted small mb-3">Sistem Absensi Kehadiran & Panel Manajemen</p>
+        <p class="text-center text-muted small mb-3">Sistem Absensi Kehadiran & Panel Manajemen Terpusat</p>
 
         <ul class="nav nav-pills nav-fill mb-3 bg-white p-2 rounded shadow-sm" id="pills-tab" role="tablist">
             <li class="nav-item">
@@ -46,7 +50,6 @@
         <div class="tab-content" id="pills-tabContent">
 
             <div class="tab-pane fade show active" id="absensi" style="max-width: 600px; margin: auto;">
-                
                 <div class="card shadow-sm mb-3">
                     <div class="card-body p-3">
                         <h6 class="fw-bold mb-2 text-primary">📊 Status Aktivitas Kerja (Hari Ini)</h6>
@@ -233,15 +236,32 @@
     <script>
         const WA_OWNER = "6287853561541"; 
 
+        // ==========================================
+        // SILAHKAN MASUKKAN CONFIG FIREBASE ANDA DI SINI
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "SILAHKAN_GANTI_DENGAN_MILIK_ANDA",
+            authDomain: "LAUNDRY-PRO-SECURE.firebaseapp.com",
+            databaseURL: "https://LAUNDRY-PRO-SECURE-DEFAULT-RTDB.firebaseio.com",
+            projectId: "LAUNDRY-PRO-SECURE",
+            storageBucket: "LAUNDRY-PRO-SECURE.appspot.com",
+            messagingSenderId: "0000000000",
+            appId: "1:00000000:web:00000000"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         let passAdminSistem = localStorage.getItem('pass_admin') || "123";
         let passOwnerSistem = localStorage.getItem('pass_owner') || "999"; 
         let idKaryawanSesiAktif = localStorage.getItem('sesi_id_karyawan') || null;
 
-        let dataMasterBarang = JSON.parse(localStorage.getItem('laundry_mst_brg')) || [];
-        let dataOps = JSON.parse(localStorage.getItem('laundry_ops')) || [];
-        let dataKaryawan = JSON.parse(localStorage.getItem('laundry_kar')) || [];
-        let dataAbsenLog = JSON.parse(localStorage.getItem('laundry_abs_log')) || []; 
-        let dataOmzetHarian = JSON.parse(localStorage.getItem('laundry_omzet')) || [];
+        // Inisialisasi Array Kosong, Data Utama Sekarang mengalir penuh dari Database Online Firebase
+        let dataMasterBarang = [];
+        let dataOps = [];
+        let dataKaryawan = [];
+        let dataAbsenLog = []; 
+        let dataOmzetHarian = [];
 
         const hariIni = new Date().toISOString().split('T')[0];
         document.getElementById('ops-tanggal').value = hariIni;
@@ -249,6 +269,19 @@
         if(document.getElementById('calc-tanggal')) {
             document.getElementById('calc-tanggal').value = hariIni;
         }
+
+        // --- LINK CLOUD REALTIME SYNC (FIREBASE BINDING) ---
+        db.ref('laundry_mst_brg').on('value', (snapshot) => { dataMasterBarang = snapshot.val() || []; tampilkanMasterBarang(); perbaruiPilihanBarang(); muatLaporanMatriks(); });
+        db.ref('laundry_ops').on('value', (snapshot) => { dataOps = snapshot.val() || []; tampilkanPengeluaran(); muatLaporanMatriks(); tampilkanLogbookOwnerRealtime(); });
+        db.ref('laundry_kar').on('value', (snapshot) => { dataKaryawan = snapshot.val() || []; perbaruiDropdownLoginKaryawan(); tampilkanMasterKaryawan(); cekStatusTampilanAbsen(); muatLaporanMatriks(); });
+        db.ref('laundry_omzet').on('value', (snapshot) => { dataOmzetHarian = snapshot.val() || []; tampilkanLogbookOwnerRealtime(); muatLaporanMatriks(); });
+        db.ref('laundry_abs_log').on('value', (snapshot) => { 
+            dataAbsenLog = snapshot.val() || []; 
+            cekStatusTampilanAbsen(); 
+            tampilkanTabelEditorAbsenAdmin(); 
+            tampilkanLogbookOwnerRealtime(); 
+            muatLaporanMatriks(); 
+        });
 
         setInterval(() => {
             let skrg = new Date();
@@ -276,7 +309,7 @@
                             dataAbsenLog[idx].status = `${dataAbsenLog[idx].batas_jam_kerja} Jam Kerja`;
                             dataAbsenLog[idx].gaji = Math.round(dataAbsenLog[idx].batas_jam_kerja * (karObj ? karObj.gaji : 5769));
                         }
-                        localStorage.setItem('laundry_abs_log', JSON.stringify(dataAbsenLog));
+                        db.ref('laundry_abs_log').set(dataAbsenLog);
                         alert("Izin lembur berhasil dimasukkan!");
                         window.location.href = window.location.pathname;
                     }
@@ -297,17 +330,12 @@
         function sesuaikanPlaceholderGaji() {
             let tipe = document.getElementById('kar-tipe').value;
             let inputGajiBulanan = document.getElementById('kar-gaji-bulanan');
-            if(tipe === 'full') {
-                inputGajiBulanan.value = "1800000";
-            } else {
-                inputGajiBulanan.value = "1000000";
-            }
+            if(tipe === 'full') { inputGajiBulanan.value = "1800000"; } else { inputGajiBulanan.value = "1000000"; }
         }
 
         // --- MANAJEMEN PORTAL LOGIN PRIVATE KARYAWAN ---
         function perbaruiDropdownLoginKaryawan() {
-            let select = document.getElementById('login-select-karyawan');
-            if(!select) return;
+            let select = document.getElementById('login-select-karyawan'); if(!select) return;
             select.innerHTML = '<option value="">-- Pilih Namamu --</option>';
             dataKaryawan.forEach(k => {
                 let opt = document.createElement('option'); opt.value = k.id; opt.innerText = k.nama; select.appendChild(opt);
@@ -338,29 +366,24 @@
             let p2 = document.getElementById('pin-baru-2').value;
             if(p1.length < 4) { alert("PIN Baru minimal 4 angka!"); return; }
             if(p1 !== p2) { alert("Konfirmasi PIN tidak cocok!"); return; }
-            let karyawanObj = dataKaryawan.find(k => k.id === parseInt(idKaryawanSesiAktif));
-            if(karyawanObj) {
-                karyawanObj.pin = p1;
-                localStorage.setItem('laundry_kar', JSON.stringify(dataKaryawan));
-                alert("PIN Berhasil diperbarui!");
+            let idx = dataKaryawan.findIndex(k => k.id === parseInt(idKaryawanSesiAktif));
+            if(idx !== -1) {
+                dataKaryawan[idx].pin = p1;
+                db.ref('laundry_kar').set(dataKaryawan);
+                alert("PIN Berhasil diperbarui di Cloud!");
                 document.getElementById('pin-baru-1').value = ''; document.getElementById('pin-baru-2').value = '';
                 cekStatusTampilanAbsen();
             }
         }
 
-        // --- TAMBAHAN FITUR: RENDER MATRIKS AKTIVITAS REALTIME DI HALAMAN UTAMA ---
         function tampilkanMatriksAktivitasKerja() {
-            let container = document.getElementById('matriks-aktivitas-kerja');
-            if(!container) return;
+            let container = document.getElementById('matriks-aktivitas-kerja'); if(!container) return;
             container.innerHTML = '';
-
             let karyawanAktifHariIni = dataAbsenLog.filter(a => a.tanggal === hariIni && !a.jam_pulang);
-
             if(karyawanAktifHariIni.length === 0) {
                 container.innerHTML = `<div class="col-12 text-center text-muted small py-2">😴 Belum ada karyawan yang stand-by atau aktif bekerja saat ini.</div>`;
                 return;
             }
-
             karyawanAktifHariIni.forEach(abs => {
                 container.innerHTML += `
                     <div class="col-6 col-md-4">
@@ -374,8 +397,7 @@
         }
 
         function cekStatusTampilanAbsen() {
-            perbaruiDropdownLoginKaryawan();
-            tampilkanMatriksAktivitasKerja(); // Jalankan pembaharuan aktivitas real-time
+            tampilkanMatriksAktivitasKerja();
             if (idKaryawanSesiAktif) {
                 let karyawanObj = dataKaryawan.find(k => k.id === parseInt(idKaryawanSesiAktif));
                 if (!karyawanObj) { logoutKaryawan(); return; }
@@ -399,7 +421,7 @@
 
         function buatKartuKaryawanPrivate(karyawan) {
             let logHariIni = dataAbsenLog.find(a => a.karyawan_id === karyawan.id && a.tanggal === hariIni);
-            let kontainer = document.getElementById('kontainer-kartu-karyawan');
+            let kontainer = document.getElementById('kontainer-kartu-karyawan'); if(!kontainer) return;
             let btnAksi = '';
             if(!logHariIni) {
                 btnAksi = `<button class="btn btn-success btn-sm w-100 mb-2" onclick="prosesAbsenMasuk(${karyawan.id}, '${karyawan.nama}')">Tap Masuk Kerja 🟢</button>`;
@@ -421,39 +443,28 @@
             `;
         }
 
-        // --- UPDATE UTAMA: ABSEN MASUK DENGAN OTOMATIS GEOLOCATION MAPS ---
         function prosesAbsenMasuk(id, nama) {
             if (navigator.geolocation) {
-                // Meminta izin lokasi ke browser / hp karyawan
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                        let lat = position.coords.latitude;
-                        let lng = position.coords.longitude;
-                        // Membuat link koordinat google maps terintegrasi
-                        let urlGoogleMaps = `https://www.google.com/maps?q=${lat},${lng}`;
-                        
-                        simpanLogAbsen(id, nama, urlGoogleMaps);
+                        let urlMap = `https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`;
+                        simpanLogAbsenCloud(id, nama, urlMap);
                     },
                     (error) => {
-                        alert("⚠️ Gagal mengambil GPS otomatis. Pastikan izin lokasi/GPS HP Anda aktif! Tetap menyimpan absen dengan tag lokasi kosong.");
-                        simpanLogAbsen(id, nama, "Lokasi tidak diizinkan");
+                        alert("⚠️ Lokasi GPS diblokir/gagal. Tetap absen tanpa tag peta.");
+                        simpanLogAbsenCloud(id, nama, "No GPS Access");
                     }
                 );
-            } else {
-                alert("Browser perangkat Anda tidak mendukung GPS.");
-                simpanLogAbsen(id, nama, "Browser No GPS");
-            }
+            } else { simpanLogAbsenCloud(id, nama, "Not Supported"); }
         }
 
-        function simpanLogAbsen(id, nama, lokasiMap) {
+        function simpanLogAbsenCloud(id, nama, lokasiMap) {
             dataAbsenLog.push({
                 tanggal: hariIni, karyawan_id: id, nama: nama,
                 jam_masuk: new Date().toTimeString().split(' ')[0], jam_pulang: null,
                 lokasi: lokasiMap, status: "Sedang Kerja", gaji: 0
             });
-            localStorage.setItem('laundry_abs_log', JSON.stringify(dataAbsenLog));
-            cekStatusTampilanAbsen();
-            tampilkanTabelEditorAbsenAdmin();
+            db.ref('laundry_abs_log').set(dataAbsenLog);
         }
 
         function prosesPulang(id) {
@@ -467,16 +478,12 @@
                 if(selisihJam < 0) selisihJam = 0;
 
                 let batasDefault = (kObj.tipe === 'full') ? 12 : 6;
-
-                if (selisihJam > batasDefault && !abs.status_lembur) {
-                    selisihJam = batasDefault;
-                }
+                if (selisihJam > batasDefault && !abs.status_lembur) { selisihJam = batasDefault; }
 
                 abs.jam_pulang = skrg.toTimeString().split(' ')[0]; 
                 abs.status = `${selisihJam.toFixed(2)} Jam Kerja`; 
                 abs.gaji = Math.round(selisihJam * kObj.gaji);
-                localStorage.setItem('laundry_abs_log', JSON.stringify(dataAbsenLog));
-                cekStatusTampilanAbsen();
+                db.ref('laundry_abs_log').set(dataAbsenLog);
             }
         }
 
@@ -486,23 +493,20 @@
             window.open(`https://api.whatsapp.com/send?phone=${WA_OWNER}&text=${encodeURIComponent(pesanWa)}`, '_blank');
         }
 
-        // --- PROTEKSI & EDIT DATA (ADMIN & OWNER) ---
         function verifikasiSandiAksi(callback) {
-            let passInput = prompt("⚠️ MASUKKAN SANDI UTAMA KEAMANAN untuk memvalidasi perubahan ini:");
-            if (passInput === passAdminSistem || passInput === passOwnerSistem) { callback(); } 
-            else { alert("❌ Sandi Salah! Perubahan dibatalkan."); }
+            let passInput = prompt("⚠️ MASUKKAN SANDI UTAMA KEAMANAN untuk memvalidasi:");
+            if (passInput === passAdminSistem || passInput === passOwnerSistem) { callback(); } else { alert("❌ Sandi Salah!"); }
         }
 
         function ubahHargaBarangAdmin(id) {
             verifikasiSandiAksi(() => {
-                let barang = dataMasterBarang.find(b => b.id === id);
-                if(barang) {
-                    let hargaBaru = prompt(`Masukkan Harga Satuan Baru untuk [${barang.nama}]:`, barang.harga);
+                let idx = dataMasterBarang.findIndex(b => b.id === id);
+                if(idx !== -1) {
+                    let hargaBaru = prompt(`Masukkan Harga Baru untuk [${dataMasterBarang[idx].nama}]:`, dataMasterBarang[idx].harga);
                     if(hargaBaru && !isNaN(hargaBaru)) {
-                        barang.harga = parseInt(hargaBaru);
-                        localStorage.setItem('laundry_mst_brg', JSON.stringify(dataMasterBarang));
-                        alert("Harga barang berhasil diperbarui!");
-                        tampilkanMasterBarang(); perbaruiPilihanBarang(); if(document.getElementById('konten-owner').classList.contains('d-none')===false) muatLaporanMatriks();
+                        dataMasterBarang[idx].harga = parseInt(hargaBaru);
+                        db.ref('laundry_mst_brg').set(dataMasterBarang);
+                        alert("Harga diperbarui!");
                     }
                 }
             });
@@ -513,15 +517,7 @@
             if(dataAbsenLog.length === 0) { tbody.innerHTML = '<tr><td colspan="7">Kosong</td></tr>'; return; }
             [...dataAbsenLog].reverse().forEach((abs) => {
                 let realIndex = dataAbsenLog.findIndex(a => a.karyawan_id === abs.karyawan_id && a.tanggal === abs.tanggal);
-                
-                // Format Tampilan Kolom Lokasi Google Maps
-                let linkPeta = "-";
-                if(abs.lokasi && abs.lokasi.startsWith("http")) {
-                    linkPeta = `<a href="${abs.lokasi}" target="_blank" class="btn btn-xs btn-outline-primary py-0 px-1 text-nowrap" style="font-size:10px;">📍 Buka Map</a>`;
-                } else {
-                    linkPeta = `<span class="text-muted small">${abs.lokasi || '-'}</span>`;
-                }
-
+                let linkPeta = (abs.lokasi && abs.lokasi.startsWith("http")) ? `<a href="${abs.lokasi}" target="_blank" class="btn btn-xs btn-outline-primary py-0 px-1 text-nowrap" style="font-size:10px;">📍 Buka Map</a>` : `<span class="text-muted small">${abs.lokasi || '-'}</span>`;
                 tbody.innerHTML += `
                     <tr>
                         <td><small>${abs.tanggal}</small></td>
@@ -551,50 +547,36 @@
                     abs.status = `${selisihJam < 0 ? 0 : selisihJam.toFixed(2)} Jam Kerja`;
                     abs.gaji = Math.round((selisihJam < 0 ? 0 : selisihJam) * (karObj ? karObj.gaji : 5769));
                 } else { abs.status = "Sedang Kerja"; abs.gaji = 0; }
-                localStorage.setItem('laundry_abs_log', JSON.stringify(dataAbsenLog));
-                alert("Berhasil diperbarui!"); tampilkanTabelEditorAbsenAdmin(); muatLaporanMatriks(); cekStatusTampilanAbsen();
+                db.ref('laundry_abs_log').set(dataAbsenLog);
+                alert("Berhasil disinkronkan ke Cloud!");
             });
         }
 
         function hapusResetAbsenAdmin(idx) {
             verifikasiSandiAksi(() => {
-                dataAbsenLog.splice(idx, 1); localStorage.setItem('laundry_abs_log', JSON.stringify(dataAbsenLog));
-                alert("Data dihapus!"); tampilkanTabelEditorAbsenAdmin(); muatLaporanMatriks(); cekStatusTampilanAbsen();
+                dataAbsenLog.splice(idx, 1);
+                db.ref('laundry_abs_log').set(dataAbsenLog);
+                alert("Data terhapus dari Cloud!");
             });
         }
 
-        // --- FINANSIAL: OMZET REALTIME DENGAN VALIDASI HARI YANG SAMA ---
         function simpanOmzetHarian() {
             let tglInput = document.getElementById('calc-tanggal').value;
             let omzet = parseInt(document.getElementById('calc-omzet').value);
-
-            if(!tglInput || isNaN(omzet)) { alert("Lengkapi input data nominal kotor!"); return; }
-
-            let tglHariIniRealtime = new Date().toISOString().split('T')[0];
-
-            if (tglInput !== tglHariIniRealtime) {
-                alert("❌ GAGAL: Omzet hanya dapat diisi atau diubah pada hari yang sama sebelum jam 00.00 pergantian hari!");
-                return;
-            }
+            if(!tglInput || isNaN(omzet)) { alert("Lengkapi data!"); return; }
+            if (tglInput !== hariIni) { alert("❌ GAGAL: Harus diisi di hari yang sama!"); return; }
 
             let idx = dataOmzetHarian.findIndex(o => o.tanggal === tglInput);
-            if(idx !== -1) { 
-                dataOmzetHarian[idx].nominal = omzet; 
-            } else { 
-                dataOmzetHarian.push({ tanggal: tglInput, nominal: omzet }); 
-            }
-
-            localStorage.setItem('laundry_omzet', JSON.stringify(dataOmzetHarian));
-            alert("✅ Omzet Harian Berhasil Disimpan/Diperbarui!"); 
+            if(idx !== -1) { dataOmzetHarian[idx].nominal = omzet; } else { dataOmzetHarian.push({ tanggal: tglInput, nominal: omzet }); }
+            db.ref('laundry_omzet').set(dataOmzetHarian);
+            alert("✅ Omzet Cloud Berhasil Disimpan!");
             document.getElementById('calc-omzet').value = '';
-            tampilkanLogbookOwnerRealtime(); 
-            muatLaporanMatriks();
         }
 
         function tampilkanLogbookOwnerRealtime() {
             let tbody = document.querySelector('#logbook-realtime-owner tbody'); if(!tbody) return; tbody.innerHTML = '';
             let daftarTanggal = [...new Set(dataAbsenLog.map(a => a.tanggal).concat(dataOps.map(o => o.tanggal)).concat(dataOmzetHarian.map(om => om.tanggal)))].sort().reverse();
-            if(daftarTanggal.length === 0) { tbody.innerHTML='<tr><td colspan="7">Belum ada catatan logbook harian</td></tr>'; return; }
+            if(daftarTanggal.length === 0) { tbody.innerHTML='<tr><td colspan="7">Belum ada catatan logbook</td></tr>'; return; }
 
             daftarTanggal.forEach(tgl => {
                 let kotor = dataOmzetHarian.find(o => o.tanggal === tgl)?.nominal || 0;
@@ -604,10 +586,8 @@
                     return acc + (hrg * parseInt(c.jumlah));
                 }, 0);
                 let bersih = kotor - (bGaji + bOps);
-                
-                // Cari salah satu sampel link lokasi di hari tersebut untuk owner preview
                 let logHariIni = dataAbsenLog.find(a => a.tanggal === tgl && a.lokasi && a.lokasi.startsWith("http"));
-                let linkLokasiOwner = logHariIni ? `<a href="${logHariIni.lokasi}" target="_blank" class="small">📍 Check Map</a>` : '<span class="text-muted text-xs">-</span>';
+                let linkLokasiOwner = logHariIni ? `<a href="${logHariIni.lokasi}" target="_blank" class="small">📍 Check Map</a>` : '-';
 
                 tbody.innerHTML += `
                     <tr>
@@ -622,7 +602,6 @@
             });
         }
 
-        // --- PANEL ADMIN ACCESSIBILITY ---
         function cekAksesAdmin() {
             if ((localStorage.getItem('login_admin_sukses') || "tidak") === "ya") {
                 document.getElementById('login-admin-box').classList.add('d-none'); document.getElementById('konten-admin').classList.remove('d-none');
@@ -630,58 +609,45 @@
             } else { document.getElementById('login-admin-box').classList.remove('d-none'); document.getElementById('konten-admin').classList.add('d-none'); }
         }
         function verifikasiAdmin() {
-            if (document.getElementById('pass-admin').value === passAdminSistem) { localStorage.setItem('login_admin_sukses', "ya"); cekAksesAdmin(); } 
-            else { alert("Sandi Admin Salah!"); }
+            if (document.getElementById('pass-admin').value === passAdminSistem) { localStorage.setItem('login_admin_sukses', "ya"); cekAksesAdmin(); } else { alert("Sandi Admin Salah!"); }
         }
         function logoutAdmin() { localStorage.setItem('login_admin_sukses', "tidak"); cekAksesAdmin(); }
 
-        // --- MASTER DATA RUNNERS ---
         document.getElementById('form-master-barang').addEventListener('submit', function(e){
             e.preventDefault();
             dataMasterBarang.push({ id: Date.now(), nama: document.getElementById('mst-nama').value, harga: parseInt(document.getElementById('mst-harga').value) });
-            localStorage.setItem('laundry_mst_brg', JSON.stringify(dataMasterBarang));
-            this.reset(); tampilkanMasterBarang(); perbaruiPilihanBarang();
+            db.ref('laundry_mst_brg').set(dataMasterBarang);
+            this.reset();
         });
 
         function tampilkanMasterBarang() {
             let html = '';
             dataMasterBarang.forEach((item) => {
-                html += `<tr><td>${item.nama}</td><td>Rp ${item.harga.toLocaleString('id-ID')}</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahHargaBarangAdmin(${item.id})">✏️ Edit Harga</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataMasterBarang = dataMasterBarang.filter(b => b.id !== ${item.id}); localStorage.setItem('laundry_mst_brg', JSON.stringify(dataMasterBarang)); tampilkanMasterBarang(); })">Hapus</button></td></tr>`;
+                html += `<tr><td>${item.nama}</td><td>Rp ${item.harga.toLocaleString('id-ID')}</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahHargaBarangAdmin(${item.id})">✏️ Edit Harga</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataMasterBarang = dataMasterBarang.filter(b => b.id !== ${item.id}); db.ref('laundry_mst_brg').set(dataMasterBarang); })">Hapus</button></td></tr>`;
             });
-            let tbody = document.querySelector('#tabel-master-barang tbody');
-            if(tbody) tbody.innerHTML = html || '<tr><td colspan="3">Kosong</td></tr>';
+            let tbody = document.querySelector('#tabel-master-barang tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="3">Kosong</td></tr>';
         }
 
         document.getElementById('form-karyawan').addEventListener('submit', function(e){
             e.preventDefault();
             let tipe = document.getElementById('kar-tipe').value;
             let gajiBulanan = parseInt(document.getElementById('kar-gaji-bulanan').value);
-
             let totalJamKerjaSebulan = (tipe === 'full') ? (26 * 12) : (26 * 6);
             let ratePerJamPilihan = Math.round(gajiBulanan / totalJamKerjaSebulan);
 
-            dataKaryawan.push({ 
-                id: Date.now(), 
-                nama: document.getElementById('kar-nama').value, 
-                tipe: tipe, 
-                gaji: ratePerJamPilihan, 
-                pin: "1234" 
-            });
-
-            localStorage.setItem('laundry_kar', JSON.stringify(dataKaryawan));
-            this.reset(); sesuaikanPlaceholderGaji(); tampilkanMasterKaryawan();
-            alert("Karyawan Terdaftar! Tarif per jam berhasil dikalkulasi otomatis.");
-            cekStatusTampilanAbsen();
+            dataKaryawan.push({ id: Date.now(), nama: document.getElementById('kar-nama').value, tipe: tipe, gaji: ratePerJamPilihan, pin: "1234" });
+            db.ref('laundry_kar').set(dataKaryawan);
+            this.reset(); sesuaikanPlaceholderGaji();
+            alert("Karyawan Baru Terunggah ke Cloud Database!");
         });
 
         function tampilkanMasterKaryawan() {
             let html = '';
             dataKaryawan.forEach((item) => {
                 let labelTipe = item.tipe === 'full' ? 'Full (12j)' : 'Harian (6j)';
-                html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); localStorage.setItem('laundry_kar', JSON.stringify(dataKaryawan)); tampilkanMasterKaryawan(); })">Hapus</button></td></tr>`;
+                html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button></td></tr>`;
             });
-            let tbody = document.querySelector('#tabel-master-karyawan tbody');
-            if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
+            let tbody = document.querySelector('#tabel-master-karyawan tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
         }
 
         function perbaruiPilihanBarang() {
@@ -693,9 +659,9 @@
         document.getElementById('form-pengeluaran').addEventListener('submit', function(e){
             e.preventDefault();
             dataOps.push({ barang: document.getElementById('ops-barang').value, jumlah: document.getElementById('ops-jumlah').value, tanggal: document.getElementById('ops-tanggal').value });
-            localStorage.setItem('laundry_ops', JSON.stringify(dataOps));
+            db.ref('laundry_ops').set(dataOps);
             this.reset(); document.getElementById('ops-tanggal').value = hariIni;
-            alert("Belanja tercatat!"); tampilkanPengeluaran();
+            alert("Belanja Tersimpan di Server!");
         });
 
         function tampilkanPengeluaran() {
@@ -704,11 +670,9 @@
                 let masterB = dataMasterBarang.find(b => b.nama === item.barang);
                 html += `<tr><td>${item.tanggal.substring(5, 10)}</td><td>${item.barang}</td><td>${item.jumlah}</td><td>Rp ${((masterB?masterB.harga:0)*parseInt(item.jumlah)).toLocaleString('id-ID')}</td></tr>`;
             });
-            let tbody = document.querySelector('#tabel-pengeluaran tbody');
-            if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
+            let tbody = document.querySelector('#tabel-pengeluaran tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
         }
 
-        // --- SISTEM PEMANTAUAN AKUN OWNER ---
         function cekAksesOwner() {
             if ((localStorage.getItem('login_owner_sukses') || "tidak") === "ya") {
                 document.getElementById('login-owner-box').classList.add('d-none'); document.getElementById('konten-owner').classList.remove('d-none');
@@ -716,18 +680,15 @@
             } else { document.getElementById('login-owner-box').classList.remove('d-none'); document.getElementById('konten-owner').classList.add('d-none'); }
         }
         function verifikasiOwner() {
-            if (document.getElementById('pass-owner').value === passOwnerSistem) { localStorage.setItem('login_owner_sukses', "ya"); cekAksesOwner(); } 
-            else { alert("Sandi Owner Salah!"); }
+            if (document.getElementById('pass-owner').value === passOwnerSistem) { localStorage.setItem('login_owner_sukses', "ya"); cekAksesOwner(); } else { alert("Sandi Owner Salah!"); }
         }
         function logoutOwner() { localStorage.setItem('login_owner_sukses', "tidak"); document.getElementById('pass-owner').value=''; cekAksesOwner(); }
 
         function muatLaporanMatriks() {
             let bulanPilihan = document.getElementById('filter-bulan').value; 
             let tbody = document.querySelector('#matriks-inventory tbody'); if(!tbody) return; tbody.innerHTML = '';
-
             let totalBebanBulanan = 0; let totalOmzetBulanan = 0;
 
-            // 1. Render Baris Omzet Bulanan
             let trOmzet = document.createElement('tr'); trOmzet.className = "table-success fw-bold";
             trOmzet.innerHTML = `<td class="col-nama text-start">📈 Omzet (Kotor)</td><td>Kotor</td>`;
             for(let d=1; d<=31; d++) {
@@ -739,7 +700,6 @@
             trOmzet.innerHTML += `<td>Rp ${totalOmzetBulanan.toLocaleString('id-ID')}</td><td>Pendapatan</td>`;
             tbody.appendChild(trOmzet);
 
-            // 2. Render Baris Barang / Belanja
             dataMasterBarang.forEach(b => {
                 let tr = document.createElement('tr'); tr.innerHTML = `<td class="col-nama text-start">${b.nama}</td><td>Rp ${b.harga}</td>`;
                 let totalQty = 0;
@@ -752,7 +712,6 @@
                 tbody.appendChild(tr);
             });
 
-            // 3. Render Baris Gaji Karyawan
             dataKaryawan.forEach(k => {
                 let tr = document.createElement('tr'); tr.className = "table-info";
                 let labelTipe = k.tipe === 'full' ? 'Full' : 'Harian';
@@ -768,20 +727,18 @@
                 tbody.appendChild(tr);
             });
 
-            // Update Ringkasan Atas Dashboard Owner
-            document.getElementById('rep-omzet').innerText = "Rp " + totalOmzetBulanan.toLocaleString('id-ID');
-            document.getElementById('rep-total').innerText = "Rp " + totalBebanBulanan.toLocaleString('id-ID');
+            let repOmzet = document.getElementById('rep-omzet'); if(repOmzet) repOmzet.innerText = "Rp " + totalOmzetBulanan.toLocaleString('id-ID');
+            let repTotal = document.getElementById('rep-total'); if(repTotal) repTotal.innerText = "Rp " + totalBebanBulanan.toLocaleString('id-ID');
             let labaBersih = totalOmzetBulanan - totalBebanBulanan;
             let bersihEl = document.getElementById('rep-bersih');
-            bersihEl.innerText = "Rp " + labaBersih.toLocaleString('id-ID');
-            if(labaBersih >= 0) { bersihEl.className = "fw-bold text-primary mb-0"; } else { bersihEl.className = "fw-bold text-danger mb-0"; }
+            if(bersihEl) {
+                bersihEl.innerText = "Rp " + labaBersih.toLocaleString('id-ID');
+                bersihEl.className = labaBersih >= 0 ? "fw-bold text-primary mb-0" : "fw-bold text-danger mb-0";
+            }
         }
 
         // INITIAL LOAD RUNNER
         inisialisasiHeaderMatriks();
-        cekStatusTampilanAbsen();
-        tampilkanPengeluaran();
-        perbaruiPilihanBarang();
         cekAksesAdmin(); 
     </script>
 </body>
