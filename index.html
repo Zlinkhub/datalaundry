@@ -12,8 +12,8 @@
 
     <style>
         .table-responsive-matrix { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .table-matrix th, .table-matrix td { min-width: 50px; text-align: center; vertical-align: middle; font-size: 11px; }
-        .table-matrix .col-nama { min-width: 160px; text-align: left; position: sticky; left: 0; background-color: #fff; z-index: 2; }
+        .table-matrix th, .table-matrix td { min-width: 40px; text-align: center; vertical-align: middle; font-size: 11px; }
+        .table-matrix .col-nama { min-width: 140px; text-align: left; position: sticky; left: 0; background-color: #fff; z-index: 2; }
         .table-matrix thead th.col-nama { background-color: #212529; }
 
         /* Tampilan Kartu Karyawan */
@@ -53,7 +53,8 @@
                 <div class="card shadow-sm mb-3">
                     <div class="card-body p-3">
                         <h6 class="fw-bold mb-2 text-primary">📊 Status Aktivitas Kerja (Hari Ini)</h6>
-                        <div id="matriks-aktivitas-kerja" class="row g-2"></div>
+                        <div id="matriks-aktivitas-kerja" class="row g-2">
+                            </div>
                     </div>
                 </div>
 
@@ -121,25 +122,6 @@
                         <button type="button" class="btn btn-danger btn-sm" onclick="logoutAdmin()">🔒 Keluar Admin</button>
                     </div>
 
-                    <div class="card shadow-sm mb-3 border-warning">
-                        <div class="card-body p-3">
-                            <h6 class="fw-bold text-warning-emphasis">⚙️ Atur Tunjangan Bawaan (Harian)</h6>
-                            <div class="row g-2">
-                                <div class="col-md-5">
-                                    <label class="small text-muted fw-bold">Uang Makan (Rp):</label>
-                                    <input type="number" id="cfg-uang-makan" class="form-control form-control-sm" value="10000">
-                                </div>
-                                <div class="col-md-5">
-                                    <label class="small text-muted fw-bold">Uang Bensin (Rp):</label>
-                                    <input type="number" id="cfg-uang-bensin" class="form-control form-control-sm" value="10000">
-                                </div>
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button type="button" class="btn btn-warning btn-sm w-100 fw-bold" onclick="simpanKonfigurasiTunjangan()">Update</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <div class="card shadow-sm">
@@ -170,17 +152,13 @@
                                             </select>
                                         </div>
                                         <div class="mb-2">
-                                            <label class="form-label small text-muted mb-1 fw-bold">Input Acuan Gaji Bulanan (Otomatis Konversi ke Rate/Jam):</label>
+                                            <label class="form-label small text-muted mb-1 fw-bold">Input Gaji Bulanan (Sistem Otomatis Konversi ke Rate/Jam):</label>
                                             <input type="number" id="kar-gaji-bulanan" class="form-control form-control-sm" placeholder="Gaji Bulanan (Rp)" value="1800000" required>
-                                        </div>
-                                        <div class="form-check mb-2 text-start">
-                                            <input class="form-check-input" type="checkbox" id="kar-insentif-makan" checked>
-                                            <label class="form-check-label small fw-bold text-primary" for="kar-insentif-makan">Berhak Insentif Uang Makan (Owner/Admin Approval)</label>
                                         </div>
                                         <button type="submit" class="btn btn-secondary btn-sm w-100">Daftarkan Karyawan</button>
                                     </form>
                                     <div class="table-responsive bg-white rounded shadow-sm mt-3" style="max-height: 180px;">
-                                        <table class="table table-sm small text-center mb-0" id="tabel-master-karyawan"><thead class="table-dark"><tr><th>Nama</th><th>Tipe</th><th>Makan?</th><th>Rate / Jam</th><th>Aksi</th></tr></thead><tbody></tbody></table>
+                                        <table class="table table-sm small text-center mb-0" id="tabel-master-karyawan"><thead class="table-dark"><tr><th>Nama</th><th>Tipe</th><th>Rate / Jam</th><th>Aksi</th></tr></thead><tbody></tbody></table>
                                     </div>
                                 </div>
                             </div>
@@ -192,7 +170,7 @@
                         <div class="card-body p-3">
                             <div class="table-responsive bg-white rounded shadow-sm" style="max-height: 250px;">
                                 <table class="table table-sm table-hover small text-center align-middle mb-0" id="tabel-editor-absen">
-                                    <thead class="table-dark"><tr><th>Tanggal</th><th>Nama</th><th>Jam Masuk</th><th>Jam Pulang</th><th>Gaji Total</th><th>Lokasi Map</th><th>Aksi Terproteksi</th></tr></thead>
+                                    <thead class="table-dark"><tr><th>Tanggal</th><th>Nama</th><th>Jam Masuk</th><th>Jam Pulang</th><th>Gaji</th><th>Lokasi Map</th><th>Aksi Terproteksi</th></tr></thead>
                                     <tbody></tbody>
                                 </table>
                             </div>
@@ -258,15 +236,19 @@
     <script>
         const WA_OWNER = "6287853561541"; 
 
+        // ==========================================
+        // SILAHKAN MASUKKAN CONFIG FIREBASE ANDA DI SINI
+        // ==========================================
         const firebaseConfig = {
-            apiKey: "AIzaSyAz4OdAWkrxyge58Rv8Fj0RG5WMNLq-HGw",
-            authDomain:"laundry-pro-69e74.firebaseapp.com",
-            databaseURL:"https://laundry-pro-69e74-default-rtdb.asia-southeast1.firebasedatabase.app/",
-            projectId: "laundry-pro-69e74",
-            storageBucket: "laundry-pro-69e74.firebasestorage.app",
-            messagingSenderId: "449060243221",
-            appId: "1:449060243221:web:52e87e58580b586b5d4b1c"
-        };
+  apiKey: "AIzaSyAz4OdAWkrxyge58Rv8Fj0RG5WMNLq-HGw",
+  authDomain:"laundry-pro-69e74.firebaseapp.com",
+databaseURL:"https://laundry-pro-69e74-default-rtdb.asia-southeast1.firebasedatabase.app/",
+projectId: "laundry-pro-69e74",
+  storageBucket: "laundry-pro-69e74.firebasestorage.app",
+  messagingSenderId: "449060243221",
+  appId: "1:449060243221:web:52e87e58580b586b5d4b1c"
+};
+
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -275,12 +257,12 @@
         let passOwnerSistem = localStorage.getItem('pass_owner') || "999"; 
         let idKaryawanSesiAktif = localStorage.getItem('sesi_id_karyawan') || null;
 
+        // Inisialisasi Array Kosong, Data Utama Sekarang mengalir penuh dari Database Online Firebase
         let dataMasterBarang = [];
         let dataOps = [];
         let dataKaryawan = [];
         let dataAbsenLog = []; 
         let dataOmzetHarian = [];
-        let configTunjangan = { makan: 10000, bensin: 10000 };
 
         const hariIni = new Date().toISOString().split('T')[0];
         document.getElementById('ops-tanggal').value = hariIni;
@@ -289,14 +271,7 @@
             document.getElementById('calc-tanggal').value = hariIni;
         }
 
-        // Realtime Sync Online
-        db.ref('laundry_config_tunjangan').on('value', (snapshot) => {
-            if(snapshot.val()) {
-                configTunjangan = snapshot.val();
-                document.getElementById('cfg-uang-makan').value = configTunjangan.makan;
-                document.getElementById('cfg-uang-bensin').value = configTunjangan.bensin;
-            }
-        });
+        // --- LINK CLOUD REALTIME SYNC (FIREBASE BINDING) ---
         db.ref('laundry_mst_brg').on('value', (snapshot) => { dataMasterBarang = snapshot.val() || []; tampilkanMasterBarang(); perbaruiPilihanBarang(); muatLaporanMatriks(); });
         db.ref('laundry_ops').on('value', (snapshot) => { dataOps = snapshot.val() || []; tampilkanPengeluaran(); muatLaporanMatriks(); tampilkanLogbookOwnerRealtime(); });
         db.ref('laundry_kar').on('value', (snapshot) => { dataKaryawan = snapshot.val() || []; perbaruiDropdownLoginKaryawan(); tampilkanMasterKaryawan(); cekStatusTampilanAbsen(); muatLaporanMatriks(); });
@@ -332,7 +307,8 @@
                         dataAbsenLog[idx].batas_jam_kerja = basisJam + parseFloat(jamTambahan);
                         dataAbsenLog[idx].status_lembur = "Disetujui Owner " + jamTambahan + " Jam";
                         if(dataAbsenLog[idx].jam_pulang) {
-                            hitungUlangGajiItem(idx, karObj, basisJam + parseFloat(jamTambahan));
+                            dataAbsenLog[idx].status = `${dataAbsenLog[idx].batas_jam_kerja} Jam Kerja`;
+                            dataAbsenLog[idx].gaji = Math.round(dataAbsenLog[idx].batas_jam_kerja * (karObj ? karObj.gaji : 5769));
                         }
                         db.ref('laundry_abs_log').set(dataAbsenLog);
                         alert("Izin lembur berhasil dimasukkan!");
@@ -355,18 +331,10 @@
         function sesuaikanPlaceholderGaji() {
             let tipe = document.getElementById('kar-tipe').value;
             let inputGajiBulanan = document.getElementById('kar-gaji-bulanan');
-            if(tipe === 'full') { inputGajiBulanan.value = "1800000"; } else { inputGajiBulanan.value = "1300000"; } // 50rb*26 = 1.300.000 harian bawaan
+            if(tipe === 'full') { inputGajiBulanan.value = "1800000"; } else { inputGajiBulanan.value = "1000000"; }
         }
 
-        function simpanKonfigurasiTunjangan() {
-            let m = parseInt(document.getElementById('cfg-uang-makan').value) || 0;
-            let b = parseInt(document.getElementById('cfg-uang-bensin').value) || 0;
-            db.ref('laundry_config_tunjangan').set({ makan: m, bensin: b }, (err) => {
-                if(!err) alert("Konfigurasi Tunjangan Terupdate!");
-            });
-        }
-
-        // --- PRIVATE PORTAL KARYAWAN ---
+        // --- MANAJEMEN PORTAL LOGIN PRIVATE KARYAWAN ---
         function perbaruiDropdownLoginKaryawan() {
             let select = document.getElementById('login-select-karyawan'); if(!select) return;
             select.innerHTML = '<option value="">-- Pilih Namamu --</option>';
@@ -480,7 +448,7 @@
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                        let urlMap = `http://maps.google.com/?q=${position.coords.latitude},${position.coords.longitude}`;
+                        let urlMap = `https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`;
                         simpanLogAbsenCloud(id, nama, urlMap);
                     },
                     (error) => {
@@ -495,7 +463,7 @@
             dataAbsenLog.push({
                 tanggal: hariIni, karyawan_id: id, nama: nama,
                 jam_masuk: new Date().toTimeString().split(' ')[0], jam_pulang: null,
-                lokasi: lokasiMap, status: "Sedang Kerja", gaji: 0, jam_bersih: 0
+                lokasi: lokasiMap, status: "Sedang Kerja", gaji: 0
             });
             db.ref('laundry_abs_log').set(dataAbsenLog);
         }
@@ -514,31 +482,10 @@
                 if (selisihJam > batasDefault && !abs.status_lembur) { selisihJam = batasDefault; }
 
                 abs.jam_pulang = skrg.toTimeString().split(' ')[0]; 
-                hitungUlangGajiItem(idx, kObj, selisihJam);
+                abs.status = `${selisihJam.toFixed(2)} Jam Kerja`; 
+                abs.gaji = Math.round(selisihJam * kObj.gaji);
                 db.ref('laundry_abs_log').set(dataAbsenLog);
             }
-        }
-
-        function hitungUlangGajiItem(idx, kObj, jamKerja) {
-            let abs = dataAbsenLog[idx];
-            abs.jam_bersih = parseFloat(jamKerja.toFixed(2));
-            abs.status = `${abs.jam_bersih} Jam Kerja`;
-            
-            // Hitung Gaji Pokok Berdasarkan Jam Kerja Nyata
-            let gajiPokok = Math.round(abs.jam_bersih * kObj.gaji);
-            let tMakan = 0;
-            let tBensin = 0;
-
-            if(kObj.tipe === 'full') {
-                tMakan = configTunjangan.makan;
-                tBensin = configTunjangan.bensin;
-            } else if(kObj.tipe === 'harian') {
-                // Pekerja harian default Rp 50.000/6jam, jika tercapai >= 6 jam berhak dapat uang makan jika disetujui owner
-                if(abs.jam_bersih >= 6 && kObj.insentif_makan_sah === true) {
-                    tMakan = configTunjangan.makan;
-                }
-            }
-            abs.gaji = gajiPokok + tMakan + tBensin;
         }
 
         function ajukanLemburWhatsApp(id, nama) {
@@ -597,10 +544,10 @@
                 if (abs.jam_pulang) {
                     let [jM, mM] = abs.jam_masuk.split(':').map(Number); let [jP, mP] = abs.jam_pulang.split(':').map(Number);
                     let selisihJam = parseFloat((((jP*60)+mP) - ((jM*60)+mM))/60);
-                    if(selisihJam < 0) selisihJam = 0;
                     let karObj = dataKaryawan.find(k => k.id === abs.karyawan_id);
-                    hitungUlangGajiItem(idx, karObj, selisihJam);
-                } else { abs.status = "Sedang Kerja"; abs.gaji = 0; abs.jam_bersih = 0; }
+                    abs.status = `${selisihJam < 0 ? 0 : selisihJam.toFixed(2)} Jam Kerja`;
+                    abs.gaji = Math.round((selisihJam < 0 ? 0 : selisihJam) * (karObj ? karObj.gaji : 5769));
+                } else { abs.status = "Sedang Kerja"; abs.gaji = 0; }
                 db.ref('laundry_abs_log').set(dataAbsenLog);
                 alert("Berhasil disinkronkan ke Cloud!");
             });
@@ -686,38 +633,22 @@
             e.preventDefault();
             let tipe = document.getElementById('kar-tipe').value;
             let gajiBulanan = parseInt(document.getElementById('kar-gaji-bulanan').value);
-            let hakMakan = document.getElementById('kar-insentif-makan').checked;
-            
-            // Konversi rate per jam bulanan bawaan (26 Hari kerja sebulan)
             let totalJamKerjaSebulan = (tipe === 'full') ? (26 * 12) : (26 * 6);
             let ratePerJamPilihan = Math.round(gajiBulanan / totalJamKerjaSebulan);
 
-            // Ganti ke default Rp50.000 / 6jam = Rp8.333 per jam jika tipe harian dan nilai default form tidak dirubah
-            if(tipe === 'harian' && gajiBulanan === 1300000) {
-                ratePerJamPilihan = 8333;
-            }
-
-            dataKaryawan.push({ 
-                id: Date.now(), 
-                nama: document.getElementById('kar-nama').value, 
-                tipe: tipe, 
-                gaji: ratePerJamPilihan, 
-                pin: "1234",
-                insentif_makan_sah: hakMakan
-            });
+            dataKaryawan.push({ id: Date.now(), nama: document.getElementById('kar-nama').value, tipe: tipe, gaji: ratePerJamPilihan, pin: "1234" });
             db.ref('laundry_kar').set(dataKaryawan);
             this.reset(); sesuaikanPlaceholderGaji();
             alert("Karyawan Baru Terunggah ke Cloud Database!");
         });
 
-        function-tampilkanMasterKaryawan() {
+        function tampilkanMasterKaryawan() {
             let html = '';
             dataKaryawan.forEach((item) => {
                 let labelTipe = item.tipe === 'full' ? 'Full (12j)' : 'Harian (6j)';
-                let statusMakan = item.insentif_makan_sah ? '✅ Ya' : '❌ Tidak';
-                html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td><td><small>${statusMakan}</small></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button></td></tr>`;
+                html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button></td></tr>`;
             });
-            let tbody = document.querySelector('#tabel-master-karyawan tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="5">Kosong</td></tr>';
+            let tbody = document.querySelector('#tabel-master-karyawan tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
         }
 
         function perbaruiPilihanBarang() {
@@ -759,7 +690,6 @@
             let tbody = document.querySelector('#matriks-inventory tbody'); if(!tbody) return; tbody.innerHTML = '';
             let totalBebanBulanan = 0; let totalOmzetBulanan = 0;
 
-            // 1. Baris Omzet Bulanan
             let trOmzet = document.createElement('tr'); trOmzet.className = "table-success fw-bold";
             trOmzet.innerHTML = `<td class="col-nama text-start">📈 Omzet (Kotor)</td><td>Kotor</td>`;
             for(let d=1; d<=31; d++) {
@@ -771,7 +701,6 @@
             trOmzet.innerHTML += `<td>Rp ${totalOmzetBulanan.toLocaleString('id-ID')}</td><td>Pendapatan</td>`;
             tbody.appendChild(trOmzet);
 
-            // 2. Baris Pengeluaran / Master Barang
             dataMasterBarang.forEach(b => {
                 let tr = document.createElement('tr'); tr.innerHTML = `<td class="col-nama text-start">${b.nama}</td><td>Rp ${b.harga}</td>`;
                 let totalQty = 0;
@@ -784,45 +713,21 @@
                 tbody.appendChild(tr);
             });
 
-            // 3. Baris Matriks Kehadiran & Jam Kerja Karyawan Plus Gaji Terintegrasi
             dataKaryawan.forEach(k => {
-                let trKehadiran = document.createElement('tr');
-                trKehadiran.className = "table-light text-muted";
-                trKehadiran.innerHTML = `<td class="col-nama text-start">🕒 ${k.nama} (Jam Kerja)</td><td>Jam</td>`;
-                
-                let trGaji = document.createElement('tr'); 
-                trGaji.className = "table-info fw-bold";
+                let tr = document.createElement('tr'); tr.className = "table-info";
                 let labelTipe = k.tipe === 'full' ? 'Full' : 'Harian';
-                trGaji.innerHTML = `<td class="col-nama text-start">💰 ${k.nama} (${labelTipe})</td><td>Gaji Total</td>`;
-                
+                tr.innerHTML = `<td class="col-nama text-start">💰 ${k.nama} (${labelTipe})</td><td>Rate</td>`;
                 let totalGajiKaryawan = 0;
-                let totalJamKaryawan = 0;
-
                 for (let d = 1; d <= 31; d++) {
-                    let tglLoop = `${bulanPilihan}-${d<10?'0'+d:d}`;
-                    let logHariIni = dataAbsenLog.filter(a => a.karyawan_id === k.id && a.tanggal === tglLoop);
-                    
-                    let gajiHariIni = logHariIni.reduce((acc, curr) => acc + (curr.gaji || 0), 0);
-                    let jamHariIni = logHariIni.reduce((acc, curr) => acc + (curr.jam_bersih || 0), 0);
-
-                    // Tampilan Matrix Jam Kerja
-                    trKehadiran.innerHTML += `<td>${jamHariIni > 0 ? jamHariIni.toFixed(1) + 'h' : ''}</td>`;
-                    // Tampilan Matrix Nominal Rupiah
-                    trGaji.innerHTML += `<td>${gajiHariIni > 0 ? gajiHariIni.toLocaleString('id-ID') : ''}</td>`;
-                    
+                    let gajiHariIni = dataAbsenLog.filter(a => a.karyawan_id === k.id && a.tanggal === `${bulanPilihan}-${d<10?'0'+d:d}`).reduce((acc, curr) => acc + curr.gaji, 0);
+                    tr.innerHTML += `<td>${gajiHariIni > 0 ? gajiHariIni.toLocaleString('id-ID') : ''}</td>`;
                     totalGajiKaryawan += gajiHariIni;
-                    totalJamKaryawan += jamHariIni;
                 }
                 totalBebanBulanan += totalGajiKaryawan;
-                
-                trKehadiran.innerHTML += `<td class="fw-bold">${totalJamKaryawan.toFixed(1)} Jam</td><td>Total Hadir</td>`;
-                trGaji.innerHTML += `<td>Rp ${totalGajiKaryawan.toLocaleString('id-ID')}</td><td>Beban Bersih</td>`;
-                
-                tbody.appendChild(trKehadiran);
-                tbody.appendChild(trGaji);
+                tr.innerHTML += `<td>Rp ${totalGajiKaryawan.toLocaleString('id-ID')}</td><td>Beban Kerja</td>`;
+                tbody.appendChild(tr);
             });
 
-            // Sinkronisasi komponen ringkasan atas dashboard
             let repOmzet = document.getElementById('rep-omzet'); if(repOmzet) repOmzet.innerText = "Rp " + totalOmzetBulanan.toLocaleString('id-ID');
             let repTotal = document.getElementById('rep-total'); if(repTotal) repTotal.innerText = "Rp " + totalBebanBulanan.toLocaleString('id-ID');
             let labaBersih = totalOmzetBulanan - totalBebanBulanan;
@@ -833,6 +738,7 @@
             }
         }
 
+        // INITIAL LOAD RUNNER
         inisialisasiHeaderMatriks();
         cekAksesAdmin(); 
     </script>
