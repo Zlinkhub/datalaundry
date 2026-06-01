@@ -643,13 +643,51 @@ projectId: "laundry-pro-69e74",
         });
 
         function tampilkanMasterKaryawan() {
-            let html = '';
-            dataKaryawan.forEach((item) => {
-                let labelTipe = item.tipe === 'full' ? 'Full (12j)' : 'Harian (6j)';
-                html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button></td></tr>`;
-            });
-            let tbody = document.querySelector('#tabel-master-karyawan tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
+    let html = '';
+    dataKaryawan.forEach((item) => {
+        let labelTipe = item.tipe === 'full' ? 'Full (12j)' : 'Harian (6j)';
+        html += `
+            <tr>
+                <td>${item.nama}</td>
+                <td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td>
+                <td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td>
+                <td>
+                    <button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahGajiKaryawanAdmin(${item.id})">✏️ Gaji</button>
+                    <button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button>
+                </td>
+            </tr>`;
+    });
+    let tbody = document.querySelector('#tabel-master-karyawan tbody'); 
+    if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
+}
+
+function ubahGajiKaryawanAdmin(id) {
+    verifikasiSandiAksi(() => {
+        let idx = dataKaryawan.findIndex(k => k.id === id);
+        if (idx !== -1) {
+            let karyawan = dataKaryawan[idx];
+            
+            // 1. Minta input gaji bulanan baru lewat prompt
+            let gajiBulananBaru = prompt(`Masukkan Gaji Bulanan Baru untuk [${karyawan.nama}]:\n(Sistem akan otomatis konversi ke rate/jam)`, "1800000");
+            
+            if (gajiBulananBaru && !isNaN(gajiBulananBaru)) {
+                gajiBulananBaru = parseInt(gajiBulananBaru);
+                
+                // 2. Hitung ulang rate per jam berdasarkan tipenya
+                let totalJamKerjaSebulan = (karyawan.tipe === 'full') ? (26 * 12) : (26 * 6);
+                let ratePerJamBaru = Math.round(gajiBulananBaru / totalJamKerjaSebulan);
+                
+                // 3. Update data lokal dan kirim ke Firebase Cloud
+                dataKaryawan[idx].gaji = ratePerJamBaru;
+                db.ref('laundry_kar').set(dataKaryawan);
+                
+                alert(`✅ Gaji ${karyawan.nama} berhasil diperbarui menjadi Rp ${ratePerJamBaru.toLocaleString('id-ID')}/jam`);
+            } else if (gajiBulananBaru !== null) {
+                alert("❌ Input tidak valid! Harus berupa angka.");
+            }
         }
+    });
+}
 
         function perbaruiPilihanBarang() {
             let select = document.getElementById('ops-barang'); if(!select) return;
