@@ -237,6 +237,20 @@
                     </div>
                 </div>
             </div>
+<!-- KODE BARU: Letakkan di dalam tab-pane id="owner" setelah tabel matriks-inventory -->
+<h6 class="fw-bold mt-4">📊 Matriks Total Jam Kerja Karyawan (1-31)</h6>
+<div class="table-responsive-matrix bg-white rounded shadow-sm border mb-5">
+    <table class="table table-bordered table-sm table-matrix mb-0" id="matriks-durasi-kerja">
+        <thead class="table-dark">
+            <tr id="matriks-durasi-header">
+                <th class="col-nama">Nama Karyawan</th>
+                <th>Tipe Kerja</th>
+                <!-- Tanggal 1-31 akan diisi otomatis oleh JavaScript -->
+            </tr>
+        </thead>
+        <tbody class="small"></tbody>
+    </table>
+</div>
 
         </div>
     </div>
@@ -326,15 +340,28 @@ projectId: "laundry-pro-69e74",
             }
         });
 
-        function inisialisasiHeaderMatriks() {
-            const headerRow = document.getElementById('matriks-header');
-            if (headerRow && headerRow.children.length <= 2) {
-                for (let d = 1; d <= 31; d++) { 
-                    let th = document.createElement('th'); th.innerText = d; headerRow.appendChild(th); 
-                }
-                headerRow.innerHTML += `<th>Total (Biaya/Omzet)</th><th>Keterangan</th>`;
-            }
+        // PERBARUI: Inisialisasi header untuk kedua matriks bulanan
+function inisialisasiHeaderMatriks() {
+    const headerRow = document.getElementById('matriks-header');
+    const headerDurasiRow = document.getElementById('matriks-durasi-header');
+    
+    // Inisialisasi header tabel inventory/gaji (jika belum ada tanggalnya)
+    if (headerRow && headerRow.children.length <= 2) {
+        for (let d = 1; d <= 31; d++) { 
+            let th = document.createElement('th'); th.innerText = d; headerRow.appendChild(th); 
         }
+        headerRow.innerHTML += `<th>Total (Biaya/Omzet)</th><th>Keterangan</th>`;
+    }
+
+    // KODE BARU: Inisialisasi header tabel khusus durasi kerja
+    if (headerDurasiRow && headerDurasiRow.children.length <= 2) {
+        for (let d = 1; d <= 31; d++) {
+            let th = document.createElement('th'); th.innerText = d; headerDurasiRow.appendChild(th);
+        }
+        headerDurasiRow.innerHTML += `<th>Total Jam / Bulan</th>`;
+    }
+}
+
 
         function sesuaikanPlaceholderGaji() {
             let tipe = document.getElementById('kar-tipe').value;
