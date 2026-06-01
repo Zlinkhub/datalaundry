@@ -179,13 +179,21 @@
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="owner">
-                <div id="login-owner-box" class="card shadow-sm mb-3 mx-auto" style="max-width: 400px;">
-                    <div class="card-body p-3 text-center">
-                        <h6 class="fw-bold text-danger">👑 Gembok Utama Pemilik (Owner)</h6>
-                        <input type="password" id="pass-owner" class="form-control form-control-sm mb-2 text-center" placeholder="Masukkan Password Khusus Owner">
-                        <button type="button" class="btn btn-dark btn-sm w-100" onclick="verifikasiOwner()">Buka Dashboard Owner</button>
-                    </div>
+            <div <h6 class="fw-bold text-info mt-4">🎁 Rangkuman Pembayaran Benefit Karyawan (Per 10 Hari)</h6>
+<div class="table-responsive bg-white rounded shadow-sm border mb-4">
+    <table class="table table-sm table-bordered text-center mb-0" id="tabel-benefit-10hari">
+        <thead class="table-info text-dark small">
+            <tr>
+                <th>Nama Karyawan</th>
+                <th>Periode I (Tgl 1-10)<br><small class="text-muted">Cair Tgl 10</small></th>
+                <th>Periode II (Tgl 11-20)<br><small class="text-muted">Cair Tgl 20</small></th>
+                <th>Periode III (Tgl 21-31)<br><small class="text-muted">Cair Tgl 30/31</small></th>
+                <th>Total Benefit Bulan Ini</th>
+            </tr>
+        </thead>
+        <tbody class="small"></tbody>
+    </table>
+</div>
                 </div>
 
                 <div id="konten-owner" class="d-none">
@@ -468,24 +476,58 @@ projectId: "laundry-pro-69e74",
             db.ref('laundry_abs_log').set(dataAbsenLog);
         }
 
-        function prosesPulang(id) {
-            let idx = dataAbsenLog.findIndex(a => a.karyawan_id === id && a.tanggal === hariIni);
-            let kObj = dataKaryawan.find(k => k.id === id);
-            if(idx !== -1 && kObj) {
-                let abs = dataAbsenLog[idx];
-                let [jM, mM] = abs.jam_masuk.split(':').map(Number);
-                let skrg = new Date();
-                let selisihJam = parseFloat((((skrg.getHours()*60)+skrg.getMinutes()) - ((jM*60)+mM))/60);
-                if(selisihJam < 0) selisihJam = 0;
 
-                let batasDefault = (kObj.tipe === 'full') ? 12 : 6;
-                if (selisihJam > batasDefault && !abs.status_lembur) { selisihJam = batasDefault; }
 
-                abs.jam_pulang = skrg.toTimeString().split(' ')[0]; 
-                abs.status = `${selisihJam.toFixed(2)} Jam Kerja`; 
-                abs.gaji = Math.round(selisihJam * kObj.gaji);
-                db.ref('laundry_abs_log').set(dataAbsenLog);
-            }
+        
+        // PERBARUI: Penghitungan otomatis Gaji Pokok + Gaji Lembur + Uang Makan (Jika >= 6 Jam) + Bensin
+// PERBARUI: Pisahkan Gaji Pokok dengan Benefit Harian di Database
+function prosesPulang(id) {
+    let idx = dataAbsenLog.findIndex(a => a.karyawan_id === id && a.tanggal === hariIni);
+    let kObj = dataKaryawan.find(k => k.id === id);
+    if(idx !== -1 && kObj) {
+        let abs = dataAbsenLog[idx];
+        let [jM, mM] = abs.jam_masuk.split(':').map(Number);
+        let skrg = new Date();
+        let selisihJam = parseFloat((((skrg.getHours()*60)+skrg.getMinutes()) - ((jM*60)+mM))/60);
+        if(selisihJam < 0) selisihJam = 0;
+
+        let batasDefault = (kObj.tipe === 'full') ? 12 : 6;
+        let jamLembur = 0;
+
+        if (abs.batas_jam_kerja && abs.batas_jam_kerja > batasDefault) {
+            if (selisihJam > abs.batas_jam_kerja) selisihJam = abs.batas_jam_kerja;
+            jamLembur = selisihJam - batasDefault; 
+            if (jamLembur < 0) jamLembur = 0;
+        } else {
+            if (selisihJam > batasDefault) { selisihJam = batasDefault; }
+        }
+
+        // --- HITUNG BENEFIT TERPISAH ---
+        let rMakan = kObj.benefit?.uang_makan || 0;
+        let rBensin = kObj.benefit?.uang_bensin || 0;
+        let rLembur = kObj.benefit?.rate_lembur || 0;
+
+        let dapatUangMakan = (selisihJam >= 6) ? rMakan : 0;
+        let dapatUangBensin = rBensin; 
+        let dapatUangLembur = Math.round(jamLembur * rLembur);
+
+        // Gaji Pokok murni durasi kerja reguler
+        let gajiPokok = Math.round((selisihJam - jamLembur) * kObj.gaji);
+        // Total akumulasi benefit hari ini saja
+        let benefitHariIni = dapatUangMakan + dapatUangBensin + dapatUangLembur;
+
+        abs.jam_pulang = skrg.toTimeString().split(' ')[0]; 
+        abs.durasi_nyata = selisihJam.toFixed(2); 
+        abs.status = `${selisihJam.toFixed(2)} Jam Kerja`; 
+        
+        // Simpan terpisah di Firebase agar bisa difilter
+        abs.gaji = gajiPokok; 
+        abs.benefit_terpisah = benefitHariIni; 
+        
+        db.ref('laundry_abs_log').set(dataAbsenLog);
+        alert("Absen Pulang Berhasil! Gaji pokok & benefit tercatat terpisah.");
+    }
+}
         }
 
         function ajukanLemburWhatsApp(id, nama) {
@@ -784,57 +826,105 @@ function ubahGajiKaryawanAdmin(id) {
         }
         function logoutOwner() { localStorage.setItem('login_owner_sukses', "tidak"); document.getElementById('pass-owner').value=''; cekAksesOwner(); }
 
-        function muatLaporanMatriks() {
-            let bulanPilihan = document.getElementById('filter-bulan').value; 
-            let tbody = document.querySelector('#matriks-inventory tbody'); if(!tbody) return; tbody.innerHTML = '';
-            let totalBebanBulanan = 0; let totalOmzetBulanan = 0;
+        
+            // PERBARUI: Penghitungan Matriks Bulanan + Kalkulator Akumulasi Benefit 10 Harian
+function muatLaporanMatriks() {
+    let bulanPilihan = document.getElementById('filter-bulan').value; 
+    let tbody = document.querySelector('#matriks-inventory tbody'); if(!tbody) return; tbody.innerHTML = '';
+    let tbodyBenefit = document.querySelector('#tabel-benefit-10hari tbody'); if(tbodyBenefit) tbodyBenefit.innerHTML = '';
+    
+    let totalBebanBulanan = 0; 
+    let totalOmzetBulanan = 0;
 
-            let trOmzet = document.createElement('tr'); trOmzet.className = "table-success fw-bold";
-            trOmzet.innerHTML = `<td class="col-nama text-start">📈 Omzet (Kotor)</td><td>Kotor</td>`;
-            for(let d=1; d<=31; d++) {
-                let tgl = `${bulanPilihan}-${d<10?'0'+d:d}`;
-                let nominal = dataOmzetHarian.find(o => o.tanggal === tgl)?.nominal || 0;
-                trOmzet.innerHTML += `<td>${nominal > 0 ? nominal.toLocaleString('id-ID') : ''}</td>`;
-                totalOmzetBulanan += nominal;
+    // --- 1. RENDER MATRIKS OMZET & BIAYA BARANG (Tetap seperti logika awalmu) ---
+    let trOmzet = document.createElement('tr'); trOmzet.className = "table-success fw-bold";
+    trOmzet.innerHTML = `<td class="col-nama text-start">📈 Omzet (Kotor)</td><td>Kotor</td>`;
+    for(let d=1; d<=31; d++) {
+        let tgl = `${bulanPilihan}-${d<10?'0'+d:d}`;
+        let nominal = dataOmzetHarian.find(o => o.tanggal === tgl)?.nominal || 0;
+        trOmzet.innerHTML += `<td>${nominal > 0 ? nominal.toLocaleString('id-ID') : ''}</td>`;
+        totalOmzetBulanan += nominal;
+    }
+    trOmzet.innerHTML += `<td>Rp ${totalOmzetBulanan.toLocaleString('id-ID')}</td><td>Pendapatan</td>`;
+    tbody.appendChild(trOmzet);
+
+    dataMasterBarang.forEach(b => {
+        let tr = document.createElement('tr'); tr.innerHTML = `<td class="col-nama text-start">${b.nama}</td><td>Rp ${b.harga}</td>`;
+        let totalQty = 0;
+        for (let d = 1; d <= 31; d++) {
+            let qty = dataOps.filter(o => o.barang === b.nama && o.tanggal === `${bulanPilihan}-${d<10?'0'+d:d}`).reduce((acc, curr) => acc + parseInt(curr.jumlah), 0);
+            tr.innerHTML += `<td>${qty > 0 ? qty : ''}</td>`; totalQty += qty;
+        }
+        let totalBiaya = totalQty * b.harga; totalBebanBulanan += totalBiaya;
+        tr.innerHTML += `<td>Rp ${totalBiaya.toLocaleString('id-ID')}</td><td>Qty: ${totalQty}</td>`;
+        tbody.appendChild(tr);
+    });
+
+    // --- 2. HITUNG GAJI POKOK (DI MATRIKS) & BENEFIT (DI TABEL 10 HARIAN) ---
+    dataKaryawan.forEach(k => {
+        let tr = document.createElement('tr'); tr.className = "table-info";
+        let labelTipe = k.tipe === 'full' ? 'Full' : 'Harian';
+        tr.innerHTML = `<td class="col-nama text-start">💰 ${k.nama} (${labelTipe})</td><td>Rate</td>`;
+        
+        let totalGajiPokokKaryawan = 0;
+        let totalDurasiSebulan = 0;
+
+        // Variabel penampung termin bonus per 10 hari
+        let benefitPeriode1 = 0; // Tgl 1 - 10
+        let benefitPeriode2 = 0; // Tgl 11 - 20
+        let benefitPeriode3 = 0; // Tgl 21 - 31
+
+        for (let d = 1; d <= 31; d++) {
+            let logHariIni = dataAbsenLog.filter(a => a.karyawan_id === k.id && a.tanggal === `${bulanPilihan}-${d<10?'0'+d:d}`);
+            
+            let gajiPokokHariIni = logHariIni.reduce((acc, curr) => acc + (curr.gaji || 0), 0);
+            let benefitHariIni = logHariIni.reduce((acc, curr) => acc + (curr.benefit_terpisah || 0), 0);
+            let durasiHariIni = logHariIni.reduce((acc, curr) => acc + parseFloat(curr.durasi_nyata || 0), 0);
+            
+            // Tampilkan gaji pokok harian murni di tabel matriks utama
+            tr.innerHTML += `<td>${gajiPokokHariIni > 0 ? 'Rp ' + gajiPokokHariIni.toLocaleString('id-ID') + '<br><small class="text-muted">(' + durasiHariIni.toFixed(1) + 'j)</small>' : ''}</td>`;
+            
+            totalGajiPokokKaryawan += gajiPokokHariIni;
+            totalDurasiSebulan += durasiHariIni;
+
+            // Logika Pembagian Kelompok Hari Benefit
+            if (d <= 10) {
+                benefitPeriode1 += benefitHariIni;
+            } else if (d <= 20) {
+                benefitPeriode2 += benefitHariIni;
+            } else {
+                benefitPeriode3 += benefitHariIni;
             }
-            trOmzet.innerHTML += `<td>Rp ${totalOmzetBulanan.toLocaleString('id-ID')}</td><td>Pendapatan</td>`;
-            tbody.appendChild(trOmzet);
+        }
+        
+        // Akumulasi beban laundry bulanan (Pokok + Seluruh Benefit)
+        let totalAllBenefitKaryawan = benefitPeriode1 + benefitPeriode2 + benefitPeriode3;
+        totalBebanBulanan += (totalGajiPokokKaryawan + totalAllBenefitKaryawan);
 
-            dataMasterBarang.forEach(b => {
-                let tr = document.createElement('tr'); tr.innerHTML = `<td class="col-nama text-start">${b.nama}</td><td>Rp ${b.harga}</td>`;
-                let totalQty = 0;
-                for (let d = 1; d <= 31; d++) {
-                    let qty = dataOps.filter(o => o.barang === b.nama && o.tanggal === `${bulanPilihan}-${d<10?'0'+d:d}`).reduce((acc, curr) => acc + parseInt(curr.jumlah), 0);
-                    tr.innerHTML += `<td>${qty > 0 ? qty : ''}</td>`; totalQty += qty;
-                }
-                let totalBiaya = totalQty * b.harga; totalBebanBulanan += totalBiaya;
-                tr.innerHTML += `<td>Rp ${totalBiaya.toLocaleString('id-ID')}</td><td>Qty: ${totalQty}</td>`;
-                tbody.appendChild(tr);
-            });
+        tr.innerHTML += `<td>Rp ${totalGajiPokokKaryawan.toLocaleString('id-ID')}</td><td>Total: ${totalDurasiSebulan.toFixed(1)} Jam</td>`;
+        tbody.appendChild(tr);
 
-            dataKaryawan.forEach(k => {
-                let tr = document.createElement('tr'); tr.className = "table-info";
-                let labelTipe = k.tipe === 'full' ? 'Full' : 'Harian';
-                tr.innerHTML = `<td class="col-nama text-start">💰 ${k.nama} (${labelTipe})</td><td>Rate</td>`;
-                let totalGajiKaryawan = 0;
-                for (let d = 1; d <= 31; d++) {
-                    let gajiHariIni = dataAbsenLog.filter(a => a.karyawan_id === k.id && a.tanggal === `${bulanPilihan}-${d<10?'0'+d:d}`).reduce((acc, curr) => acc + curr.gaji, 0);
-                    tr.innerHTML += `<td>${gajiHariIni > 0 ? gajiHariIni.toLocaleString('id-ID') : ''}</td>`;
-                    totalGajiKaryawan += gajiHariIni;
-                }
-                totalBebanBulanan += totalGajiKaryawan;
-                tr.innerHTML += `<td>Rp ${totalGajiKaryawan.toLocaleString('id-ID')}</td><td>Beban Kerja</td>`;
-                tbody.appendChild(tr);
-            });
+        // --- 3. RENDER DATA KE TABEL 10 HARIAN KHUSUS OWNER ---
+        if(tbodyBenefit) {
+            tbodyBenefit.innerHTML += `
+                <tr>
+                    <td class="text-start"><strong>${k.nama}</strong></td>
+                    <td class="text-primary fw-bold">Rp ${benefitPeriode1.toLocaleString('id-ID')}</td>
+                    <td class="text-primary fw-bold">Rp ${benefitPeriode2.toLocaleString('id-ID')}</td>
+                    <td class="text-primary fw-bold">Rp ${benefitPeriode3.toLocaleString('id-ID')}</td>
+                    <td class="table-dark text-warning fw-bold">Rp ${totalAllBenefitKaryawan.toLocaleString('id-ID')}</td>
+                </tr>`;
+        }
+    });
 
-            let repOmzet = document.getElementById('rep-omzet'); if(repOmzet) repOmzet.innerText = "Rp " + totalOmzetBulanan.toLocaleString('id-ID');
-            let repTotal = document.getElementById('rep-total'); if(repTotal) repTotal.innerText = "Rp " + totalBebanBulanan.toLocaleString('id-ID');
-            let labaBersih = totalOmzetBulanan - totalBebanBulanan;
-            let bersihEl = document.getElementById('rep-bersih');
-            if(bersihEl) {
-                bersihEl.innerText = "Rp " + labaBersih.toLocaleString('id-ID');
-                bersihEl.className = labaBersih >= 0 ? "fw-bold text-primary mb-0" : "fw-bold text-danger mb-0";
-            }
+    // --- 4. UPDATE CARD SUMMARY ATAS ---
+    let repOmzet = document.getElementById('rep-omzet'); if(repOmzet) repOmzet.innerText = "Rp " + totalOmzetBulanan.toLocaleString('id-ID');
+    let repTotal = document.getElementById('rep-total'); if(repTotal) repTotal.innerText = "Rp " + totalBebanBulanan.toLocaleString('id-ID');
+    let labaBersih = totalOmzetBulanan - totalBebanBulanan;
+    let bersihEl = document.getElementById('rep-bersih');
+    if(bersihEl) {
+        bersihEl.innerText = "Rp " + labaBersih.toLocaleString('id-ID');
+        bersihEl.className = labaBersih >= 0 ? "fw-bold text-primary mb-0" : "fw-bold text-danger mb-0";
         }
 
         // INITIAL LOAD RUNNER
