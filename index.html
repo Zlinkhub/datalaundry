@@ -871,6 +871,54 @@ function muatLaporanMatriks() {
         let nominal = dataOmzetHarian.find(o => o.tanggal === tgl)?.nominal || 0;
         trOmzet.innerHTML += `<td>${nominal > 0 ? nominal.toLocaleString('id-ID') : ''}</td>`;
         totalOmzetBulanan += nominal;
+
+
+
+        
+    // KODE BARU: Sisipkan kode ini di dalam bagian akhir fungsi muatLaporanMatriks()
+    let tbodyDurasi = document.querySelector('#matriks-durasi-kerja tbody');
+    if (tbodyDurasi) {
+        tbodyDurasi.innerHTML = ''; // Reset data lama sebelum render ulang
+
+        dataKaryawan.forEach(k => {
+            let tr = document.createElement('tr');
+            let labelTipe = k.tipe === 'full' ? 'Full' : 'Harian';
+            
+            // Kolom nama dan tipe kerja (menggunakan class sticky agar rapi saat digeser)
+            tr.innerHTML = `<td class="col-nama text-start fw-bold">${k.nama}</td><td><span class="badge ${k.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td>`;
+            
+            let totalDurasiKaryawanSebulan = 0;
+
+            // Loop Tanggal 1 s/d 31
+            for (let d = 1; d <= 31; d++) {
+                let tanggalTarget = `${bulanPilihan}-${d < 10 ? '0' + d : d}`;
+                let logHariIni = dataAbsenLog.filter(a => a.karyawan_id === k.id && a.tanggal === tanggalTarget);
+                
+                // Ambil durasi_nyata yang sudah dihitung saat karyawan tap pulang
+                let durasiHariIni = logHariIni.reduce((acc, curr) => acc + parseFloat(curr.durasi_nyata || 0), 0);
+
+                if (durasiHariIni > 0) {
+                    // Jika ada jam kerja, beri latar hijau soft dan tampilkan durasinya
+                    tr.innerHTML += `<td class="table-success fw-bold text-success" style="background-color: #d1e7dd !important;">${durasiHariIni.toFixed(1)}j</td>`;
+                    totalDurasiKaryawanSebulan += durasiHariIni;
+                } else {
+                    // Jika tidak ada absensi pada tanggal tersebut
+                    tr.innerHTML += `<td>-</td>`;
+                }
+            }
+
+            // Tambahkan kolom total akumulasi jam kerja di paling kanan
+            tr.innerHTML += `<td class="bg-dark text-warning fw-bold">${totalDurasiKaryawanSebulan.toFixed(1)} Jam</td>`;
+            tbodyDurasi.appendChild(tr);
+        });
+    }
+
+
+
+
+
+
+        
     }
     trOmzet.innerHTML += `<td>Rp ${totalOmzetBulanan.toLocaleString('id-ID')}</td><td>Pendapatan</td>`;
     tbody.appendChild(trOmzet);
