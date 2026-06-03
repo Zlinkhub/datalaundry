@@ -65,14 +65,36 @@
         /* Sembunyikan navigasi admin secara default sebelum fitur klik rahasia dipicu */
         .admin-nav-item { display: none; }
 
-        /* CSS KHUSUS PRINT LAPORAN OWNER */
+        /* CSS KHUSUS PRINT LAPORAN OWNER (Disesuaikan untuk A4 Lanskap) */
         @media print {
+            @page {
+                size: A4 landscape;
+                margin: 10mm;
+            }
+            body {
+                background: none !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
+            }
             body * { visibility: hidden; }
             #owner, #owner * { visibility: visible; }
             #owner { position: absolute; left: 0; top: 0; width: 100%; }
-            .btn, #login-owner-box, .bg-dark, .nav, #filter-bulan { display: none !important; }
-            /* Menyembunyikan bagian matriks yang di-collapse/minimize saat cetak */
-            .collapse:not(.show) { display: none !important; }
+            
+            /* Menyembunyikan tombol aksi, navigasi, kotak login, dan filter tanggal saat cetak */
+            .btn, #login-owner-box, .bg-dark, .nav, #filter-bulan, #social-footer-container, footer, .bi-arrows-expand { 
+                display: none !important; 
+            }
+            
+            /* Memaksa area ringkasan omzet & matriks laporan tetap terlihat lapang */
+            .row { display: flex !important; flex-wrap: nowrap !important; }
+            .col-md-3 { width: 25% !important; float: left !important; }
+            
+            /* Pengkondisian paksa untuk Tabel Matriks Bulanan agar muat di kertas A4 */
+            .collapse { display: block !important; height: auto !important; visibility: visible !important; }
+            .table-responsive-matrix { overflow: visible !important; }
+            .table-matrix { width: 100% !important; table-layout: auto !important; }
+            .table-matrix th, .table-matrix td { font-size: 9px !important; padding: 2px !important; min-width: auto !important; }
+            .table-matrix .col-nama { position: static !important; background-color: transparent !important; }
         }
     </style>
 </head>
@@ -95,7 +117,7 @@
             <li class="nav-item admin-nav-item" id="nav-admin">
                 <button class="nav-link small" id="tab-admin" data-bs-toggle="pill" data-bs-target="#admin" onclick="cekAksesAdmin()">⚙️ Admin</button>
             </li>
-            <li class="nav-item admin-nav-item" id="nav-owner">
+            <li class="nav-item" id="nav-owner">
                 <button class="nav-link small btn-outline-danger" id="tab-owner" data-bs-toggle="pill" data-bs-target="#owner" onclick="cekAksesOwner()">👑 Owner Panel</button>
             </li>
         </ul>
@@ -452,7 +474,7 @@
                             <i class="bi bi-arrows-expand"></i> Minimize / Tampilkan Data Cetak
                         </button>
                     </div>
-                    
+
                     <div id="collapseMatriksTabel" class="collapse show">
                         <div class="table-responsive-matrix bg-white rounded shadow-sm border mb-5">
                             <table class="table table-bordered table-sm table-matrix mb-0" id="matriks-inventory">
@@ -468,7 +490,7 @@
     </div>
 
     <footer class="text-center py-3 bg-white mt-auto border-top w-100">
-        <p class="mb-0 text-muted small">&copy; 2026 <span id="footer-brand">Laundry Pro-Secure</span>. All Rights Reserved.</p>
+        <p class="mb-0 text-muted small">© 2026 <span id="footer-brand">Laundry Pro-Secure</span>. All Rights Reserved.</p>
         <div id="social-footer-container" class="mt-1 small"></div>
     </footer>
 
@@ -498,20 +520,18 @@
         let dataAbsenLog = []; 
         let dataOmzetHarian = [];
 
-        // Pengembangan 1: Logika hitung klik rahasia
         let hitungKlikLogo = 0;
         let waktuKlikTerakhir = 0;
 
         function pemicuKlikRahasiaAdmin() {
             const skrg = new Date().getTime();
-            if (skrg - waktuKlikTerakhir > 2000) { hitungKlikLogo = 0; } // reset jika jeda terlalu lama (>2 detik)
+            if (skrg - waktuKlikTerakhir > 2000) { hitungKlikLogo = 0; }
             hitungKlikLogo++;
             waktuKlikTerakhir = skrg;
 
             if (hitungKlikLogo === 5) {
                 document.getElementById('nav-admin').style.display = 'block';
-                document.getElementById('nav-owner').style.display = 'block';
-                alert("🔓 Fitur Pengembang Aktif: Panel Admin & Owner Terbuka!");
+                alert("🔓 Fitur Pengembang Aktif: Panel Admin Terbuka!");
                 hitungKlikLogo = 0;
             }
         }
@@ -545,7 +565,6 @@
             }
         });
 
-        // Binding Cloud untuk Pengaturan Tema & Tambahan Media Video / Sosmed
         db.ref('laundry_settings').on('value', (snapshot) => {
             const settings = snapshot.val();
             if (settings) {
@@ -587,7 +606,6 @@
                     document.documentElement.style.setProperty('--bg-overlay', overlayValue);
                     document.getElementById('cfg-bg-overlay').value = settings.bg_overlay;
                 }
-                // Sinkronisasi Video Iklan & Sosmed Realtime
                 if(settings.ad_video) {
                     document.getElementById('cfg-ad-video').value = settings.ad_video;
                     muatVideoPlayerIklan(settings.ad_video);
@@ -599,7 +617,6 @@
             }
         });
 
-        // Mengatur player video iklan agar otomatis berjalan senyap
         function muatVideoPlayerIklan(urlVideo) {
             const wrapper = document.getElementById('video-container-wrapper');
             const mainBox = document.getElementById('video-iklan-box');
@@ -626,7 +643,6 @@
                 const bgImg = document.getElementById('cfg-bg-image').value;
                 const bgOver = document.getElementById('cfg-bg-overlay').value;
 
-                // Ambil data media lama agar tidak terhapus
                 db.ref('laundry_settings').once('value').then((snapshot) => {
                     let dataLama = snapshot.val() || {};
                     db.ref('laundry_settings').set({
@@ -638,7 +654,6 @@
             });
         }
 
-        // Fungsi Baru: Menyimpan video & sosmed ke database cloud
         function simpanPengaturanMediaKhusus() {
             verifikasiSandiAksi(() => {
                 const adVideo = document.getElementById('cfg-ad-video').value;
@@ -861,7 +876,6 @@
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                        // FIX BUG: Perbaikan string literal untuk koordinat GPS
                         let urlMap = `https://maps.google.com/?q=${position.coords.latitude},${position.coords.longitude}`;
                         simpanLogAbsenCloud(id, nama, urlMap);
                     },
@@ -1218,7 +1232,6 @@
                 let tr = document.createElement('tr'); tr.innerHTML = `<td class="col-nama text-start">${b.nama}</td><td>Rp ${b.harga.toLocaleString('id-ID')}</td>`;
                 let totalQty = 0;
                 for (let d = 1; d <= 31; d++) {
-                    // FIX BUG: Ubah curr.james menjadi curr.jumlah
                     let qty = dataOps.filter(o => o.barang === b.nama && o.tanggal === `${bulanPilihan}-${d<10?'0'+d:d}`).reduce((acc, curr) => acc + parseInt(curr.jumlah), 0);
                     let validQty = isNaN(qty) ? 0 : qty; 
                     tr.innerHTML += `<td>${validQty > 0 ? validQty : ''}</td>`; totalQty += validQty;
@@ -1255,8 +1268,6 @@
         }
 
         inisialisasiHeaderMatriks();
-        // Fungsi pemicu bawaan untuk login admin di-comment agar tab sembunyi bekerja
-        // cekAksesAdmin(); 
     </script>
 </body>
 </html>
