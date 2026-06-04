@@ -716,98 +716,6 @@
     return `${String(jam).padStart(2, '0')}:${String(menit).padStart(2, '0')}:${String(detik).padStart(2, '0')}`;
 }
 
-// ... kode fungsi yang sudah ada sebelumnya ...
-
-function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
-    const tokenAPI = "72xuNGqpPwG3VcfsTf84"; 
-    const targetGrupID = "function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
-    // Token yang kamu temukan di dashboard
-    const tokenAPI = "72xuNGqpPwG3VcfsTf84"; 
-    
-    // Ganti dengan ID Grup yang kamu ambil dari list grup Fonnte
-    const targetGrupID = "function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
-    // Token yang kamu temukan di dashboard
-    const tokenAPI = "72xuNGqpPwG3VcfsTf84"; 
-    
-    // Ganti dengan ID Grup yang kamu ambil dari list grup Fonnte
-    const targetGrupID = 120363289366385304@g.us"; 
-
-    const isiPesan = `📢 *NOTIFIKASI ABSENSI LAUNDRY*\n\n` +
-                     `Karyawan: *${namaKaryawan}*\n` +
-                     `Waktu Hadir: *${jamMasuk} WIB*\n` +
-                     `Status: Sudah check-in di lokasi.`;
-
-    const myHeaders = new Headers();
-    myHeaders.append("Authorization", tokenAPI);
-
-    const formdata = new FormData();
-    formdata.append("target", targetGrupID);
-    formdata.append("message", isiPesan);
-
-    const requestOptions = {
-        method: 'POST',
-        headers: myHeaders,
-        body: formdata,
-        redirect: 'follow'
-    };
-
-    fetch("https://api.fonnte.com/send", requestOptions)
-        .then(response => response.json())
-        .then(result => console.log("Notifikasi WA Terkirim:", result))
-        .catch(error => console.error("Gagal kirim WA:", error));
-}
-"; 
-
-    const isiPesan = `📢 *NOTIFIKASI ABSENSI LAUNDRY*\n\n` +
-                     `Karyawan: *${namaKaryawan}*\n` +
-                     `Waktu Hadir: *${jamMasuk} WIB*\n` +
-                     `Status: Sudah check-in di lokasi.`;
-
-    const myHeaders = new Headers();
-    myHeaders.append("Authorization", tokenAPI);
-
-    const formdata = new FormData();
-    formdata.append("target", targetGrupID);
-    formdata.append("message", isiPesan);
-
-    const requestOptions = {
-        method: 'POST',
-        headers: myHeaders,
-        body: formdata,
-        redirect: 'follow'
-    };
-
-    fetch("https://api.fonnte.com/send", requestOptions)
-        .then(response => response.json())
-        .then(result => console.log("Notifikasi WA Terkirim:", result))
-        .catch(error => console.error("Gagal kirim WA:", error));
-}
-"; 
-
-    const isiPesan = `📢 *NOTIFIKASI ABSENSI LAUNDRY*\n\n` +
-                     `Karyawan: *${namaKaryawan}*\n` +
-                     `Waktu Hadir: *${jamMasuk} WIB*\n` +
-                     `Status: Sudah check-in di lokasi.`;
-
-    const myHeaders = new Headers();
-    myHeaders.append("Authorization", tokenAPI);
-
-    const formdata = new FormData();
-    formdata.append("target", targetGrupID); 
-    formdata.append("message", isiPesan);
-
-    const requestOptions = {
-        method: 'POST',
-        headers: myHeaders,
-        body: formdata,
-        redirect: 'follow'
-    };
-
-    fetch("https://api.fonnte.com/send", requestOptions)
-        .then(response => response.json())
-        .then(result => console.log("Notifikasi WA Terkirim:", result))
-        .catch(error => console.error("Gagal kirim WA:", error));
-}
 
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -894,8 +802,6 @@ function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
                 document.getElementById('pin-baru-1').value = ''; document.getElementById('pin-baru-2').value = '';
                 cekStatusTampilanAbsen();
             }
-        }
-
         function tampilkanMatriksAktivitasKerja() {
             let container = document.getElementById('matriks-aktivitas-kerja'); if(!container) return;
             container.innerHTML = '';
