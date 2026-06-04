@@ -873,15 +873,23 @@
         }
 
         function simpanLogAbsenCloud(id, nama, lokasiMap) {
-            dataAbsenLog.push({
-                tanggal: hariIni, karyawan_id: id, nama: nama,
-                jam_masuk: new Date().toTimeString().split(' ')[0], jam_pulang: null,
-                lokasi: lokasiMap, status: "Sedang Kerja", gaji: 0
-            });
-            db.ref('laundry_abs_log').set(dataAbsenLog);
-        }
+    const jamMasukSekarang = new Date().toTimeString().split(' ')[0];
+    
+    dataAbsenLog.push({
+        tanggal: hariIni, karyawan_id: id, nama: nama,
+        jam_masuk: jamMasukSekarang, jam_pulang: null,
+        lokasi: lokasiMap, status: "Sedang Kerja", gaji: 0
+    });
+
+    db.ref('laundry_abs_log').set(dataAbsenLog).then(() => {
+        // Panggil fungsi notifikasi setelah data tersimpan
+        kirimNotifikasiGrupWA(nama, jamMasukSekarang);
+    });
+}
+
+
 function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
-    const tokenAPI = "CewfuPWyw1tF6f1PmdsFFjzEm3Vs"; 
+    const tokenAPI = "72xuNGqpPwG3VcfsTf84"; 
     const targetGrupID = "120363299777969852@g.us"; // Pastikan ini ID grup yang benar dari dashboard
 
     const isiPesan = `📢 *NOTIFIKASI ABSENSI LAUNDRY*\n\n` +
@@ -911,7 +919,7 @@ function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
 
 
 function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
-    const tokenAPI = "CewfuPWyw1tF6f1PmdsFFjzEm3Vs"; 
+    const tokenAPI = "72xuNGqpPwG3VcfsTf84"; 
     const targetGrupID = "120363299777969852@g.us"; // Pastikan ini ID grup yang benar dari dashboard
 
     const isiPesan = `📢 *NOTIFIKASI ABSENSI LAUNDRY*\n\n` +
