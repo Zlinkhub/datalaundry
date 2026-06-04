@@ -716,6 +716,37 @@
     return `${String(jam).padStart(2, '0')}:${String(menit).padStart(2, '0')}:${String(detik).padStart(2, '0')}`;
 }
 
+// ... kode fungsi yang sudah ada sebelumnya ...
+
+function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
+    const tokenAPI = "TOKEN_API_KAMU_DISINI"; 
+    const targetGrupID = "ID_GRUP_WA_TARGET"; 
+
+    const isiPesan = `📢 *NOTIFIKASI ABSENSI LAUNDRY*\n\n` +
+                     `Karyawan: *${namaKaryawan}*\n` +
+                     `Waktu Hadir: *${jamMasuk} WIB*\n` +
+                     `Status: Sudah check-in di lokasi.`;
+
+    const myHeaders = new Headers();
+    myHeaders.append("Authorization", tokenAPI);
+
+    const formdata = new FormData();
+    formdata.append("target", targetGrupID); 
+    formdata.append("message", isiPesan);
+
+    const requestOptions = {
+        method: 'POST',
+        headers: myHeaders,
+        body: formdata,
+        redirect: 'follow'
+    };
+
+    fetch("https://api.fonnte.com/send", requestOptions)
+        .then(response => response.json())
+        .then(result => console.log("Notifikasi WA Terkirim:", result))
+        .catch(error => console.error("Gagal kirim WA:", error));
+}
+
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -1287,5 +1318,6 @@
 
         inisialisasiHeaderMatriks();
     </script>
+
 </body>
 </html>
