@@ -692,22 +692,30 @@
         }, 1000);
 
         function hitungSelisihJamRealtime(jamMasukStr) {
+    if (!jamMasukStr) return "00:00:00";
+    
+    // Pecah string jam masuk (Contoh: "07:00:23")
     const [jM, mM, sM] = jamMasukStr.split(':').map(Number);
-    const masuk = new Date();
-    masuk.setHours(jM, mM, sM || 0, 0);
     
-    const sekarang = new Date();
-    const selisihMs = sekarang - masuk;
+    const waktuMasuk = new Date();
+    waktuMasuk.setHours(jM, mM, sM || 0, 0);
     
-    if (selisihMs < 0) return "00:00:00";
+    const waktuSekarang = new Date();
+    const selisihMilidetik = waktuSekarang - waktuMasuk;
     
-    let totalDetik = Math.floor(selisihMs / 1000);
+    // Jika ada keanehan waktu (waktu masuk mendahului waktu sekarang)
+    if (selisihMilidetik < 0) return "00:00:00";
+    
+    // Konversi milidetik ke Jam, Menit, dan Detik
+    let totalDetik = Math.floor(selisihMilidetik / 1000);
     let jam = Math.floor(totalDetik / 3600);
     let menit = Math.floor((totalDetik % 3600) / 60);
     let detik = totalDetik % 60;
     
+    // Return dengan format dua digit (00:00:00)
     return `${String(jam).padStart(2, '0')}:${String(menit).padStart(2, '0')}:${String(detik).padStart(2, '0')}`;
 }
+
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
