@@ -692,14 +692,22 @@
         }, 1000);
 
         function hitungSelisihJamRealtime(jamMasukStr) {
-            let [jM, mM, sM] = jamMasukStr.split(':').map(Number);
-            let skrg = new Date();
-            let detikMasuk = (jM * 3600) + (mM * 60) + (sM || 0);
-            let detikSkrg = (skrg.getHours() * 3600) + (skrg.getMinutes() * 60) + skrg.getSeconds();
-            let selisihDetik = detikSkrg - detikMasuk;
-            if(selisihDetik < 0) return "0.00";
-            return (selisihDetik / 3600).toFixed(2);
-        }
+    const [jM, mM, sM] = jamMasukStr.split(':').map(Number);
+    const masuk = new Date();
+    masuk.setHours(jM, mM, sM || 0, 0);
+    
+    const sekarang = new Date();
+    const selisihMs = sekarang - masuk;
+    
+    if (selisihMs < 0) return "00:00:00";
+    
+    let totalDetik = Math.floor(selisihMs / 1000);
+    let jam = Math.floor(totalDetik / 3600);
+    let menit = Math.floor((totalDetik % 3600) / 60);
+    let detik = totalDetik % 60;
+    
+    return `${String(jam).padStart(2, '0')}:${String(menit).padStart(2, '0')}:${String(detik).padStart(2, '0')}`;
+}
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
