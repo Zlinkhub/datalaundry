@@ -692,31 +692,14 @@
         }, 1000);
 
         function hitungSelisihJamRealtime(jamMasukStr) {
-    if (!jamMasukStr) return "00:00:00";
-    
-    // Pecah string jam masuk (Contoh: "07:00:23")
-    const [jM, mM, sM] = jamMasukStr.split(':').map(Number);
-    
-    const waktuMasuk = new Date();
-    waktuMasuk.setHours(jM, mM, sM || 0, 0);
-    
-    const waktuSekarang = new Date();
-    const selisihMilidetik = waktuSekarang - waktuMasuk;
-    
-    // Jika ada keanehan waktu (waktu masuk mendahului waktu sekarang)
-    if (selisihMilidetik < 0) return "00:00:00";
-    
-    // Konversi milidetik ke Jam, Menit, dan Detik
-    let totalDetik = Math.floor(selisihMilidetik / 1000);
-    let jam = Math.floor(totalDetik / 3600);
-    let menit = Math.floor((totalDetik % 3600) / 60);
-    let detik = totalDetik % 60;
-    
-    // Return dengan format dua digit (00:00:00)
-    return `${String(jam).padStart(2, '0')}:${String(menit).padStart(2, '0')}:${String(detik).padStart(2, '0')}`;
-}
-
-
+            let [jM, mM, sM] = jamMasukStr.split(':').map(Number);
+            let skrg = new Date();
+            let detikMasuk = (jM * 3600) + (mM * 60) + (sM || 0);
+            let detikSkrg = (skrg.getHours() * 3600) + (skrg.getMinutes() * 60) + skrg.getSeconds();
+            let selisihDetik = detikSkrg - detikMasuk;
+            if(selisihDetik < 0) return "0.00";
+            return (selisihDetik / 3600).toFixed(2);
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -802,6 +785,8 @@
                 document.getElementById('pin-baru-1').value = ''; document.getElementById('pin-baru-2').value = '';
                 cekStatusTampilanAbsen();
             }
+        }
+
         function tampilkanMatriksAktivitasKerja() {
             let container = document.getElementById('matriks-aktivitas-kerja'); if(!container) return;
             container.innerHTML = '';
@@ -1286,6 +1271,5 @@
 
         inisialisasiHeaderMatriks();
     </script>
-
 </body>
 </html>
