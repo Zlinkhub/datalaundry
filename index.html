@@ -880,6 +880,66 @@
             });
             db.ref('laundry_abs_log').set(dataAbsenLog);
         }
+function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
+    const tokenAPI = "CewfuPWyw1tF6f1PmdsFFjzEm3Vs"; 
+    const targetGrupID = "120363299777969852@g.us"; // Pastikan ini ID grup yang benar dari dashboard
+
+    const isiPesan = `📢 *NOTIFIKASI ABSENSI LAUNDRY*\n\n` +
+                     `Karyawan: *${namaKaryawan}*\n` +
+                     `Waktu Hadir: *${jamMasuk} WIB*\n` +
+                     `Status: Sudah check-in di lokasi.`;
+
+    const myHeaders = new Headers();
+    myHeaders.append("Authorization", tokenAPI);
+
+    const formdata = new FormData();
+    formdata.append("target", targetGrupID);
+    formdata.append("message", isiPesan);
+
+    fetch("https://api.fonnte.com/send", {
+        method: 'POST',
+        headers: myHeaders,
+        body: formdata,
+        redirect: 'follow'
+    })
+    .then(response => response.json())
+    .then(result => console.log("Notifikasi WA Terkirim:", result))
+    .catch(error => console.error("Gagal kirim WA:", error));
+}
+
+
+
+
+function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
+    const tokenAPI = "CewfuPWyw1tF6f1PmdsFFjzEm3Vs"; 
+    const targetGrupID = "120363299777969852@g.us"; // Pastikan ini ID grup yang benar dari dashboard
+
+    const isiPesan = `📢 *NOTIFIKASI ABSENSI LAUNDRY*\n\n` +
+                     `Karyawan: *${namaKaryawan}*\n` +
+                     `Waktu Hadir: *${jamMasuk} WIB*\n` +
+                     `Status: Sudah check-in di lokasi.`;
+
+    const myHeaders = new Headers();
+    myHeaders.append("Authorization", tokenAPI);
+
+    const formdata = new FormData();
+    formdata.append("target", targetGrupID);
+    formdata.append("message", isiPesan);
+
+    fetch("https://api.fonnte.com/send", {
+        method: 'POST',
+        headers: myHeaders,
+        body: formdata,
+        redirect: 'follow'
+    })
+    .then(response => response.json())
+    .then(result => console.log("Notifikasi WA Terkirim:", result))
+    .catch(error => console.error("Gagal kirim WA:", error));
+}
+
+
+
+
 
         function prosesPulang(id) {
             let idx = dataAbsenLog.findIndex(a => a.karyawan_id === id && a.tanggal === hariIni);
