@@ -697,9 +697,14 @@
             let detikMasuk = (jM * 3600) + (mM * 60) + (sM || 0);
             let detikSkrg = (skrg.getHours() * 3600) + (skrg.getMinutes() * 60) + skrg.getSeconds();
             let selisihDetik = detikSkrg - detikMasuk;
-            if(selisihDetik < 0) return "0.00";
+            if(selisihDetik < 0) return "00:00:00";
             return (selisihDetik / 3600).toFixed(2);
         }
+let h = Math.floor(selisihDetik / 3600);
+let m = Math.floor((selisihDetik % 3600) / 60);
+let s = selisihDetik % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -741,7 +746,7 @@
         function sesuaikanPlaceholderGaji() {
             let tipe = document.getElementById('kar-tipe').value;
             let inputGajiBulanan = document.getElementById('kar-gaji-bulanan');
-            if(tipe === 'full') { inputGajiBulanan.value = "1800000"; } else { inputGajiBulanan.value = "1000000"; }
+            if(tipe === 'full') { inputGajiBulanan.value = "1800000"; } else { inputGajiBulanan.value = "1560000"; }
         }
 
         function perbaruiDropdownLoginKaryawan() {
