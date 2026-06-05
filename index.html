@@ -691,22 +691,30 @@
             }
         }, 1000);
 
-        function hitungSelisihJamRealtime(jamMasukStr) {
-            let [jM, mM, sM] = jamMasukStr.split(':').map(Number);
-            let skrg = new Date();
-            let detikMasuk = (jM * 3600) + (mM * 60) + (sM || 0);
-            let detikSkrg = (skrg.getHours() * 3600) + (skrg.getMinutes() * 60) + skrg.getSeconds();
-            let selisihDetik = detikSkrg - detikMasuk;
-            if(selisihDetik < 0) return "0.00";
-            return (selisihDetik / 3600).toFixed(2);
-        }
+        function hitungSelisihJamRealtime(jamMasukStr, untukMatriks = false) {
+    let [jM, mM, sM] = jamMasukStr.split(':').map(Number);
+    let skrg = new Date();
+    let detikMasuk = (jM * 3600) + (mM * 60) + (sM || 0);
+    let detikSkrg = (skrg.getHours() * 3600) + (skrg.getMinutes() * 60) + skrg.getSeconds();
+    let selisihDetik = detikSkrg - detikMasuk;
+    
+    if (selisihDetik < 0) return untukMatriks ? "0.00" : "00:00:00";
+    
+    if (untukMatriks) {
+        return (selisihDetik / 3600).toFixed(2);
+    } else {
+        let h = Math.floor(selisihDetik / 3600);
+        let m = Math.floor((selisihDetik % 3600) / 60);
+        let s = selisihDetik % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             if(urlParams.has('approve_lembur_id') && urlParams.has('tgl')) {
                 let idKar = parseInt(urlParams.get('approve_lembur_id'));
                 let tglKerja = urlParams.get('tgl');
-                let jamTambahan = prompt("Owner Terverifikasi! Masukkan berapa jam tambahan lembur yang diizinkan:", "2");
+                let jamTambahan = prompt("Owner Terverifikasi! Masukkan berapa jam tambahan lembur yang diizinkan:", "1");
 
                 if(jamTambahan && !isNaN(jamTambahan)) {
                     let idx = dataAbsenLog.findIndex(a => a.karyawan_id === idKar && a.tanggal === tglKerja);
