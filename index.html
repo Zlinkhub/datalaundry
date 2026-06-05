@@ -836,34 +836,44 @@
                 document.getElementById('ganti-pin-box').classList.add('d-none');
                 document.getElementById('area-kartu-private').classList.add('d-none');
             }
-        }
+        
+        function resetAbsenHariIni(id) {
+    if (confirm("Apakah Anda yakin ingin membatalkan absen masuk hari ini? (Tombol Masuk akan muncul kembali)")) {
+        dataAbsenLog = dataAbsenLog.filter(a => !(a.karyawan_id === id && a.tanggal === hariIni));
+        db.ref('laundry_abs_log').set(dataAbsenLog);
+        alert("Absen berhasil di-reset. Silakan refresh jika diperlukan.");
+    }
+}
 
-        function buatKartuKaryawanPrivate(karyawan) {
-            let logHariIni = dataAbsenLog.find(a => a.karyawan_id === karyawan.id && a.tanggal === hariIni);
-            let kontainer = document.getElementById('kontainer-kartu-karyawan'); if(!kontainer) return;
-            let btnAksi = '';
-            if(!logHariIni) {
-                btnAksi = `<button class="btn btn-success btn-sm w-100 mb-2" onclick="prosesAbsenMasuk(${karyawan.id}, '${karyawan.nama}')">Tap Masuk Kerja 🟢</button>`;
-            } else if(logHariIni && !logHariIni.jam_pulang) {
-                btnAksi = `
-                    <div class="alert alert-info py-2 small mb-2 text-center">
-                        Jam Masuk: <strong>${logHariIni.jam_masuk}</strong><br>
-                        Durasi Berjalan: <strong id="live-durasi-kerja">${hitungSelisihJamRealtime(logHariIni.jam_masuk)} Jam</strong>
-                    </div>
-                    <button class="btn btn-danger btn-sm w-100 mb-2" onclick="prosesPulang(${karyawan.id})">Tap Pulang Kerja 🔴</button>
-                    <button class="btn btn-warning btn-sm w-100 small" onclick="ajukanLemburWhatsApp(${karyawan.id}, '${karyawan.nama}')">⚡ Ajukan Lembur ke Owner</button>
-                `;
-            } else {
-                btnAksi = `<div class="alert alert-success py-2 small text-center mb-0">Selesai Kerja Hari Ini 🎉 (${logHariIni.status})</div>`;
-            }
-            kontainer.innerHTML = `
-                <div class="karyawan-card p-3">
-                    <h5 class="fw-bold mb-1 text-center">${karyawan.nama}</h5>
-                    <p class="text-muted text-center small mb-3">Tipe: ${karyawan.tipe === 'full' ? 'Full Kerja (12 Jam)' : 'Harian (6 Jam)'} <br> Rate Efektif: Rp ${Math.round(karyawan.gaji).toLocaleString('id-ID')}/jam</p>
-                    ${btnAksi}
-                </div>
-            `;
-        }
+function buatKartuKaryawanPrivate(karyawan) {
+    let logHariIni = dataAbsenLog.find(a => a.karyawan_id === karyawan.id && a.tanggal === hariIni);
+    let kontainer = document.getElementById('kontainer-kartu-karyawan'); 
+    if(!kontainer) return;
+    
+    let btnAksi = '';
+    if(!logHariIni) {
+        btnAksi = `<button class="btn btn-success btn-sm w-100 mb-2" onclick="prosesAbsenMasuk(${karyawan.id}, '${karyawan.nama}')">Tap Masuk Kerja 🟢</button>`;
+    } else if(logHariIni && !logHariIni.jam_pulang) {
+        btnAksi = `
+            <div class="alert alert-info py-2 small mb-2 text-center">
+                Jam Masuk: <strong>${logHariIni.jam_masuk}</strong><br>
+                Durasi Berjalan: <strong id="live-durasi-kerja">${hitungSelisihJamRealtime(logHariIni.jam_masuk)}</strong>
+            </div>
+            <button class="btn btn-danger btn-sm w-100 mb-2" onclick="prosesPulang(${karyawan.id})">Tap Pulang Kerja 🔴</button>
+            <button class="btn btn-warning btn-sm w-100 mb-2 small" onclick="ajukanLemburWhatsApp(${karyawan.id}, '${karyawan.nama}')">⚡ Ajukan Lembur ke Owner</button>
+            <button class="btn btn-outline-secondary btn-xs w-100 mt-1" onclick="resetAbsenHariIni(${karyawan.id})">🔄 Reset Absen Masuk</button>
+        `;
+    } else {
+        btnAksi = `<div class="alert alert-success py-2 small text-center mb-0">Selesai Kerja Hari Ini 🎉 (${logHariIni.status})</div>`;
+    }
+    kontainer.innerHTML = `
+        <div class="karyawan-card p-3">
+            <h5 class="fw-bold mb-1 text-center">${karyawan.nama}</h5>
+            <p class="text-muted text-center small mb-3">Tipe: ${karyawan.tipe === 'full' ? 'Full Kerja (12 Jam)' : 'Harian (6 Jam)'} <br> Rate Efektif: Rp ${Math.round(karyawan.gaji).toLocaleString('id-ID')}/jam</p>
+            ${btnAksi}
+        </div>
+    `;
+}
 
         function prosesAbsenMasuk(id, nama) {
             if (navigator.geolocation) {
