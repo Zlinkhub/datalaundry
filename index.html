@@ -697,7 +697,7 @@
             let detikMasuk = (jM * 3600) + (mM * 60) + (sM || 0);
             let detikSkrg = (skrg.getHours() * 3600) + (skrg.getMinutes() * 60) + skrg.getSeconds();
             let selisihDetik = detikSkrg - detikMasuk;
-            if(selisihDetik < 0) return "jM:mM:sM";
+            if(selisihDetik < 0) return "jM, mM, sM";
             return (selisihDetik / 3600).toFixed(2);
         }
 
