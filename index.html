@@ -691,31 +691,22 @@
             }
         }, 1000);
 
-        function hitungSelisihJamRealtime(jamMasukStr, untukMatriks = false) {
-    let [jM, mM, sM] = jamMasukStr.split(':').map(Number);
-    let skrg = new Date();
-    let detikMasuk = (jM * 3600) + (mM * 60) + (sM || 0);
-    let detikSkrg = (skrg.getHours() * 3600) + (skrg.getMinutes() * 60) + skrg.getSeconds();
-    let selisihDetik = detikSkrg - detikMasuk;
-    
-    if (selisihDetik < 0) return untukMatriks ? "0.00" : "00:00:00";
-    
-    if (untukMatriks) {
-        // Tetap kembalikan desimal untuk perhitungan matriks owner
-        return (selisihDetik / 3600).toFixed(2);
-    } else {
-        // Format HH:MM:SS untuk tampilan live di kartu karyawan
-        let h = Math.floor(selisihDetik / 3600);
-        let m = Math.floor((selisihDetik % 3600) / 60);
-        let s = selisihDetik % 60;
-        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }
+        function hitungSelisihJamRealtime(jamMasukStr) {
+            let [jM, mM, sM] = jamMasukStr.split(':').map(Number);
+            let skrg = new Date();
+            let detikMasuk = (jM * 3600) + (mM * 60) + (sM || 0);
+            let detikSkrg = (skrg.getHours() * 3600) + (skrg.getMinutes() * 60) + skrg.getSeconds();
+            let selisihDetik = detikSkrg - detikMasuk;
+            if(selisihDetik < 0) return "0.00";
+            return (selisihDetik / 3600).toFixed(2);
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             if(urlParams.has('approve_lembur_id') && urlParams.has('tgl')) {
                 let idKar = parseInt(urlParams.get('approve_lembur_id'));
                 let tglKerja = urlParams.get('tgl');
-                let jamTambahan = prompt("Owner Terverifikasi! Masukkan berapa jam tambahan lembur yang diizinkan:", "1");
+                let jamTambahan = prompt("Owner Terverifikasi! Masukkan berapa jam tambahan lembur yang diizinkan:", "2");
 
                 if(jamTambahan && !isNaN(jamTambahan)) {
                     let idx = dataAbsenLog.findIndex(a => a.karyawan_id === idKar && a.tanggal === tglKerja);
@@ -837,44 +828,34 @@
                 document.getElementById('ganti-pin-box').classList.add('d-none');
                 document.getElementById('area-kartu-private').classList.add('d-none');
             }
-        
-        function resetAbsenHariIni(id) {
-    if (confirm("Apakah Anda yakin ingin membatalkan absen masuk hari ini? (Tombol Masuk akan muncul kembali)")) {
-        dataAbsenLog = dataAbsenLog.filter(a => !(a.karyawan_id === id && a.tanggal === hariIni));
-        db.ref('laundry_abs_log').set(dataAbsenLog);
-        alert("Absen berhasil di-reset. Silakan refresh jika diperlukan.");
-    }
-}
+        }
 
-function buatKartuKaryawanPrivate(karyawan) {
-    let logHariIni = dataAbsenLog.find(a => a.karyawan_id === karyawan.id && a.tanggal === hariIni);
-    let kontainer = document.getElementById('kontainer-kartu-karyawan'); 
-    if(!kontainer) return;
-    
-    let btnAksi = '';
-    if(!logHariIni) {
-        btnAksi = `<button class="btn btn-success btn-sm w-100 mb-2" onclick="prosesAbsenMasuk(${karyawan.id}, '${karyawan.nama}')">Tap Masuk Kerja 🟢</button>`;
-    } else if(logHariIni && !logHariIni.jam_pulang) {
-        btnAksi = `
-            <div class="alert alert-info py-2 small mb-2 text-center">
-                Jam Masuk: <strong>${logHariIni.jam_masuk}</strong><br>
-                Durasi Berjalan: <strong id="live-durasi-kerja">${hitungSelisihJamRealtime(logHariIni.jam_masuk)}</strong>
-            </div>
-            <button class="btn btn-danger btn-sm w-100 mb-2" onclick="prosesPulang(${karyawan.id})">Tap Pulang Kerja 🔴</button>
-            <button class="btn btn-warning btn-sm w-100 mb-2 small" onclick="ajukanLemburWhatsApp(${karyawan.id}, '${karyawan.nama}')">⚡ Ajukan Lembur ke Owner</button>
-            <button class="btn btn-outline-secondary btn-xs w-100 mt-1" onclick="resetAbsenHariIni(${karyawan.id})">🔄 Reset Absen Masuk</button>
-        `;
-    } else {
-        btnAksi = `<div class="alert alert-success py-2 small text-center mb-0">Selesai Kerja Hari Ini 🎉 (${logHariIni.status})</div>`;
-    }
-    kontainer.innerHTML = `
-        <div class="karyawan-card p-3">
-            <h5 class="fw-bold mb-1 text-center">${karyawan.nama}</h5>
-            <p class="text-muted text-center small mb-3">Tipe: ${karyawan.tipe === 'full' ? 'Full Kerja (12 Jam)' : 'Harian (6 Jam)'} <br> Rate Efektif: Rp ${Math.round(karyawan.gaji).toLocaleString('id-ID')}/jam</p>
-            ${btnAksi}
-        </div>
-    `;
-}
+        function buatKartuKaryawanPrivate(karyawan) {
+            let logHariIni = dataAbsenLog.find(a => a.karyawan_id === karyawan.id && a.tanggal === hariIni);
+            let kontainer = document.getElementById('kontainer-kartu-karyawan'); if(!kontainer) return;
+            let btnAksi = '';
+            if(!logHariIni) {
+                btnAksi = `<button class="btn btn-success btn-sm w-100 mb-2" onclick="prosesAbsenMasuk(${karyawan.id}, '${karyawan.nama}')">Tap Masuk Kerja 🟢</button>`;
+            } else if(logHariIni && !logHariIni.jam_pulang) {
+                btnAksi = `
+                    <div class="alert alert-info py-2 small mb-2 text-center">
+                        Jam Masuk: <strong>${logHariIni.jam_masuk}</strong><br>
+                        Durasi Berjalan: <strong id="live-durasi-kerja">${hitungSelisihJamRealtime(logHariIni.jam_masuk)} Jam</strong>
+                    </div>
+                    <button class="btn btn-danger btn-sm w-100 mb-2" onclick="prosesPulang(${karyawan.id})">Tap Pulang Kerja 🔴</button>
+                    <button class="btn btn-warning btn-sm w-100 small" onclick="ajukanLemburWhatsApp(${karyawan.id}, '${karyawan.nama}')">⚡ Ajukan Lembur ke Owner</button>
+                `;
+            } else {
+                btnAksi = `<div class="alert alert-success py-2 small text-center mb-0">Selesai Kerja Hari Ini 🎉 (${logHariIni.status})</div>`;
+            }
+            kontainer.innerHTML = `
+                <div class="karyawan-card p-3">
+                    <h5 class="fw-bold mb-1 text-center">${karyawan.nama}</h5>
+                    <p class="text-muted text-center small mb-3">Tipe: ${karyawan.tipe === 'full' ? 'Full Kerja (12 Jam)' : 'Harian (6 Jam)'} <br> Rate Efektif: Rp ${Math.round(karyawan.gaji).toLocaleString('id-ID')}/jam</p>
+                    ${btnAksi}
+                </div>
+            `;
+        }
 
         function prosesAbsenMasuk(id, nama) {
             if (navigator.geolocation) {
