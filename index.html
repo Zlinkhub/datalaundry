@@ -710,9 +710,6 @@
         let s = selisihDetik % 60;
         return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
-}
-
-
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             if(urlParams.has('approve_lembur_id') && urlParams.has('tgl')) {
