@@ -701,13 +701,17 @@
     if (selisihDetik < 0) return untukMatriks ? "0.00" : "00:00:00";
     
     if (untukMatriks) {
+        // Tetap kembalikan desimal untuk perhitungan matriks owner
         return (selisihDetik / 3600).toFixed(2);
     } else {
+        // Format HH:MM:SS untuk tampilan live di kartu karyawan
         let h = Math.floor(selisihDetik / 3600);
         let m = Math.floor((selisihDetik % 3600) / 60);
         let s = selisihDetik % 60;
         return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
+}
+
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
