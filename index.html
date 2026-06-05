@@ -700,11 +700,6 @@
             if(selisihDetik < 0) return "00:00:00";
             return (selisihDetik / 3600).toFixed(2);
         }
-let h = Math.floor(selisihDetik / 3600);
-let m = Math.floor((selisihDetik % 3600) / 60);
-let s = selisihDetik % 60;
-        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
