@@ -1003,36 +1003,40 @@ function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
     }
 }
 
-// 5. FUNGSI BARU KHUSUS UNTUK KIRIM NOTIFIKASI PULANG KE WA
 function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
-    const tokenAPI = "72xuNGqpPwG3VcfsTf84"; // Token Fonnte Anda
-    const targetGrupID = "120363299777969852@g.us"; // ID Grup WhatsApp Anda
+    const tokenAPI = "72xuNGqpPwG3VcfsTf84"; 
+    const targetGrupID = "120363299777969852@g.us"; 
 
-    // Struktur pesan teks WhatsApp menggunakan format Markdown (*teks tebal*)
     const isiPesan = `🛑 *NOTIFIKASI ABSENSI LAUNDRY (PULANG)*\n\n` +
                      `Karyawan: *${namaKaryawan}*\n` +
                      `Waktu Pulang: *${jamPulang} WIB*\n` +
                      `Total Durasi: *${durasiKerja}*\n\n` +
-                     `Status: Selesai tugas hari ini. Terima kasih atas kerja kerasnya! ✨`;
-
-    const myHeaders = new Headers();
-    myHeaders.append("Authorization", tokenAPI);
+                     `Status: Selesai tugas hari ini.`;
 
     const formdata = new FormData();
     formdata.append("target", targetGrupID);
     formdata.append("message", isiPesan);
 
-    // Kirim request ke API Fonnte
+    console.log("Mencoba kirim WA ke:", targetGrupID); // CEK DI CONSOLE
+
     fetch("https://api.fonnte.com/send", {
         method: 'POST',
-        headers: myHeaders,
-        body: formdata,
-        redirect: 'follow'
+        headers: { "Authorization": tokenAPI },
+        body: formdata
     })
     .then(response => response.json())
-    .then(result => console.log("Notifikasi Pulang WA Terkirim:", result))
-    .catch(error => console.error("Gagal mengirim WA Pulang:", error));
+    .then(result => {
+        console.log("Hasil Fonnte:", result); // SANGAT PENTING: Lihat apa jawaban dari server
+        if (result.status === false) {
+            alert("Gagal kirim WA: " + result.reason);
+        }
+    })
+    .catch(error => {
+        console.error("Eror Koneksi:", error);
+        alert("Eror koneksi ke Fonnte!");
+    });
 }
+
 
 
 
