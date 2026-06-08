@@ -964,24 +964,50 @@ function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
 
 
         function prosesPulang(id) {
-            let idx = dataAbsenLog.findIndex(a => a.karyawan_id === id && a.tanggal === hariIni);
-            let kObj = dataKaryawan.find(k => k.id === id);
-            if(idx !== -1 && kObj) {
-                let abs = dataAbsenLog[idx];
-                let [jM, mM] = abs.jam_masuk.split(':').map(Number);
-                let skrg = new Date();
-                let selisihJam = parseFloat((((skrg.getHours()*60)+skrg.getMinutes()) - ((jM*60)+mM))/60);
-                if(selisihJam < 0) selisihJam = 0;
+    // 1. Ambil tombol yang diklik
+    const btn = event.target;
+    
+    // 2. Aktifkan loading agar tombol tidak bisa diklik lagi
+    toggleLoadingUI(btn, true); 
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memproses...'; // Kustomisasi pesan untuk pulang
 
-                let batasDefault = (kObj.tipe === 'full') ? 12 : 6;
-                if (selisihJam > batasDefault && !abs.status_lembur) { selisihJam = batasDefault; }
+    let idx = dataAbsenLog.findIndex(a => a.karyawan_id === id && a.tanggal === hariIni);
+    let kObj = dataKaryawan.find(k => k.id === id);
 
-                abs.jam_pulang = skrg.toTimeString().split(' ')[0]; 
-                abs.status = `${selisihJam.toFixed(2)} Jam Kerja`; 
-                abs.gaji = Math.round(selisihJam * kObj.gaji);
-                db.ref('laundry_abs_log').set(dataAbsenLog);
-            }
-        }
+    if(idx !== -1 && kObj) {
+        let abs = dataAbsenLog[idx];
+        let [jM, mM] = abs.jam_masuk.split(':').map(Number);
+        let skrg = new Date();
+        let selisihJam = parseFloat((((skrg.getHours()*60)+skrg.getMinutes()) - ((jM*60)+mM))/60);
+        if(selisihJam < 0) selisihJam = 0;
+
+        let batasDefault = (kObj.tipe === 'full') ? 12 : 6;
+        if (selisihJam > batasDefault && !abs.status_lembur) { selisihJam = batasDefault; }
+
+        abs.jam_pulang = skrg.toTimeString().split(' ')[0]; 
+        abs.status = `${selisihJam.toFixed(2)} Jam Kerja`; 
+        abs.gaji = Math.round(selisihJam * kObj.gaji);
+
+        // 3. Simpan ke Firebase
+        db.ref('laundry_abs_log').set(dataAbsenLog).then(() => {
+            alert("Berhasil Tap Pulang!");
+            // Tidak perlu toggleLoadingUI(false) karena kartu akan refresh otomatis
+        });
+    } else {
+        // Jika terjadi error, kembalikan tombol ke kondisi semula
+        toggleLoadingUI(btn, false);
+        btn.innerHTML = 'Tap Pulang Kerja 🔴';
+        alert("Gagal memproses data.");
+    }
+}
+
+
+
+
+
+
+
+
 
         function ajukanLemburWhatsApp(id, nama) {
             let linkKonfirmasiPersetujuan = `${window.location.href.split('?')[0]}?approve_lembur_id=${id}&tgl=${hariIni}`;
