@@ -858,19 +858,31 @@
         }
 
         function prosesAbsenMasuk(id, nama) {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        let urlMap = `https://maps.google.com/?q=${position.coords.latitude},${position.coords.longitude}`;
-                        simpanLogAbsenCloud(id, nama, urlMap);
-                    },
-                    (error) => {
-                        alert("⚠️ Lokasi GPS diblokir/gagal. Tetap absen tanpa tag peta.");
-                        simpanLogAbsenCloud(id, nama, "No GPS Access");
-                    }
-                );
-            } else { simpanLogAbsenCloud(id, nama, "Not Supported"); }
-        }
+    // 1. Ambil tombol yang diklik
+    const btn = event.target;
+    
+    // 2. Aktifkan status loading (disable tombol)
+    toggleLoadingUI(btn, true); 
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                let urlMap = `https://maps.google.com/?q=${position.coords.latitude},${position.coords.longitude}`;
+                simpanLogAbsenCloud(id, nama, urlMap);
+            },
+            (error) => {
+                alert("⚠️ Lokasi GPS diblokir.");
+                // 3. Jika gagal, kembalikan tombol ke kondisi semula
+                toggleLoadingUI(btn, false); 
+                simpanLogAbsenCloud(id, nama, "No GPS Access");
+            }
+        );
+    } else { 
+        toggleLoadingUI(btn, false);
+        simpanLogAbsenCloud(id, nama, "Not Supported"); 
+    }
+}
+
 
         function simpanLogAbsenCloud(id, nama, lokasiMap) {
     const jamMasukSekarang = new Date().toTimeString().split(' ')[0];
