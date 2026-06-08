@@ -108,7 +108,7 @@
             .table-matrix { width: 100% !important; table-layout: auto !important; }
             .table-matrix th, .table-matrix td { font-size: 9px !important; padding: 2px !important; min-width: auto !important; }
             .table-matrix .col-nama { position: static !important; background-color: transparent !important; }
-            
+
             /* Pastikan baris karyawan terlihat saat diprint meskipun sedang di-minimize di web */
             .row-matriks-karyawan.d-none { display: table-row !important; visibility: visible !important; }
         }
@@ -860,7 +860,7 @@
         function prosesAbsenMasuk(id, nama) {
     // 1. Ambil tombol yang diklik
     const btn = event.target;
-    
+
     // 2. Aktifkan status loading (disable tombol)
     toggleLoadingUI(btn, true); 
 
@@ -886,7 +886,7 @@
 
         function simpanLogAbsenCloud(id, nama, lokasiMap) {
     const jamMasukSekarang = new Date().toTimeString().split(' ')[0];
-    
+
     dataAbsenLog.push({
         tanggal: hariIni, karyawan_id: id, nama: nama,
         jam_masuk: jamMasukSekarang, jam_pulang: null,
@@ -931,7 +931,7 @@ function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
         function prosesPulang(id) {
     // 1. Ambil elemen tombol yang sedang diklik oleh user
     const btn = event.target;
-    
+
     // 2. Aktifkan UI Loading (Tombol jadi disable & berputar)
     toggleLoadingUI(btn, true, 'Tap Pulang Kerja 🔴'); 
 
@@ -957,7 +957,7 @@ function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
         // 3. Simpan data terbaru ke Firebase Cloud
         db.ref('laundry_abs_log').set(dataAbsenLog).then(() => {
             alert("🎉 Berhasil Tap Pulang Kerja!");
-            
+
             // 4. PICU NOTIFIKASI WHATSAPP UNTUK GRUP KETIKA BERHASIL SIMPAN
             kirimNotifikasiPulangGrupWA(abs.nama, jamPulangSekarang, abs.status);
         });
@@ -1178,7 +1178,7 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
             statusKaryawanMinimizeWeb = !statusKaryawanMinimizeWeb;
             const rowsKaryawan = document.querySelectorAll('.row-matriks-karyawan');
             const btnToggle = document.getElementById('btn-toggle-karyawan');
-            
+
             rowsKaryawan.forEach(row => {
                 if(statusKaryawanMinimizeWeb) {
                     row.classList.add('d-none');
@@ -1295,13 +1295,51 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
             this.reset();
         });
 
+        function tampilkanMasterBarang() {
+            let html = '';
+            dataMasterBarang.forEach((item) => {
+                html += `<tr><td>${item.nama}</td><td>Rp ${item.harga.toLocaleString('id-ID')}</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahHargaBarangAdmin(${item.id})">✏️ Harga</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataMasterBarang = dataMasterBarang.filter(b => b.id !== ${item.id}); db.ref('laundry_mst_brg').set(dataMasterBarang); })">Hapus</button></td></tr>`;
+            });
+            let tbody = document.querySelector('#tabel-master-barang tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="3">Kosong</td></tr>';
+        }
+
+       
+
+
+
+
+
+
+
+
+
+ document.getElementById('form-karyawan').addEventListener('submit', function(e){
+            e.preventDefault();
+            let tipe = document.getElementById('kar-tipe').value;
+            let gajiBulanan = parseInt(document.getElementById('kar-gaji-bulanan').value);
+            let totalJamKerjaSebulan = (tipe === 'full') ? (26 * 12) : (26 * 6);
+            let ratePerJamPilihan = Math.round(gajiBulanan / totalJamKerjaSebulan);
+
+            let uangMakan = parseInt(prompt("Nominal Uang Makan/hari:", "0")) || 0;
+            let uangBensin = parseInt(prompt("Nominal Uang Bensin/hari:", "0")) || 0;
+            let rateLembur = parseInt(prompt("Nominal Gaji Lembur/jam:", "5000")) || 0;
+
+            dataKaryawan.push({ 
+                id: Date.now(), nama: document.getElementById('kar-nama').value, tipe: tipe, gaji: ratePerJamPilihan, pin: "1234",
+                benefit: { uang_makan: uangMakan, uang_bensin: uangBensin, rate_lembur: rateLembur }
+            });
+            db.ref('laundry_kar').set(dataKaryawan);
+            this.reset(); sesuaikanPlaceholderGaji();
+        });
+
+
 
 
 
 
 function resetAbsenKaryawan(karyawanId, namaKaryawan) {
     // 1. Autentikasi PIN Admin
-    const PIN_ADMIN = "123"; // Sesuaikan dengan PIN Anda
+    const PIN_ADMIN = "123456"; // Sesuaikan dengan PIN Anda
     let inputPin = prompt("Masukkan PIN Admin untuk Reset:");
 
     if (inputPin !== PIN_ADMIN) {
@@ -1335,43 +1373,16 @@ function resetAbsenKaryawan(karyawanId, namaKaryawan) {
         }
     }
 }
-        
-});
-            let tbody = document.querySelector('#tabel-master-barang tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="3">Kosong</td></tr>';
-        }
 
-        document.getElementById('form-karyawan').addEventListener('submit', function(e){
-            e.preventDefault();
-            let tipe = document.getElementById('kar-tipe').value;
-            let gajiBulanan = parseInt(document.getElementById('kar-gaji-bulanan').value);
-            let totalJamKerjaSebulan = (tipe === 'full') ? (26 * 12) : (26 * 6);
-            let ratePerJamPilihan = Math.round(gajiBulanan / totalJamKerjaSebulan);
 
-            let uangMakan = parseInt(prompt("Nominal Uang Makan/hari:", "0")) || 0;
-            let uangBensin = parseInt(prompt("Nominal Uang Bensin/hari:", "0")) || 0;
-            let rateLembur = parseInt(prompt("Nominal Gaji Lembur/jam:", "5000")) || 0;
 
-            dataKaryawan.push({ 
-                id: Date.now(), nama: document.getElementById('kar-nama').value, tipe: tipe, gaji: ratePerJamPilihan, pin: "123",
-                benefit: { uang_makan: uangMakan, uang_bensin: uangBensin, rate_lembur: rateLembur }
-            });
-            db.ref('laundry_kar').set(dataKaryawan);
-            this.reset(); sesuaikanPlaceholderGaji();
-        });
 
         function tampilkanMasterKaryawan() {
             let html = '';
             dataKaryawan.forEach((item) => {
                 let labelTipe = item.tipe === 'full' ? 'Full (12j)' : 'Harian (6j)';
-                html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahGajiKaryawanAdmin(${item.id})">✏️ Gaji</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button></td></tr>`;
 
 
-
-
-function tampilkanMasterBarang() {
-            let html = '';
-            dataMasterBarang.forEach((item) => {
-                html += `<tr><td>${item.nama}</td><td>Rp ${item.harga.toLocaleString('id-ID')}</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahHargaBarangAdmin(${item.id})">✏️ Harga</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataMasterBarang = dataMasterBarang.filter(b => b.id !== ${item.id}); db.ref('laundry_mst_brg').set(dataMasterBarang); })">Hapus</button></td></tr>`;
 // Di dalam loop tampilkanMasterKaryawan
 html += `<tr>
     <td>${item.nama}</td>
@@ -1382,7 +1393,7 @@ html += `<tr>
     </td>
 </tr>`;
 
-
+                html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahGajiKaryawanAdmin(${item.id})">✏️ Gaji</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button></td></tr>`;
             });
             let tbody = document.querySelector('#tabel-master-karyawan tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
         }
