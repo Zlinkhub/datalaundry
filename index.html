@@ -1368,24 +1368,7 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
             this.reset(); sesuaikanPlaceholderGaji();
         });
 
-        function tampilkanMasterKaryawan() {
-            let html = '';
-dataKaryawan.forEach((item) => {
-    html += `<tr>
-        <td>${item.nama}</td>
-        <td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td>
-        <td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td>
-        <td>
-            <button class="btn btn-warning btn-sm" onclick="resetAbsenKaryawan('${item.id}', '${item.nama}')">
-                🔄 Reset
-            </button>
-            <button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahGajiKaryawanAdmin(${item.id})">✏️ Gaji</button>
-            </td>
-    </tr>`;
-
-
-
-
+        
 
 
 
