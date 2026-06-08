@@ -1335,24 +1335,7 @@ function resetAbsenKaryawan(karyawanId, namaKaryawan) {
         }
     }
 }
-
-
-
-
-
-        function tampilkanMasterBarang() {
-            let html = '';
-            dataMasterBarang.forEach((item) => {
-                html += `<tr><td>${item.nama}</td><td>Rp ${item.harga.toLocaleString('id-ID')}</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahHargaBarangAdmin(${item.id})">✏️ Harga</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataMasterBarang = dataMasterBarang.filter(b => b.id !== ${item.id}); db.ref('laundry_mst_brg').set(dataMasterBarang); })">Hapus</button></td></tr>`;
-// Di dalam loop tampilkanMasterKaryawan
-html += `<tr>
-    <td>${item.nama}</td>
-    <td>
-        <button class="btn btn-warning btn-sm" onclick="resetAbsenKaryawan('${item.id}', '${item.nama}')">
-            🔄 Reset Masuk
-        </button>
-    </td>
-</tr>`;
+        
 });
             let tbody = document.querySelector('#tabel-master-barang tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="3">Kosong</td></tr>';
         }
@@ -1381,6 +1364,25 @@ html += `<tr>
             dataKaryawan.forEach((item) => {
                 let labelTipe = item.tipe === 'full' ? 'Full (12j)' : 'Harian (6j)';
                 html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahGajiKaryawanAdmin(${item.id})">✏️ Gaji</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button></td></tr>`;
+
+
+
+
+function tampilkanMasterBarang() {
+            let html = '';
+            dataMasterBarang.forEach((item) => {
+                html += `<tr><td>${item.nama}</td><td>Rp ${item.harga.toLocaleString('id-ID')}</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahHargaBarangAdmin(${item.id})">✏️ Harga</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataMasterBarang = dataMasterBarang.filter(b => b.id !== ${item.id}); db.ref('laundry_mst_brg').set(dataMasterBarang); })">Hapus</button></td></tr>`;
+// Di dalam loop tampilkanMasterKaryawan
+html += `<tr>
+    <td>${item.nama}</td>
+    <td>
+        <button class="btn btn-warning btn-sm" onclick="resetAbsenKaryawan('${item.id}', '${item.nama}')">
+            🔄 Reset Masuk
+        </button>
+    </td>
+</tr>`;
+
+
             });
             let tbody = document.querySelector('#tabel-master-karyawan tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
         }
