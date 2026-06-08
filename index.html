@@ -1325,7 +1325,7 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
             let rateLembur = parseInt(prompt("Nominal Gaji Lembur/jam:", "5000")) || 0;
 
             dataKaryawan.push({ 
-                id: Date.now(), nama: document.getElementById('kar-nama').value, tipe: tipe, gaji: ratePerJamPilihan, pin: "1234",
+                id: Date.now(), nama: document.getElementById('kar-nama').value, tipe: tipe, gaji: ratePerJamPilihan, pin: "123",
                 benefit: { uang_makan: uangMakan, uang_bensin: uangBensin, rate_lembur: rateLembur }
             });
             db.ref('laundry_kar').set(dataKaryawan);
@@ -1339,7 +1339,7 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
 
 function resetAbsenKaryawan(karyawanId, namaKaryawan) {
     // 1. Autentikasi PIN Admin
-    const PIN_ADMIN = "123456"; // Sesuaikan dengan PIN Anda
+    const PIN_ADMIN = "123"; // Sesuaikan dengan PIN Anda
     let inputPin = prompt("Masukkan PIN Admin untuk Reset:");
 
     if (inputPin !== PIN_ADMIN) {
