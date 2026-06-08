@@ -1295,11 +1295,65 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
             this.reset();
         });
 
+
+
+
+
+function resetAbsenKaryawan(karyawanId, namaKaryawan) {
+    // 1. Autentikasi PIN Admin
+    const PIN_ADMIN = "123"; // Sesuaikan dengan PIN Anda
+    let inputPin = prompt("Masukkan PIN Admin untuk Reset:");
+
+    if (inputPin !== PIN_ADMIN) {
+        alert("❌ PIN Salah! Akses ditolak.");
+        return;
+    }
+
+    // 2. Konfirmasi tindakan
+    if (confirm(`Yakin ingin mengaktifkan kembali tombol 'Masuk' untuk ${namaKaryawan}?`)) {
+        let tglHariIni = new Date().toISOString().split('T')[0]; 
+        
+        // 3. Cari data log absen karyawan tersebut hari ini
+        let indeksData = dataAbsenLog.findIndex(log => 
+            log.karyawan_id == karyawanId && log.tanggal === tglHariIni
+        );
+        
+        if (indeksData !== -1) {
+            // Hapus data dari array lokal
+            dataAbsenLog.splice(indeksData, 1);
+            
+            // 4. Update ke Firebase
+            db.ref('laundry_abs_log').set(dataAbsenLog)
+            .then(() => {
+                alert(`✅ Tombol masuk ${namaKaryawan} sudah aktif kembali!`);
+            })
+            .catch((error) => {
+                alert("❌ Gagal terhubung ke database.");
+            });
+        } else {
+            alert("⚠️ Karyawan belum melakukan absen masuk hari ini.");
+        }
+    }
+}
+
+
+
+
+
         function tampilkanMasterBarang() {
             let html = '';
             dataMasterBarang.forEach((item) => {
                 html += `<tr><td>${item.nama}</td><td>Rp ${item.harga.toLocaleString('id-ID')}</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahHargaBarangAdmin(${item.id})">✏️ Harga</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataMasterBarang = dataMasterBarang.filter(b => b.id !== ${item.id}); db.ref('laundry_mst_brg').set(dataMasterBarang); })">Hapus</button></td></tr>`;
-            });
+// Di dalam loop tampilkanMasterKaryawan
+html += `<tr>
+    <td>${item.nama}</td>
+    <td>
+        <button class="btn btn-warning btn-sm" onclick="resetAbsenKaryawan('${item.id}', '${item.nama}')">
+            🔄 Reset Masuk
+        </button>
+    </td>
+</tr>`;
+});
             let tbody = document.querySelector('#tabel-master-barang tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="3">Kosong</td></tr>';
         }
 
