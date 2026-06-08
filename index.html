@@ -1370,14 +1370,29 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
 
 
 
-function tampilkanMasterKaryawan()
+function tampilkanMasterKaryawan(){
 let html ='';
 dataKaryawan.forEach((item) => {
-                let labelTipe = item.tipe === 'full' ? 'Full (12j)' : 'Harian (6j)';
-                html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahGajiKaryawanAdmin(${item.id})">✏️ Gaji</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button></td></tr>`;
-            });
-            let tbody = document.querySelector('#tabel-master-karyawan tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
-        }
+let labelTipe = item.tipe ===
+'full'?'Full (12j)':'Harian (6j)';
+html +=`<tr><td>${item.nama}</
+td><td><span class="badge $
+{item.tipe==='full'?'bg-dark':'bg-secondary'}">$
+{labelTipe}</span></td><td>Rp$
+{Math.round(item.gaji).toLocaleString('id-ID')}/
+jam</td><td><button class="btn btn-warning btn-xs
+py-0 px-1 me-1" onclick="ubahGajiKaryawanAdmin($
+{item.id})">\ Gaji</button><button class="btn
+btn-danger btn-xs py-0 px-1"
+onclick="verifikasiSandiAksi(() => { dataKaryawan
+dataKaryawan.filter(k => k.id !== ${item.id});
+db.ref('laundry_kar').set(dataKaryawan);})">Hapus<
+/button></td></tr>`;
+});
+let tbody =
+document.querySelector('#tabel-master-karyawan
+tbody'); if(tbody) tbody.innerHTML = html |I
+'<tr><td colspan="4">Kosong</td></tr>';
 
         function ubahGajiKaryawanAdmin(id) {
             verifikasiSandiAksi(() => {
