@@ -706,7 +706,7 @@
             if(urlParams.has('approve_lembur_id') && urlParams.has('tgl')) {
                 let idKar = parseInt(urlParams.get('approve_lembur_id'));
                 let tglKerja = urlParams.get('tgl');
-                let jamTambahan = prompt("Owner Terverifikasi! Masukkan berapa jam tambahan lembur yang diizinkan:", "2");
+                let jamTambahan = prompt("Owner Terverifikasi! Masukkan berapa jam tambahan lembur yang diizinkan:", "1");
 
                 if(jamTambahan && !isNaN(jamTambahan)) {
                     let idx = dataAbsenLog.findIndex(a => a.karyawan_id === idKar && a.tanggal === tglKerja);
@@ -741,7 +741,7 @@
         function sesuaikanPlaceholderGaji() {
             let tipe = document.getElementById('kar-tipe').value;
             let inputGajiBulanan = document.getElementById('kar-gaji-bulanan');
-            if(tipe === 'full') { inputGajiBulanan.value = "1800000"; } else { inputGajiBulanan.value = "1000000"; }
+            if(tipe === 'full') { inputGajiBulanan.value = "1800000"; } else { inputGajiBulanan.value = "1300000"; }
         }
 
         function perbaruiDropdownLoginKaryawan() {
