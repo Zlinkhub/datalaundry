@@ -887,6 +887,32 @@
     });
 }
 
+
+
+
+
+
+
+
+function toggleLoadingUI(btnElement, isLoading) {
+    if (isLoading) {
+        btnElement.disabled = true;
+        btnElement.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Memproses...';
+    } else {
+        btnElement.disabled = false;
+        btnElement.innerHTML = 'Tap Masuk Kerja 🟢';
+    }
+}
+
+
+
+
+
+
+
+
+
+
 function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
     const tokenAPI = "72xuNGqpPwG3VcfsTf84"; 
     const targetGrupID = "120363299777969852@g.us"; // Pastikan ini ID grup yang benar dari dashboard
