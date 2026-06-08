@@ -964,41 +964,74 @@ function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
 
 
         function prosesPulang(id) {
-    // 1. Ambil tombol yang diklik
+    // 1. Ambil elemen tombol yang sedang diklik oleh user
     const btn = event.target;
     
-    // 2. Aktifkan loading agar tombol tidak bisa diklik lagi
-    toggleLoadingUI(btn, true); 
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memproses...'; // Kustomisasi pesan untuk pulang
+    // 2. Aktifkan UI Loading (Tombol jadi disable & berputar)
+    toggleLoadingUI(btn, true, 'Tap Pulang Kerja 🔴'); 
 
     let idx = dataAbsenLog.findIndex(a => a.karyawan_id === id && a.tanggal === hariIni);
     let kObj = dataKaryawan.find(k => k.id === id);
 
-    if(idx !== -1 && kObj) {
+    if (idx !== -1 && kObj) {
         let abs = dataAbsenLog[idx];
         let [jM, mM] = abs.jam_masuk.split(':').map(Number);
         let skrg = new Date();
-        let selisihJam = parseFloat((((skrg.getHours()*60)+skrg.getMinutes()) - ((jM*60)+mM))/60);
-        if(selisihJam < 0) selisihJam = 0;
+        let selisihJam = parseFloat((((skrg.getHours() * 60) + skrg.getMinutes()) - ((jM * 60) + mM)) / 60);
+        if (selisihJam < 0) selisihJam = 0;
 
         let batasDefault = (kObj.tipe === 'full') ? 12 : 6;
         if (selisihJam > batasDefault && !abs.status_lembur) { selisihJam = batasDefault; }
 
-        abs.jam_pulang = skrg.toTimeString().split(' ')[0]; 
+        // Catat jam pulang sekarang dan kalkulasi performa gaji
+        const jamPulangSekarang = skrg.toTimeString().split(' ')[0];
+        abs.jam_pulang = jamPulangSekarang; 
         abs.status = `${selisihJam.toFixed(2)} Jam Kerja`; 
         abs.gaji = Math.round(selisihJam * kObj.gaji);
 
-        // 3. Simpan ke Firebase
+        // 3. Simpan data terbaru ke Firebase Cloud
         db.ref('laundry_abs_log').set(dataAbsenLog).then(() => {
-            alert("Berhasil Tap Pulang!");
-            // Tidak perlu toggleLoadingUI(false) karena kartu akan refresh otomatis
+            alert("🎉 Berhasil Tap Pulang Kerja!");
+            
+            // 4. PICU NOTIFIKASI WHATSAPP UNTUK GRUP KETIKA BERHASIL SIMPAN
+            kirimNotifikasiPulangGrupWA(abs.nama, jamPulangSekarang, abs.status);
         });
     } else {
-        // Jika terjadi error, kembalikan tombol ke kondisi semula
-        toggleLoadingUI(btn, false);
-        btn.innerHTML = 'Tap Pulang Kerja 🔴';
-        alert("Gagal memproses data.");
+        // Jika data tidak ditemukan di log database, kembalikan tombol ke semula
+        toggleLoadingUI(btn, false, 'Tap Pulang Kerja 🔴');
+        alert("⚠️ Gagal memproses data pulang. Data log absen tidak ditemukan.");
     }
+}
+
+// 5. FUNGSI BARU KHUSUS UNTUK KIRIM NOTIFIKASI PULANG KE WA
+function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
+    const tokenAPI = "72xuNGqpPwG3VcfsTf84"; // Token Fonnte Anda
+    const targetGrupID = "120363299777969852@g.us"; // ID Grup WhatsApp Anda
+
+    // Struktur pesan teks WhatsApp menggunakan format Markdown (*teks tebal*)
+    const isiPesan = `🛑 *NOTIFIKASI ABSENSI LAUNDRY (PULANG)*\n\n` +
+                     `Karyawan: *${namaKaryawan}*\n` +
+                     `Waktu Pulang: *${jamPulang} WIB*\n` +
+                     `Total Durasi: *${durasiKerja}*\n\n` +
+                     `Status: Selesai tugas hari ini. Terima kasih atas kerja kerasnya! ✨`;
+
+    const myHeaders = new Headers();
+    myHeaders.append("Authorization", tokenAPI);
+
+    const formdata = new FormData();
+    formdata.append("target", targetGrupID);
+    formdata.append("message", isiPesan);
+
+    // Kirim request ke API Fonnte
+    fetch("https://api.fonnte.com/send", {
+        method: 'POST',
+        headers: myHeaders,
+        body: formdata,
+        redirect: 'follow'
+    })
+    .then(response => response.json())
+    .then(result => console.log("Notifikasi Pulang WA Terkirim:", result))
+    .catch(error => console.error("Gagal mengirim WA Pulang:", error));
 }
 
 
