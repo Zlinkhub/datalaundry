@@ -1357,7 +1357,7 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
             let ratePerJamPilihan = Math.round(gajiBulanan / totalJamKerjaSebulan);
 
             let uangMakan = parseInt(prompt("Nominal Uang Makan/hari:", "15000")) || 0;
-            let uangBensin = parseInt(prompt("Nominal Uang Bensin/hari:", "10000")) || 0;
+            let uangBensin = parseInt(prompt("Nominal Uang Bensin/hari:", "0")) || 0;
             let rateLembur = parseInt(prompt("Nominal Gaji Lembur/jam:", "5000")) || 0;
 
             dataKaryawan.push({ 
@@ -1370,6 +1370,28 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
 
         function tampilkanMasterKaryawan() {
             let html = '';
+dataKaryawan.forEach((item) => {
+    html += `<tr>
+        <td>${item.nama}</td>
+        <td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td>
+        <td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td>
+        <td>
+            <button class="btn btn-warning btn-sm" onclick="resetAbsenKaryawan('${item.id}', '${item.nama}')">
+                🔄 Reset
+            </button>
+            <button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahGajiKaryawanAdmin(${item.id})">✏️ Gaji</button>
+            </td>
+    </tr>`;
+
+
+
+
+
+
+
+
+
+
             dataKaryawan.forEach((item) => {
                 let labelTipe = item.tipe === 'full' ? 'Full (12j)' : 'Harian (6j)';
                 html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahGajiKaryawanAdmin(${item.id})">✏️ Gaji</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button></td></tr>`;
