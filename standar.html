@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizTrack Secure by zLink</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        /* CSS Variables untuk Kustomisasi Tema Dinamis */
+        :root {
+            --theme-color: #0d6efd;
+            --theme-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --theme-bg: #f8f9fa;
+            --card-transparency: 0.01;
+            --bg-image: url('');
+            --bg-overlay: rgba(0, 0, 0, 0);
+        }
+
+        body {
+            background: var(--bg-overlay), var(--bg-image) no-repeat center center fixed !important;
+            background-size: cover !important;
+            background-color: var(--theme-bg) !important;
+            font-family: var(--theme-font) !important;
+            min-height: 100vh;
+        }
+
+        .card {
+            background-color: rgba(255, 255, 255, var(--card-transparency)) !important;
+            backdrop-filter: blur(0.05px);
+        }
+
+        .text-primary, .btn-primary {
+            background-color: var(--theme-color) !important;
+            border-color: var(--theme-color) !important;
+        }
+        .btn-primary:hover {
+            filter: brightness(80%);
+        }
+
+        .table-responsive-matrix { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .table-matrix th, .table-matrix td { min-width: 40px; text-align: center; vertical-align: middle; font-size: 11px; }
+        .table-matrix .col-nama { min-width: 140px; text-align: left; position: sticky; left: 0; background-color: #fff; z-index: 2; }
+        .table-matrix thead th.col-nama { background-color: #212529; }
+
+        /* Tampilan Kartu Karyawan */
+        .karyawan-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin: 10px auto; border: 1px solid #e1e4e8; max-width: 500px; }
+        .matrix-mini { display: flex; flex-wrap: wrap; gap: 4px; background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #dee2e6; }
+        .matrix-day { width: 24px; height: 24px; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; border-radius: 4px; background: #e9ecef; color: #6c757d; }
+        .matrix-day.hadir { background: #198754; color: white; }
+        .matrix-day.lembur { background: #dc3545; color: white; }
+
+        .live-clock-badge { font-family: monospace; font-size: 18px; }
+        .btn-xs { padding: 1px 5px; font-size: 10px; border-radius: 3px; }
+
+        #brand-logo { max-height: 80px; object-fit: contain; display: block; margin: 0 auto 10px auto; cursor: pointer; transition: transform 0.2s; }
+        #brand-logo:active { transform: scale(0.9); }
+        .cursor-pointer { cursor: pointer; }
+
+        /* Sembunyikan navigasi admin secara default sebelum fitur klik rahasia dipicu */
+        .admin-nav-item { display: none; }
+
+        /* Tombol Cetak Melayang di Pojok Kanan Bawah */
+        .floating-print-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            border-radius: 50px;
+            padding: 10px 15px;
+        }
+
+        /* CSS KHUSUS PRINT LAPORAN OWNER (Disesuaikan untuk A4 Lanskap) */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 10mm;
+            }
+            body {
+                background: none !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
+            }
+            body * { visibility: hidden; }
+            #owner, #owner * { visibility: visible; }
+            #owner { position: absolute; left: 0; top: 0; width: 100%; }
+
+            .print-hide-row, .print-hide-row * {
+                display: none !important;
+                visibility: hidden !important;
+            }
+
+            .btn, #login-owner-box, .bg-dark, .nav, #filter-bulan, #social-footer-container, footer, .bi-arrows-expand, .btn-xs, .floating-print-btn, .btn-group { 
+                display: none !important; 
+            }
+
+            .row { display: flex !important; flex-wrap: nowrap !important; }
+            .col-md-3 { width: 25% !important; float: left !important; }
+
+            .collapse { display: block !important; height: auto !important; visibility: visible !important; }
+            .table-responsive-matrix { overflow: visible !important; }
+            .table-matrix { width: 100% !important; table-layout: auto !important; }
+            .table-matrix th, .table-matrix td { font-size: 9px !important; padding: 2px !important; min-width: auto !important; }
+            .table-matrix .col-nama { position: static !important; background-color: transparent !important; }
+
+            /* Pastikan baris karyawan terlihat saat diprint meskipun sedang di-minimize di web */
+            .row-matriks-karyawan.d-none { display: table-row !important; visibility: visible !important; }
+        }
+    </style>
+</head>
+<body class="text-dark">
+
+    <div class="container py-3" style="max-width: 100%;">
+        <div class="text-center mb-3 p-2 rounded" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(2px); max-width: 600px; margin: auto;">
+            <img id="brand-logo" src="https://cdn-icons-png.flaticon.com/512/2954/2954350.png" alt="Logo Brand" onclick="pemicuKlikRahasiaAdmin()" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2954/2954350.png'">
+            <h3 id="brand-name" class="mb-1">BizTrack by zLink</h3>
+            <p class="text-center text-muted small mb-1">Sistem Absensi Kehadiran & Panel Manajemen Terpusat</p>
+        </div>
+
+        <ul class="nav nav-pills nav-fill mb-3 bg-white p-2 rounded shadow-sm" id="pills-tab" role="tablist" style="max-width: 800px; margin: auto;">
+            <li class="nav-item">
+                <button class="nav-link active small" id="tab-absensi" data-bs-toggle="pill" data-bs-target="#absensi" onclick="cekStatusTampilanAbsen()">👥 Absen</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link small" id="tab-operasional" data-bs-toggle="pill" data-bs-target="#operasional">📦 Belanja</button>
+            </li>
+            <li class="nav-item admin-nav-item" id="nav-admin">
+                <button class="nav-link small" id="tab-admin" data-bs-toggle="pill" data-bs-target="#admin" onclick="cekAksesAdmin()">⚙️ Admin</button>
+            </li>
+            <li class="nav-item" id="nav-owner">
+                <button class="nav-link small btn-outline-danger" id="tab-owner" data-bs-toggle="pill" data-bs-target="#owner" onclick="cekAksesOwner()">👑 Owner Panel</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="pills-tabContent">
+
+            <div class="tab-pane fade show active" id="absensi" style="max-width: 600px; margin: auto;">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold mb-2 text-primary">📊 Status Aktivitas Kerja (Hari Ini)</h6>
+                        <div id="matriks-aktivitas-kerja" class="row g-2"></div>
+                    </div>
+                </div>
+
+                <div id="login-karyawan-portal" class="card shadow-sm mb-3 mx-auto" style="max-width: 400px;">
+                    <div class="card-body p-4 text-center">
+                        <h6 class="fw-bold mb-3">🔐 Login Masuk Karyawan</h6>
+                        <div class="mb-2"><select id="login-select-karyawan" class="form-select form-select-sm text-center"></select></div>
+                        <div class="mb-3"><input type="password" id="login-pin-karyawan" class="form-control form-control-sm text-center" placeholder="Masukkan PIN Anda (Awal: 1234)"></div>
+                        <button type="button" class="btn btn-primary btn-sm w-100" onclick="prosesLoginKaryawan()">Masuk ke Kartu Saya</button>
+                    </div>
+                </div>
+
+                <div id="papan-pengumuman-box" class="card shadow-sm mb-3 mx-auto border-info" style="max-width: 400px;">
+                    <div class="card-header bg-info text-white py-1 text-center">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-megaphone-fill me-2"></i>📢 Papan Pengumuman Owner</h6>
+                    </div>
+                    <div class="card-body p-3">
+                        <div id="text-pengumuman-karyawan" class="small text-dark style-pre-line text-center fw-medium">📌 Belum ada pengumuman hari ini. Tetap semangat bekerja!</div>
+                    </div>
+                </div>
+
+                <div id="video-iklan-box" class="card shadow-sm mb-3 mx-auto d-none" style="max-width: 400px;">
+                    <div class="card-body p-2 text-center bg-black rounded">
+                        <div id="video-container-wrapper"></div>
+                    </div>
+                </div>
+
+                <div id="ganti-pin-box" class="card shadow-sm mb-3 mx-auto d-none" style="max-width: 400px; background: #fff3cd;">
+                    <div class="card-body p-3 text-center border border-warning rounded">
+                        <h6 class="fw-bold text-warning-emphasis">⚠️ Keamanan: Ganti PIN Awal Anda</h6>
+                        <input type="password" id="pin-baru-1" class="form-control form-control-sm mb-2 text-center" placeholder="Masukkan PIN Baru">
+                        <input type="password" id="pin-baru-2" class="form-control form-control-sm mb-2 text-center" placeholder="Ulangi PIN Baru">
+                        <button type="button" class="btn btn-warning btn-sm w-100 fw-bold" onclick="prosesGantiPinMutlak()">Simpan PIN Baru</button>
+                    </div>
+                </div>
+
+                <div id="area-kartu-private" class="d-none">
+                    <div class="d-flex justify-content-between align-items-center p-2 mb-2 bg-white rounded shadow-sm border">
+                        <span class="small text-muted">Sesi: <strong id="nama-sesi-aktif" class="text-dark"></strong></span>
+                        <span class="badge bg-dark live-clock-badge text-warning" id="live-clock-karyawan">00:00:00</span>
+                        <button class="btn btn-xs btn-outline-danger py-0 px-2 small" onclick="logoutKaryawan()">Keluar 🔒</button>
+                    </div>
+                    <div id="kontainer-kartu-karyawan"></div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="operasional" style="max-width: 500px; margin: auto;">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold">Input Belanja Operasional</h6>
+                        <form id="form-pengeluaran">
+                            <div class="mb-2"><select id="ops-barang" class="form-select form-select-sm" required><option value="">-- Pilih Barang --</option></select></div>
+                            <div class="mb-2"><input type="number" id="ops-jumlah" class="form-control form-control-sm" placeholder="Jumlah Beli" min="1" required></div>
+                            <div class="mb-2"><input type="date" id="ops-tanggal" class="form-control form-control-sm" required></div>
+                            <button type="submit" class="btn btn-primary btn-sm w-100">Simpan Pengeluaran</button>
+                        </form>
+                    </div>
+                </div>
+                <h6 class="fw-bold">Riwayat Belanja Terakhir</h6>
+                <div class="table-responsive bg-white rounded shadow-sm mb-4">
+                    <table class="table table-sm small text-center mb-0" id="tabel-pengeluaran">
+                        <thead class="table-dark"><tr><th>Tgl</th><th>Barang</th><th>Qty</th><th>Total</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="admin">
+                <div id="login-admin-box" class="card shadow-sm mb-3 mx-auto" style="max-width: 400px;">
+                    <div class="card-body p-3 text-center">
+                        <h6 class="fw-bold">Gembok Keamanan Admin</h6>
+                        <input type="password" id="pass-admin" class="form-control form-control-sm mb-2 text-center" placeholder="Masukkan Password Admin">
+                        <button type="button" class="btn btn-danger btn-sm w-100" onclick="verifikasiAdmin()">Buka Kunci Admin</button>
+                    </div>
+                </div>
+
+                <div id="konten-admin" class="d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded border">
+                        <span class="fw-bold text-success">🔓 Mode Admin Aktif</span>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="logoutAdmin()">🔒 Keluar Admin</button>
+                    </div>
+
+                    <div class="card shadow-sm mb-3 border-dark">
+                        <div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseTheme">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-palette-fill me-2"></i>🎨 Pengaturan Branding & Tema Web</h6>
+                            <i class="bi bi-chevron-expand"></i>
+                        </div>
+                        <div id="collapseTheme" class="collapse">
+                            <div class="card-body p-3">
+                                <div class="row g-2">
+                                    <div class="col-md-6"><label class="form-label small fw-bold">Nama Merek Laundry:</label><input type="text" id="cfg-brand-name" class="form-control form-control-sm"></div>
+                                    <div class="col-md-6"><label class="form-label small fw-bold">URL Logo Gambar:</label><input type="text" id="cfg-brand-logo" class="form-control form-control-sm"></div>
+                                    <div class="col-md-6"><label class="form-label small fw-bold">Warna Utama Teks:</label><input type="color" id="cfg-theme-color" class="form-control form-control-sm h-auto"></div>
+                                    <div class="col-md-6"><label class="form-label small fw-bold">Warna Background Web:</label><input type="color" id="cfg-theme-bg" class="form-control form-control-sm h-auto"></div>
+                                    <div class="col-md-6"><label class="form-label small fw-bold">URL Background Gambar:</label><input type="text" id="cfg-bg-image" class="form-control form-control-sm"></div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Gradasi Transparansi Layar:</label>
+                                        <select id="cfg-bg-overlay" class="form-select form-select-sm">
+                                            <option value="none">Tanpa Efek Lapisan</option>
+                                            <option value="terang">Lapisan Transparan Terang</option>
+                                            <option value="gelap">Lapisan Transparan Gelap</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 col-6">
+                                        <label class="form-label small fw-bold">Gaya Font:</label>
+                                        <select id="cfg-theme-font" class="form-select form-select-sm">
+                                            <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                                            <option value="'Arial', sans-serif">Arial</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 col-6"><label class="form-label small fw-bold">Transparansi Kartu:</label><input type="range" id="cfg-card-transparency" class="form-range pt-1" min="0.3" max="1" step="0.1"></div>
+                                </div>
+                                <button type="button" class="btn btn-primary btn-sm w-100 mt-3 fw-bold" onclick="simpanPengaturanBrandingTema()"><i class="bi bi-save me-1"></i> Simpan & Terapkan</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-3 border-dark">
+                        <div class="card-header bg-secondary text-white py-2 d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseMediaLink">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-link-45deg me-2"></i>📺 Manajemen Video Iklan & Sosmed</h6>
+                            <i class="bi bi-chevron-expand"></i>
+                        </div>
+                        <div id="collapseMediaLink" class="collapse">
+                            <div class="card-body p-3">
+                                <div class="mb-2"><label class="form-label small fw-bold">Link Video Iklan:</label><input type="text" id="cfg-ad-video" class="form-control form-control-sm"></div>
+                                <div class="mb-2"><label class="form-label small fw-bold">Link Akun Instagram:</label><input type="text" id="cfg-sosmed-url" class="form-control form-control-sm"></div>
+                                <button type="button" class="btn btn-success btn-sm w-100 mt-2" onclick="simpanPengaturanMediaKhusus()">Simpan Link Media</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-3 border-danger">
+                        <div class="card-header bg-danger text-white py-2 d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseSecurity">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-shield-lock-fill me-2"></i>🔒 Manajemen Kunci Akses</h6>
+                            <i class="bi bi-chevron-expand"></i>
+                        </div>
+                        <div id="collapseSecurity" class="collapse">
+                            <div class="card-body p-3">
+                                <div class="row g-2">
+                                    <div class="col-md-6"><input type="password" id="key-admin-baru" class="form-control form-control-sm text-center" placeholder="Sandi Admin Baru"></div>
+                                    <div class="col-md-6"><input type="password" id="key-owner-baru" class="form-control form-control-sm text-center" placeholder="Sandi Owner Baru"></div>
+                                </div>
+                                <button type="button" class="btn btn-danger btn-sm w-100 mt-2 fw-bold" onclick="prosesGantiSandiSistem()">Perbarui Sandi Akses</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-3 border-warning">
+                        <div class="card-header bg-warning text-dark py-2 d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseOmzet">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-pencil-square me-2"></i>📝 Editor & Koreksi Omzet Harian</h6>
+                            <i class="bi bi-chevron-expand"></i>
+                        </div>
+                        <div id="collapseOmzet" class="collapse">
+                            <div class="card-body p-3">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-4"><input type="date" id="admin-omzet-tanggal" class="form-control form-control-sm" required></div>
+                                    <div class="col-md-5"><input type="number" id="admin-omzet-nominal" class="form-control form-control-sm" placeholder="Total Pendapatan (Rp)" required></div>
+                                    <div class="col-md-3"><button type="button" class="btn btn-warning btn-sm w-100 fw-bold" onclick="simpanOmzetKoreksiAdmin()">Simpan Omzet</button></div>
+                                </div>
+                                <div class="table-responsive bg-white rounded shadow-sm" style="max-height: 150px;">
+                                    <table class="table table-sm small text-center mb-0" id="tabel-koreksi-omzet">
+                                        <thead class="table-dark"><tr><th>Tanggal</th><th>Nominal Omzet</th><th>Aksi</th></tr></thead><tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card shadow-sm">
+                                <div class="card-header py-2 bg-light d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseMasterBarang">
+                                    <h6 class="mb-0 fw-bold"><i class="bi bi-box-seam me-2"></i>Manajemen List Barang</h6><i class="bi bi-chevron-expand"></i>
+                                </div>
+                                <div id="collapseMasterBarang" class="collapse">
+                                    <div class="card-body p-3">
+                                        <form id="form-master-barang">
+                                            <div class="mb-2"><input type="text" id="mst-nama" class="form-control form-control-sm" placeholder="Nama Barang" required></div>
+                                            <div class="mb-2"><input type="number" id="mst-harga" class="form-control form-control-sm" placeholder="Harga Satuan (Rp)" required></div>
+                                            <button type="submit" class="btn btn-success btn-sm w-100">Tambah Barang</button>
+                                        </form>
+                                        <div class="table-responsive bg-white rounded shadow-sm mt-3" style="max-height: 180px;">
+                                            <table class="table table-sm small text-center mb-0" id="tabel-master-barang"><thead class="table-dark"><tr><th>Barang</th><th>Harga</th><th>Aksi</th></tr></thead><tbody></tbody></table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card shadow-sm">
+                                <div class="card-header py-2 bg-light d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseMasterKaryawan">
+                                    <h6 class="mb-0 fw-bold"><i class="bi bi-people-fill me-2"></i>Daftar Karyawan & Sistem Gaji</h6><i class="bi bi-chevron-expand"></i>
+                                </div>
+                                <div id="collapseMasterKaryawan" class="collapse">
+                                    <div class="card-body p-3">
+                                        <form id="form-karyawan">
+                                            <div class="mb-2"><input type="text" id="kar-nama" class="form-control form-control-sm" placeholder="Nama Karyawan" required></div>
+                                            <div class="mb-2">
+                                                <select id="kar-tipe" class="form-select form-select-sm" onchange="sesuaikanPlaceholderGaji()">
+                                                    <option value="full">Karyawan Full (12 Jam)</option>
+                                                    <option value="harian">Pekerja Harian (6 Jam)</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-2"><input type="number" id="kar-gaji-bulanan" class="form-control form-control-sm" value="1800000" required></div>
+                                            <button type="submit" class="btn btn-secondary btn-sm w-100">Daftarkan Karyawan</button>
+                                        </form>
+                                        <div class="table-responsive bg-white rounded shadow-sm mt-3" style="max-height: 180px;">
+                                            <table class="table table-sm small text-center mb-0" id="tabel-master-karyawan"><thead class="table-dark"><tr><th>Nama</th><th>Tipe</th><th>Rate/Jam</th><th>Aksi</th></tr></thead><tbody></tbody></table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-3 border-primary">
+                        <div class="card-header bg-primary text-white py-2 d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseEditorBelanja">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-cart-check-fill me-2"></i>📦 Editor Koreksi Belanja</h6><i class="bi bi-chevron-expand"></i>
+                        </div>
+                        <div id="collapseEditorBelanja" class="collapse">
+                            <div class="card-body p-3">
+                                <div class="table-responsive bg-white rounded shadow-sm" style="max-height: 200px;">
+                                    <table class="table table-sm table-hover small text-center align-middle mb-0" id="tabel-editor-belanja">
+                                        <thead class="table-dark"><tr><th>Tanggal</th><th>Barang</th><th>Qty</th><th>Aksi</th></tr></thead><tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-4 border-danger">
+                        <div class="card-header bg-danger text-white py-2 d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseEditorAbsen">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2"></i>🛠️ Editor Koreksi Jam Kerja</h6><i class="bi bi-chevron-expand"></i>
+                        </div>
+                        <div id="collapseEditorAbsen" class="collapse">
+                            <div class="card-body p-3">
+                                <div class="table-responsive bg-white rounded shadow-sm" style="max-height: 250px;">
+                                    <table class="table table-sm table-hover small text-center align-middle mb-0" id="tabel-editor-absen">
+                                        <thead class="table-dark"><tr><th>Tanggal</th><th>Nama</th><th>Masuk</th><th>Pulang</th><th>Gaji</th><th>Map</th><th>Aksi</th></tr></thead><tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="owner">
+                <div id="login-owner-box" class="card shadow-sm mb-3 mx-auto" style="max-width: 400px;">
+                    <div class="card-body p-3 text-center">
+                        <h6 class="fw-bold text-danger">👑 Gembok Utama Pemilik (Owner)</h6>
+                        <input type="password" id="pass-owner" class="form-control form-control-sm mb-2 text-center" placeholder="Masukkan Password Owner">
+                        <button type="button" class="btn btn-dark btn-sm w-100" onclick="verifikasiOwner()">Buka Dashboard Owner</button>
+                    </div>
+                </div>
+
+                <div id="konten-owner" class="d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-3 bg-dark text-white p-2 rounded border cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseKontenOwnerUtama">
+                        <span class="fw-bold text-warning">👑 Dashboard Pemantauan Logbook Owner</span>
+                        <button type="button" class="btn btn-outline-light btn-sm py-1 px-2" onclick="event.stopPropagation(); logoutOwner()">🔒 Keluar Sesi Owner</button>
+                    </div>
+
+                    <div id="collapseKontenOwnerUtama" class="collapse show">
+                        <div class="card shadow-sm mb-3 border-info">
+                            <div class="card-header bg-info text-white py-2">
+                                <h6 class="mb-0 fw-bold"><i class="bi bi-megaphone-fill me-2"></i>📢 Kelola Papan Pengumuman Toko</h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="mb-2"><textarea id="input-pengumuman-owner" class="form-control form-control-sm" rows="3"></textarea></div>
+                                <button type="button" class="btn btn-info btn-sm text-white fw-bold w-100" onclick="simpanPengumumanOwner()">📢 Publikasikan Pengumuman</button>
+                            </div>
+                        </div>
+
+                        <div class="row text-center mb-3 g-2">
+                            <div class="col-md-3"><div class="bg-white p-2 rounded shadow-sm border"><h6>Pilih Bulan</h6><input type="month" id="filter-bulan" class="form-control form-control-sm mx-auto" onchange="muatLaporanMatriks()"></div></div>
+                            <div class="col-md-3"><div class="bg-success-subtle p-2 rounded shadow-sm border border-success"><h6>Total Omzet Kotor</h6><h5 class="fw-bold text-success mb-0" id="rep-omzet">Rp 0</h5></div></div>
+                            <div class="col-md-3"><div class="bg-danger-subtle p-2 rounded shadow-sm border border-danger"><h6>Total Beban (Gaji+Ops)</h6><h5 class="fw-bold text-danger mb-0" id="rep-total">Rp 0</h5></div></div>
+                            <div class="col-md-3"><div class="bg-info-subtle p-2 rounded shadow-sm border border-info"><h6>Pendapatan Bersih</h6><h5 class="fw-bold text-dark mb-0" id="rep-bersih">Rp 0</h5></div></div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2 mt-3">
+                        <h6 class="fw-bold mb-0">📊 Matriks Laporan Terintegrasi Bulanan (1-31)</h6>
+                        <div class="btn-group">
+                            <button class="btn btn-xs btn-outline-dark me-1 text-dark fw-bold" id="btn-toggle-karyawan" onclick="toggleMinimizeKaryawanWeb()">
+                                <i class="bi bi-eye-fill"></i> Unminimize Gaji Karyawan
+                            </button>
+                            <button class="btn btn-xs btn-success me-1 text-white fw-bold" onclick="togglePrintRow('omzet')"><i class="bi bi-eye-slash-fill"></i> Sembunyikan Omzet (Cetak)</button>
+                            <button class="btn btn-xs btn-info text-white fw-bold" onclick="togglePrintRow('karyawan')"><i class="bi bi-eye-slash-fill"></i> Sembunyikan Karyawan (Cetak)</button>
+                            <button class="btn btn-xs btn-dark ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMatriksTabel"><i class="bi bi-arrows-expand"></i> Minimize Tabel</button>
+                        </div>
+                    </div>
+
+                    <div id="collapseMatriksTabel" class="collapse show">
+                        <div class="table-responsive-matrix bg-white rounded shadow-sm border mb-4">
+                            <table class="table table-bordered table-sm table-matrix mb-0" id="matriks-inventory">
+                                <thead class="table-dark"><tr id="matriks-header"><th class="col-nama">Item / Laporan</th><th>Harga/Rate</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-secondary mb-5">
+                        <div class="card-header bg-secondary text-white py-2">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-journal-text me-2"></i>📋 Live Log Book & Jurnal Bersih Realtime</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive bg-white rounded-bottom" style="max-height: 350px;">
+                                <table class="table table-striped table-hover table-sm small text-center mb-0" id="logbook-realtime-owner">
+                                    <thead class="table-dark"><tr><th>Tanggal</th><th>Kotor (Omzet)</th><th>Beban Gaji</th><th>Beban Barang</th><th>Bersih / Hari</th><th>Tag Lokasi</th><th>Status Kerja</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <button type="button" class="btn btn-warning floating-print-btn text-dark fw-bold" onclick="window.print()">
+        <i class="bi bi-printer-fill me-1"></i> Cetak PDF
+    </button>
+
+    <footer class="text-center py-3 bg-white mt-auto border-top w-100">
+        <p class="mb-0 text-muted small">© 2026 <span id="footer-brand">Laundry Pro-Secure</span>. All Rights Reserved.</p>
+        <div id="social-footer-container" class="mt-1 small"></div>
+    </footer>
+
+    <script>
+        const WA_OWNER = "6287853561541"; 
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz4OdAWkrxyge58Rv8Fj0RG5WMNLq-HGw",
+            authDomain:"laundry-pro-69e74.firebaseapp.com",
+            databaseURL:"https://laundry-pro-69e74-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "laundry-pro-69e74",
+            storageBucket: "laundry-pro-69e74.firebasestorage.app",
+            messagingSenderId: "449060243221",
+            appId: "1:449060243221:web:52e87e58580b586b5d4b1c"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let passAdminSistem = localStorage.getItem('pass_admin') || "123";
+        let passOwnerSistem = localStorage.getItem('pass_owner') || "999"; 
+        let idKaryawanSesiAktif = localStorage.getItem('sesi_id_karyawan') || null;
+
+        let dataMasterBarang = [];
+        let dataOps = [];
+        let dataKaryawan = [];
+        let dataAbsenLog = []; 
+        let dataOmzetHarian = [];
+        let statusKaryawanMinimizeWeb = true; // State default untuk minimize beban karyawan di web
+
+        let hitungKlikLogo = 0;
+        let waktuKlikTerakhir = 0;
+
+        function pemicuKlikRahasiaAdmin() {
+            const skrg = new Date().getTime();
+            if (skrg - waktuKlikTerakhir > 2000) { hitungKlikLogo = 0; }
+            hitungKlikLogo++;
+            waktuKlikTerakhir = skrg;
+
+            if (hitungKlikLogo === 5) {
+                document.getElementById('nav-admin').style.display = 'block';
+                alert("🔓 Fitur Pengembang Aktif: Panel Admin Terbuka!");
+                hitungKlikLogo = 0;
+            }
+        }
+
+        const hariIni = new Date().toISOString().split('T')[0];
+        document.getElementById('ops-tanggal').value = hariIni;
+        document.getElementById('filter-bulan').value = hariIni.substring(0, 7);
+        if(document.getElementById('admin-omzet-tanggal')) {
+            document.getElementById('admin-omzet-tanggal').value = hariIni;
+        }
+
+        db.ref('laundry_mst_brg').on('value', (snapshot) => { dataMasterBarang = snapshot.val() || []; tampilkanMasterBarang(); perbaruiPilihanBarang(); muatLaporanMatriks(); });
+        db.ref('laundry_ops').on('value', (snapshot) => { dataOps = snapshot.val() || []; tampilkanPengeluaran(); muatLaporanMatriks(); tampilkanLogbookOwnerRealtime(); tampilkanTabelEditorBelanjaAdmin(); });
+        db.ref('laundry_kar').on('value', (snapshot) => { dataKaryawan = snapshot.val() || []; perbaruiDropdownLoginKaryawan(); tampilkanMasterKaryawan(); cekStatusTampilanAbsen(); muatLaporanMatriks(); });
+        db.ref('laundry_omzet').on('value', (snapshot) => { dataOmzetHarian = snapshot.val() || []; tampilkanLogbookOwnerRealtime(); muatLaporanMatriks(); tumpilkanTabelKoreksiOmzetAdmin(); });
+        db.ref('laundry_abs_log').on('value', (snapshot) => { 
+            dataAbsenLog = snapshot.val() || []; 
+            cekStatusTampilanAbsen(); 
+            tampilkanTabelEditorAbsenAdmin(); 
+            tampilkanLogbookOwnerRealtime(); 
+            muatLaporanMatriks(); 
+        });
+
+        db.ref('laundry_announcement').on('value', (snapshot) => {
+            const pesan = snapshot.val();
+            if (pesan) {
+                document.getElementById('text-pengumuman-karyawan').innerText = pesan;
+                if(document.getElementById('input-pengumuman-owner')) {
+                    document.getElementById('input-pengumuman-owner').value = pesan;
+                }
+            }
+        });
+
+        db.ref('laundry_settings').on('value', (snapshot) => {
+            const settings = snapshot.val();
+            if (settings) {
+                if (settings.brand_name) {
+                    document.getElementById('brand-name').innerText = "🧺 " + settings.brand_name;
+                    document.getElementById('cfg-brand-name').value = settings.brand_name;
+                    document.getElementById('footer-brand').innerText = settings.brand_name;
+                }
+                if (settings.brand_logo) {
+                    document.getElementById('brand-logo').src = settings.brand_logo;
+                    document.getElementById('cfg-brand-logo').value = settings.brand_logo;
+                }
+                if (settings.theme_color) {
+                    document.documentElement.style.setProperty('--theme-color', settings.theme_color);
+                    document.getElementById('cfg-theme-color').value = settings.theme_color;
+                }
+                if (settings.theme_bg) {
+                    document.documentElement.style.setProperty('--theme-bg', settings.theme_bg);
+                    document.getElementById('cfg-theme-bg').value = settings.theme_bg;
+                }
+                if (settings.theme_font) {
+                    document.documentElement.style.setProperty('--theme-font', settings.theme_font);
+                    document.getElementById('cfg-theme-font').value = settings.theme_font;
+                }
+                if (settings.card_transparency) {
+                    document.documentElement.style.setProperty('--card-transparency', settings.card_transparency);
+                    document.getElementById('cfg-card-transparency').value = settings.card_transparency;
+                }
+                if (settings.bg_image) {
+                    document.documentElement.style.setProperty('--bg-image', `url('${settings.bg_image}')`);
+                    document.getElementById('cfg-bg-image').value = settings.bg_image;
+                } else {
+                    document.documentElement.style.setProperty('--bg-image', "url('')");
+                }
+                if (settings.bg_overlay) {
+                    let overlayValue = "rgba(0,0,0,0)";
+                    if(settings.bg_overlay === "terang") overlayValue = "linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5))";
+                    if(settings.bg_overlay === "gelap") overlayValue = "linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6))";
+                    document.documentElement.style.setProperty('--bg-overlay', overlayValue);
+                    document.getElementById('cfg-bg-overlay').value = settings.bg_overlay;
+                }
+                if(settings.ad_video) {
+                    document.getElementById('cfg-ad-video').value = settings.ad_video;
+                    muatVideoPlayerIklan(settings.ad_video);
+                }
+                if(settings.sosmed_url) {
+                    document.getElementById('cfg-sosmed-url').value = settings.sosmed_url;
+                    document.getElementById('social-footer-container').innerHTML = `<a href="${settings.sosmed_url}" target="_blank" class="text-primary text-decoration-none fw-bold"><i class="bi bi-instagram"></i> Kunjungi Media Sosial Toko</a>`;
+                }
+            }
+        });
+
+        function muatVideoPlayerIklan(urlVideo) {
+            const wrapper = document.getElementById('video-container-wrapper');
+            const mainBox = document.getElementById('video-iklan-box');
+            if(!urlVideo.trim()) { mainBox.classList.add('d-none'); return; }
+            mainBox.classList.remove('d-none');
+
+            if(urlVideo.includes('youtube.com') || urlVideo.includes('youtu.be')) {
+                let vidId = urlVideo.split('v=')[1] || urlVideo.split('/').pop();
+                if(vidId.includes('&')) vidId = vidId.split('&')[0];
+                wrapper.innerHTML = `<iframe width="100%" height="200" src="https://www.youtube.com/embed/${vidId}?autoplay=1&mute=1&loop=1&playlist=${vidId}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+            } else {
+                wrapper.innerHTML = `<video width="100%" height="200" controls autoplay muted loop style="border-radius:6px;"><source src="${urlVideo}" type="video/mp4">Browser tidak mendukung video player.</video>`;
+            }
+        }
+
+        function simpanPengaturanBrandingTema() {
+            verifikasiSandiAksi(() => {
+                const bName = document.getElementById('cfg-brand-name').value;
+                const bLogo = document.getElementById('cfg-brand-logo').value;
+                const tColor = document.getElementById('cfg-theme-color').value;
+                const tBg = document.getElementById('cfg-theme-bg').value;
+                const tFont = document.getElementById('cfg-theme-font').value;
+                const tTrans = document.getElementById('cfg-card-transparency').value;
+                const bgImg = document.getElementById('cfg-bg-image').value;
+                const bgOver = document.getElementById('cfg-bg-overlay').value;
+
+                db.ref('laundry_settings').once('value').then((snapshot) => {
+                    let dataLama = snapshot.val() || {};
+                    db.ref('laundry_settings').set({
+                        ...dataLama, brand_name: bName, brand_logo: bLogo, theme_color: tColor,
+                        theme_bg: tBg, theme_font: tFont, card_transparency: tTrans, bg_image: bgImg, bg_overlay: bgOver
+                    });
+                    alert("🎉 Pengaturan Branding & Tema Berhasil Disinkronkan ke Cloud!");
+                });
+            });
+        }
+
+        function simpanPengaturanMediaKhusus() {
+            verifikasiSandiAksi(() => {
+                const adVideo = document.getElementById('cfg-ad-video').value;
+                const sosmedUrl = document.getElementById('cfg-sosmed-url').value;
+                db.ref('laundry_settings').once('value').then((snapshot) => {
+                    let dataLama = snapshot.val() || {};
+                    db.ref('laundry_settings').set({ ...dataLama, ad_video: adVideo, sosmed_url: sosmedUrl });
+                    alert("📺 Link Video Iklan & Media Sosial sukses diupdate!");
+                });
+            });
+        }
+
+        function simpanPengumumanOwner() {
+            const pesanBaru = document.getElementById('input-pengumuman-owner').value;
+            if(!pesanBaru.trim()) { alert("Isi pengumuman terlebih dahulu!"); return; }
+            db.ref('laundry_announcement').set(pesanBaru);
+            alert("📢 Pengumuman berhasil disebarkan secara realtime!");
+        }
+
+        function prosesGantiSandiSistem() {
+            verifikasiSandiAksi(() => {
+                const adminBaru = document.getElementById('key-admin-baru').value;
+                const ownerBaru = document.getElementById('key-owner-baru').value;
+
+                if(adminBaru) {
+                    passAdminSistem = adminBaru;
+                    localStorage.setItem('pass_admin', adminBaru);
+                    document.getElementById('key-admin-baru').value = '';
+                }
+                if(ownerBaru) {
+                    passOwnerSistem = ownerBaru;
+                    localStorage.setItem('pass_owner', ownerBaru);
+                    document.getElementById('key-owner-baru').value = '';
+                }
+                alert("🔐 Sandi Akses Baru Berhasil Diperbarui!");
+            });
+        }
+
+        setInterval(() => {
+            let skrg = new Date();
+            let strJam = `${String(skrg.getHours()).padStart(2, '0')}:${String(skrg.getMinutes()).padStart(2, '0')}:${String(skrg.getSeconds()).padStart(2, '0')}`;
+            let clockEl = document.getElementById('live-clock-karyawan');
+            if(clockEl) clockEl.innerText = strJam;
+
+            if(idKaryawanSesiAktif) {
+                let logHariIni = dataAbsenLog.find(a => a.karyawan_id === parseInt(idKaryawanSesiAktif) && a.tanggal === hariIni);
+                let liveDurasiEl = document.getElementById('live-durasi-kerja');
+                if(logHariIni && !logHariIni.jam_pulang && liveDurasiEl) {
+                    liveDurasiEl.innerText = hitungSelisihJamRealtime(logHariIni.jam_masuk) + " Jam";
+                }
+            }
+        }, 1000);
+
+        function hitungSelisihJamRealtime(jamMasukStr) {
+            let [jM, mM, sM] = jamMasukStr.split(':').map(Number);
+            let skrg = new Date();
+            let detikMasuk = (jM * 3600) + (mM * 60) + (sM || 0);
+            let detikSkrg = (skrg.getHours() * 3600) + (skrg.getMinutes() * 60) + skrg.getSeconds();
+            let selisihDetik = detikSkrg - detikMasuk;
+            if(selisihDetik < 0) return "0.00";
+            return (selisihDetik / 3600).toFixed(2);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if(urlParams.has('approve_lembur_id') && urlParams.has('tgl')) {
+                let idKar = parseInt(urlParams.get('approve_lembur_id'));
+                let tglKerja = urlParams.get('tgl');
+                let jamTambahan = prompt("Owner Terverifikasi! Masukkan berapa jam tambahan lembur yang diizinkan:", "2");
+
+                if(jamTambahan && !isNaN(jamTambahan)) {
+                    let idx = dataAbsenLog.findIndex(a => a.karyawan_id === idKar && a.tanggal === tglKerja);
+                    if(idx !== -1) {
+                        let karObj = dataKaryawan.find(k => k.id === idKar);
+                        let basisJam = (karObj && karObj.tipe === 'full') ? 12 : 6;
+
+                        dataAbsenLog[idx].batas_jam_kerja = basisJam + parseFloat(jamTambahan);
+                        dataAbsenLog[idx].status_lembur = "Disetujui Owner " + jamTambahan + " Jam";
+                        if(dataAbsenLog[idx].jam_pulang) {
+                            dataAbsenLog[idx].status = `${dataAbsenLog[idx].batas_jam_kerja} Jam Kerja`;
+                            dataAbsenLog[idx].gaji = Math.round(dataAbsenLog[idx].batas_jam_kerja * (karObj ? karObj.gaji : 5769));
+                        }
+                        db.ref('laundry_abs_log').set(dataAbsenLog);
+                        alert("Izin lembur berhasil dimasukkan!");
+                        window.location.href = window.location.pathname;
+                    }
+                }
+            }
+        });
+
+        function inisialisasiHeaderMatriks() {
+            const headerRow = document.getElementById('matriks-header');
+            if (headerRow && headerRow.children.length <= 2) {
+                for (let d = 1; d <= 31; d++) { 
+                    let th = document.createElement('th'); th.innerText = d; headerRow.appendChild(th); 
+                }
+                headerRow.innerHTML += `<th>Total (Biaya/Omzet)</th><th>Keterangan</th>`;
+            }
+        }
+
+        function sesuaikanPlaceholderGaji() {
+            let tipe = document.getElementById('kar-tipe').value;
+            let inputGajiBulanan = document.getElementById('kar-gaji-bulanan');
+            if(tipe === 'full') { inputGajiBulanan.value = "1800000"; } else { inputGajiBulanan.value = "1000000"; }
+        }
+
+        function perbaruiDropdownLoginKaryawan() {
+            let select = document.getElementById('login-select-karyawan'); if(!select) return;
+            select.innerHTML = '<option value="">-- Pilih Namamu --</option>';
+            dataKaryawan.forEach(k => {
+                let opt = document.createElement('option'); opt.value = k.id; opt.innerText = k.nama; select.appendChild(opt);
+            });
+        }
+
+        function prosesLoginKaryawan() {
+            let idKar = document.getElementById('login-select-select-karyawan');
+            let idSelect = document.getElementById('login-select-karyawan').value;
+            let pinKar = document.getElementById('login-pin-karyawan').value;
+            if(!idSelect || !pinKar) { alert("Pilih nama dan isi PIN Anda!"); return; }
+            let karyawanObj = dataKaryawan.find(k => k.id === parseInt(idSelect));
+            if(karyawanObj && karyawanObj.pin === pinKar) {
+                idKaryawanSesiAktif = idSelect;
+                localStorage.setItem('sesi_id_karyawan', idSelect);
+                document.getElementById('login-pin-karyawan').value = '';
+                cekStatusTampilanAbsen();
+            } else { alert("PIN yang Anda masukkan salah!"); }
+        }
+
+        function logoutKaryawan() {
+            idKaryawanSesiAktif = null;
+            localStorage.removeItem('sesi_id_karyawan');
+            cekStatusTampilanAbsen();
+        }
+
+        function prosesGantiPinMutlak() {
+            let p1 = document.getElementById('pin-baru-1').value;
+            let p2 = document.getElementById('pin-baru-2').value;
+            if(p1.length < 4) { alert("PIN Baru minimal 4 angka!"); return; }
+            if(p1 !== p2) { alert("Konfirmasi PIN tidak cocok!"); return; }
+            let idx = dataKaryawan.findIndex(k => k.id === parseInt(idKaryawanSesiAktif));
+            if(idx !== -1) {
+                dataKaryawan[idx].pin = p1;
+                db.ref('laundry_kar').set(dataKaryawan);
+                alert("PIN Berhasil diperbarui di Cloud!");
+                document.getElementById('pin-baru-1').value = ''; document.getElementById('pin-baru-2').value = '';
+                cekStatusTampilanAbsen();
+            }
+        }
+
+        function tampilkanMatriksAktivitasKerja() {
+            let container = document.getElementById('matriks-aktivitas-kerja'); if(!container) return;
+            container.innerHTML = '';
+            let karyawanAktifHariIni = dataAbsenLog.filter(a => a.tanggal === hariIni && !a.jam_pulang);
+            if(karyawanAktifHariIni.length === 0) {
+                container.innerHTML = `<div class="col-12 text-center text-muted small py-2">😴 Belum ada karyawan yang aktif bekerja.</div>`;
+                return;
+            }
+            karyawanAktifHariIni.forEach(abs => {
+                container.innerHTML += `
+                    <div class="col-6 col-md-4">
+                        <div class="p-2 border rounded bg-white shadow-sm border-success text-center">
+                            <span class="d-block fw-bold text-dark small">${abs.nama}</span>
+                            <span class="badge bg-success my-1">⚡ Aktif</span>
+                            <small class="d-block text-muted" style="font-size:10px;">Masuk: ${abs.jam_masuk}</small>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function cekStatusTampilanAbsen() {
+            tampilkanMatriksAktivitasKerja();
+            if (idKaryawanSesiAktif) {
+                let karyawanObj = dataKaryawan.find(k => k.id === parseInt(idKaryawanSesiAktif));
+                if (!karyawanObj) { logoutKaryawan(); return; }
+                if (karyawanObj.pin === undefined || karyawanObj.pin === "1234") {
+                    document.getElementById('login-karyawan-portal').classList.add('d-none');
+                    document.getElementById('ganti-pin-box').classList.remove('d-none');
+                    document.getElementById('area-kartu-private').classList.add('d-none');
+                } else {
+                    document.getElementById('login-karyawan-portal').classList.add('d-none');
+                    document.getElementById('ganti-pin-box').classList.add('d-none');
+                    document.getElementById('area-kartu-private').classList.remove('d-none');
+                    document.getElementById('nama-sesi-aktif').innerText = karyawanObj.nama;
+                    buatKartuKaryawanPrivate(karyawanObj);
+                }
+            } else {
+                document.getElementById('login-karyawan-portal').classList.remove('d-none');
+                document.getElementById('ganti-pin-box').classList.add('d-none');
+                document.getElementById('area-kartu-private').classList.add('d-none');
+            }
+        }
+
+        function buatKartuKaryawanPrivate(karyawan) {
+            let logHariIni = dataAbsenLog.find(a => a.karyawan_id === karyawan.id && a.tanggal === hariIni);
+            let kontainer = document.getElementById('kontainer-kartu-karyawan'); if(!kontainer) return;
+            let btnAksi = '';
+            if(!logHariIni) {
+                btnAksi = `<button class="btn btn-success btn-sm w-100 mb-2" onclick="prosesAbsenMasuk(${karyawan.id}, '${karyawan.nama}')">Tap Masuk Kerja 🟢</button>`;
+            } else if(logHariIni && !logHariIni.jam_pulang) {
+                btnAksi = `
+                    <div class="alert alert-info py-2 small mb-2 text-center">
+                        Jam Masuk: <strong>${logHariIni.jam_masuk}</strong><br>
+                        Durasi Berjalan: <strong id="live-durasi-kerja">${hitungSelisihJamRealtime(logHariIni.jam_masuk)} Jam</strong>
+                    </div>
+                    <button class="btn btn-danger btn-sm w-100 mb-2" onclick="prosesPulang(${karyawan.id})">Tap Pulang Kerja 🔴</button>
+                    <button class="btn btn-warning btn-sm w-100 small" onclick="ajukanLemburWhatsApp(${karyawan.id}, '${karyawan.nama}')">⚡ Ajukan Lembur ke Owner</button>
+                `;
+            } else {
+                btnAksi = `<div class="alert alert-success py-2 small text-center mb-0">Selesai Kerja Hari Ini 🎉 (${logHariIni.status})</div>`;
+            }
+            kontainer.innerHTML = `
+                <div class="karyawan-card p-3">
+                    <h5 class="fw-bold mb-1 text-center">${karyawan.nama}</h5>
+                    <p class="text-muted text-center small mb-3">Tipe: ${karyawan.tipe === 'full' ? 'Full Kerja (12 Jam)' : 'Harian (6 Jam)'} <br> Rate Efektif: Rp ${Math.round(karyawan.gaji).toLocaleString('id-ID')}/jam</p>
+                    ${btnAksi}
+                </div>
+            `;
+        }
+
+        function prosesAbsenMasuk(id, nama) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        let urlMap = `https://maps.google.com/?q=${position.coords.latitude},${position.coords.longitude}`;
+                        simpanLogAbsenCloud(id, nama, urlMap);
+                    },
+                    (error) => {
+                        alert("⚠️ Lokasi GPS diblokir/gagal. Tetap absen tanpa tag peta.");
+                        simpanLogAbsenCloud(id, nama, "No GPS Access");
+                    }
+                );
+            } else { simpanLogAbsenCloud(id, nama, "Not Supported"); }
+        }
+
+        function simpanLogAbsenCloud(id, nama, lokasiMap) {
+    const jamMasukSekarang = new Date().toTimeString().split(' ')[0];
+
+    dataAbsenLog.push({
+        tanggal: hariIni, karyawan_id: id, nama: nama,
+        jam_masuk: jamMasukSekarang, jam_pulang: null,
+        lokasi: lokasiMap, status: "Sedang Kerja", gaji: 0
+    });
+
+    db.ref('laundry_abs_log').set(dataAbsenLog).then(() => {
+        // Panggil fungsi notifikasi setelah data tersimpan
+        kirimNotifikasiGrupWA(nama, jamMasukSekarang);
+    });
+}
+
+function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
+    const tokenAPI = "72xuNGqpPwG3VcfsTf84"; 
+    const targetGrupID = "120363299777969852@g.us"; // Pastikan ini ID grup yang benar dari dashboard
+
+    const isiPesan = `📢 *NOTIFIKASI ABSENSI LAUNDRY*\n\n` +
+                     `Karyawan: *${namaKaryawan}*\n` +
+                     `Waktu Hadir: *${jamMasuk} WIB*\n` +
+                     `Status: Sudah check-in di lokasi.`;
+
+    const myHeaders = new Headers();
+    myHeaders.append("Authorization", tokenAPI);
+
+    const formdata = new FormData();
+    formdata.append("target", targetGrupID);
+    formdata.append("message", isiPesan);
+
+    fetch("https://api.fonnte.com/send", {
+        method: 'POST',
+        headers: myHeaders,
+        body: formdata,
+        redirect: 'follow'
+    })
+    .then(response => response.json())
+    .then(result => console.log("Notifikasi WA Terkirim:", result))
+    .catch(error => console.error("Gagal kirim WA:", error));
+}
+
+
+
+        function prosesPulang(id) {
+            let idx = dataAbsenLog.findIndex(a => a.karyawan_id === id && a.tanggal === hariIni);
+            let kObj = dataKaryawan.find(k => k.id === id);
+            if(idx !== -1 && kObj) {
+                let abs = dataAbsenLog[idx];
+                let [jM, mM] = abs.jam_masuk.split(':').map(Number);
+                let skrg = new Date();
+                let selisihJam = parseFloat((((skrg.getHours()*60)+skrg.getMinutes()) - ((jM*60)+mM))/60);
+                if(selisihJam < 0) selisihJam = 0;
+
+                let batasDefault = (kObj.tipe === 'full') ? 12 : 6;
+                if (selisihJam > batasDefault && !abs.status_lembur) { selisihJam = batasDefault; }
+
+                abs.jam_pulang = skrg.toTimeString().split(' ')[0]; 
+                abs.status = `${selisihJam.toFixed(2)} Jam Kerja`; 
+                abs.gaji = Math.round(selisihJam * kObj.gaji);
+                db.ref('laundry_abs_log').set(dataAbsenLog);
+            }
+        }
+
+        function ajukanLemburWhatsApp(id, nama) {
+            let linkKonfirmasiPersetujuan = `${window.location.href.split('?')[0]}?approve_lembur_id=${id}&tgl=${hariIni}`;
+            let pesanWa = `Halo Owner Laundry, saya *${nama}* memohon izin lembur harian.\n\nKlik link di bawah untuk validasi:\n👉 ${linkKonfirmasiPersetujuan}`;
+            window.open(`https://api.whatsapp.com/send?phone=${WA_OWNER}&text=${encodeURIComponent(pesanWa)}`, '_blank');
+        }
+
+        function verifikasiSandiAksi(callback) {
+            let passInput = prompt("⚠️ MASUKKAN SANDI UTAMA KEAMANAN:");
+            if (passInput === passAdminSistem || passInput === passOwnerSistem) { callback(); } else { alert("❌ Sandi Salah!"); }
+        }
+
+        function simpanOmzetKoreksiAdmin() {
+            verifikasiSandiAksi(() => {
+                let tglInput = document.getElementById('admin-omzet-tanggal').value;
+                let omzet = parseInt(document.getElementById('admin-omzet-nominal').value);
+                if(!tglInput || isNaN(omzet)) { alert("Lengkapi data!"); return; }
+
+                let idx = dataOmzetHarian.findIndex(o => o.tanggal === tglInput);
+                if(idx !== -1) { 
+                    dataOmzetHarian[idx].nominal = omzet; 
+                } else { 
+                    dataOmzetHarian.push({ tanggal: tglInput, nominal: omzet }); 
+                }
+                db.ref('laundry_omzet').set(dataOmzetHarian);
+                alert("✅ Omzet Cloud Berhasil Diperbarui!");
+                document.getElementById('admin-omzet-nominal').value = '';
+            });
+        }
+
+        function tumpilkanTabelKoreksiOmzetAdmin() {
+            let tbody = document.querySelector('#tabel-koreksi-omzet tbody'); if(!tbody) return; tbody.innerHTML = '';
+            if(dataOmzetHarian.length === 0) { tbody.innerHTML = '<tr><td colspan="3">Kosong</td></tr>'; return; }
+            [...dataOmzetHarian].reverse().forEach((o) => {
+                let realIndex = dataOmzetHarian.findIndex(orig => orig.tanggal === o.tanggal);
+                tbody.innerHTML += `<tr><td><small>${o.tanggal}</small></td><td><strong>Rp ${o.nominal.toLocaleString('id-ID')}</strong></td><td><button class="btn btn-xs btn-danger" onclick="hapusOmzetAdmin(${realIndex})">Hapus</button></td></tr>`;
+            });
+        }
+
+        function hapusOmzetAdmin(idx) {
+            verifikasiSandiAksi(() => {
+                dataOmzetHarian.splice(idx, 1);
+                db.ref('laundry_omzet').set(dataOmzetHarian);
+                alert("Omzet terhapus!");
+            });
+        }
+
+        function tampilkanTabelEditorBelanjaAdmin() {
+            let tbody = document.querySelector('#tabel-editor-belanja tbody'); if(!tbody) return; tbody.innerHTML = '';
+            if(dataOps.length === 0) { tbody.innerHTML = '<tr><td colspan="4">Kosong</td></tr>'; return; }
+            [...dataOps].reverse().forEach((item) => {
+                let realIndex = dataOps.findIndex(o => o.tanggal === item.tanggal && o.barang === item.barang && o.jumlah === item.jumlah);
+                tbody.innerHTML += `
+                    <tr>
+                        <td><small>${item.tanggal}</small></td><td><strong>${item.barang}</strong></td>
+                        <td><input type="number" class="form-control form-control-sm text-center mx-auto" style="max-width:80px;" id="edit-ops-qty-${realIndex}" value="${item.jumlah}"></td>
+                        <td>
+                            <button class="btn btn-xs btn-success py-0 px-2" onclick="simpanKoreksiBelanjaAdmin(${realIndex})">💾</button>
+                            <button class="btn btn-xs btn-outline-danger py-0 px-1" onclick="hapusBelanjaAdmin(${realIndex})">Hapus</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function simpanKoreksiBelanjaAdmin(idx) {
+            verifikasiSandiAksi(() => {
+                let qtyBaru = parseInt(document.getElementById(`edit-ops-qty-${idx}`).value);
+                if(isNaN(qtyBaru) || qtyBaru < 1) { alert("Qty minimal 1!"); return; }
+                dataOps[idx].jumlah = qtyBaru;
+                db.ref('laundry_ops').set(dataOps);
+                alert("Koreksi Belanja Disinkronkan!");
+            });
+        }
+
+        function hapusBelanjaAdmin(idx) {
+            verifikasiSandiAksi(() => {
+                dataOps.splice(idx, 1);
+                db.ref('laundry_ops').set(dataOps);
+                alert("Data Belanja terhapus!");
+            });
+        }
+
+        function ubahHargaBarangAdmin(id) {
+            verifikasiSandiAksi(() => {
+                let idx = dataMasterBarang.findIndex(b => b.id === id);
+                if(idx !== -1) {
+                    let hargaBaru = prompt(`Masukkan Harga Baru [${dataMasterBarang[idx].nama}]:`, dataMasterBarang[idx].harga);
+                    if(hargaBaru && !isNaN(hargaBaru)) {
+                        dataMasterBarang[idx].harga = parseInt(hargaBaru);
+                        db.ref('laundry_mst_brg').set(dataMasterBarang);
+                    }
+                }
+            });
+        }
+
+        function tampilkanTabelEditorAbsenAdmin() {
+            let tbody = document.querySelector('#tabel-editor-absen tbody'); if(!tbody) return; tbody.innerHTML = '';
+            if(dataAbsenLog.length === 0) { tbody.innerHTML = '<tr><td colspan="7">Kosong</td></tr>'; return; }
+            [...dataAbsenLog].reverse().forEach((abs) => {
+                let realIndex = dataAbsenLog.findIndex(a => a.karyawan_id === abs.karyawan_id && a.tanggal === abs.tanggal);
+                let linkPeta = (abs.lokasi && abs.lokasi.startsWith("http")) ? `<a href="${abs.lokasi}" target="_blank" class="btn btn-xs btn-outline-primary p-0 px-1">📍 Map</a>` : `<span class="text-muted small">${abs.lokasi || '-'}</span>`;
+                tbody.innerHTML += `
+                    <tr>
+                        <td><small>${abs.tanggal}</small></td><td><strong>${abs.nama}</strong></td>
+                        <td><input type="text" class="form-control form-control-sm text-center mx-auto" style="max-width:90px;" id="edit-masuk-${realIndex}" value="${abs.jam_masuk}"></td>
+                        <td><input type="text" class="form-control form-control-sm text-center mx-auto" style="max-width:90px;" id="edit-pulang-${realIndex}" value="${abs.jam_pulang || ''}"></td>
+                        <td><small>Rp ${(abs.gaji || 0).toLocaleString('id-ID')}</small></td><td>${linkPeta}</td>
+                        <td>
+                            <button class="btn btn-xs btn-success p-0 px-2" onclick="simpanKoreksiAbsenAdmin(${realIndex})">💾</button>
+                            <button class="btn btn-xs btn-outline-danger p-0 px-1" onclick="hapusResetAbsenAdmin(${realIndex})">Hapus</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function simpanKoreksiAbsenAdmin(idx) {
+            verifikasiSandiAksi(() => {
+                let abs = dataAbsenLog[idx];
+                abs.jam_masuk = document.getElementById(`edit-masuk-${idx}`).value;
+                let jPulang = document.getElementById(`edit-pulang-${idx}`).value;
+                abs.jam_pulang = jPulang === "" ? null : jPulang;
+                if (abs.jam_pulang) {
+                    let [jM, mM] = abs.jam_masuk.split(':').map(Number); let [jP, mP] = abs.jam_pulang.split(':').map(Number);
+                    let selisihJam = parseFloat((((jP*60)+mP) - ((jM*60)+mM))/60);
+                    let karObj = dataKaryawan.find(k => k.id === abs.karyawan_id);
+                    abs.status = `${selisihJam < 0 ? 0 : selisihJam.toFixed(2)} Jam Kerja`;
+                    abs.gaji = Math.round((selisihJam < 0 ? 0 : selisihJam) * (karObj ? karObj.gaji : 5769));
+                } else { abs.status = "Sedang Kerja"; abs.gaji = 0; }
+                db.ref('laundry_abs_log').set(dataAbsenLog);
+                alert("Berhasil disinkronkan!");
+            });
+        }
+
+        function hapusResetAbsenAdmin(idx) {
+            verifikasiSandiAksi(() => {
+                dataAbsenLog.splice(idx, 1);
+                db.ref('laundry_abs_log').set(dataAbsenLog);
+                alert("Data terhapus!");
+            });
+        }
+
+        function tampilkanLogbookOwnerRealtime() {
+            let tbody = document.querySelector('#logbook-realtime-owner tbody'); if(!tbody) return; tbody.innerHTML = '';
+            let daftarTanggal = [...new Set(dataAbsenLog.map(a => a.tanggal).concat(dataOps.map(o => o.tanggal)).concat(dataOmzetHarian.map(om => om.tanggal)))].sort().reverse();
+            if(daftarTanggal.length === 0) { tbody.innerHTML='<tr><td colspan="7">Belum ada catatan logbook</td></tr>'; return; }
+
+            daftarTanggal.forEach(tgl => {
+                let kotor = dataOmzetHarian.find(o => o.tanggal === tgl)?.nominal || 0;
+                let bGaji = dataAbsenLog.filter(a => a.tanggal === tgl).reduce((acc, c) => acc + (c.gaji || 0), 0);
+                let bOps = dataOps.filter(o => o.tanggal === tgl).reduce((acc, c) => {
+                    let hrg = dataMasterBarang.find(b => b.nama === c.barang)?.harga || 0;
+                    return acc + (hrg * parseInt(c.jumlah));
+                }, 0);
+                let bersih = kotor - (bGaji + bOps);
+
+                let logHariTersebut = dataAbsenLog.filter(a => a.tanggal === tgl);
+                let statusDurasiKerjaStr = logHariTersebut.map(l => `${l.nama.split(' ')[0]}: ${l.jam_pulang ? l.status : hitungSelisihJamRealtime(l.jam_masuk)+'j(Live)'}`).join(', ') || '-';
+
+                let logHariIniMap = dataAbsenLog.find(a => a.tanggal === tgl && a.lokasi && a.lokasi.startsWith("http"));
+                let linkLokasiOwner = logHariIniMap ? `<a href="${logHariIniMap.lokasi}" target="_blank" class="small">📍 Check Map</a>` : '-';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${tgl}</strong></td>
+                        <td class="text-success">Rp ${kotor.toLocaleString('id-ID')}</td>
+                        <td class="text-danger">Rp ${bGaji.toLocaleString('id-ID')}</td>
+                        <td class="text-danger">Rp ${bOps.toLocaleString('id-ID')}</td>
+                        <td class="fw-bold ${bersih >= 0 ? 'text-primary' : 'text-danger'}">Rp ${bersih.toLocaleString('id-ID')}</td>
+                        <td>${linkLokasiOwner}</td>
+                        <td><span class="badge bg-secondary" style="font-size:9px;">${statusDurasiKerjaStr}</span></td>
+                    </tr>`;
+            });
+        }
+
+        // Fungsi Kustom Mengatur Tampilan Unminimize/Minimize Gaji Karyawan di Web Layar Utama
+        function toggleMinimizeKaryawanWeb() {
+            statusKaryawanMinimizeWeb = !statusKaryawanMinimizeWeb;
+            const rowsKaryawan = document.querySelectorAll('.row-matriks-karyawan');
+            const btnToggle = document.getElementById('btn-toggle-karyawan');
+
+            rowsKaryawan.forEach(row => {
+                if(statusKaryawanMinimizeWeb) {
+                    row.classList.add('d-none');
+                } else {
+                    row.classList.remove('d-none');
+                }
+            });
+
+            if(statusKaryawanMinimizeWeb) {
+                btnToggle.innerHTML = `<i class="bi bi-eye-fill"></i> Unminimize Gaji Karyawan`;
+                btnToggle.className = "btn btn-xs btn-outline-dark me-1 text-dark fw-bold";
+            } else {
+                btnToggle.innerHTML = `<i class="bi bi-eye-slash-fill"></i> Minimize Gaji Karyawan`;
+                btnToggle.className = "btn btn-xs btn-dark me-1 text-white fw-bold";
+            }
+        }
+
+        function togglePrintRow(tipe) {
+            if (tipe === 'omzet') {
+                const rowOmzet = document.getElementById('row-matriks-omzet');
+                if (rowOmzet) { rowOmzet.classList.toggle('print-hide-row'); }
+            } else if (tipe === 'karyawan') {
+                const rowsKaryawan = document.querySelectorAll('.row-matriks-karyawan');
+                rowsKaryawan.forEach(row => row.classList.toggle('print-hide-row'));
+            }
+            alert("Setelan filter cetak diperbarui!");
+        }
+
+        function cekAksesOwner() {
+            if ((localStorage.getItem('login_owner_sukses') || "tidak") === "ya") {
+                document.getElementById('login-owner-box').classList.add('d-none'); document.getElementById('konten-owner').classList.remove('d-none');
+                tampilkanLogbookOwnerRealtime(); muatLaporanMatriks();
+            } else { document.getElementById('login-owner-box').classList.remove('d-none'); document.getElementById('konten-owner').classList.add('d-none'); }
+        }
+        function verifikasiOwner() {
+            if (document.getElementById('pass-owner').value === passOwnerSistem) { localStorage.setItem('login_owner_sukses', "ya"); cekAksesOwner(); } else { alert("Sandi Owner Salah!"); }
+        }
+        function logoutOwner() { localStorage.setItem('login_owner_sukses', "node"); document.getElementById('pass-owner').value=''; cekAksesOwner(); }
+
+        function muatLaporanMatriks() {
+            let bulanPilihan = document.getElementById('filter-bulan').value; 
+            let tbody = document.querySelector('#matriks-inventory tbody'); if(!tbody) return; tbody.innerHTML = '';
+            let totalBebanBulanan = 0; let totalOmzetBulanan = 0;
+
+            let trOmzet = document.createElement('tr'); 
+            trOmzet.className = "table-success fw-bold";
+            trOmzet.id = "row-matriks-omzet";
+            trOmzet.innerHTML = `<td class="col-nama text-start">📈 Omzet (Kotor)</td><td>Kotor</td>`;
+            for(let d=1; d<=31; d++) {
+                let tgl = `${bulanPilihan}-${d<10?'0'+d:d}`;
+                let nominal = dataOmzetHarian.find(o => o.tanggal === tgl)?.nominal || 0;
+                trOmzet.innerHTML += `<td>${nominal > 0 ? nominal.toLocaleString('id-ID') : ''}</td>`;
+                totalOmzetBulanan += nominal;
+            }
+            trOmzet.innerHTML += `<td>Rp ${totalOmzetBulanan.toLocaleString('id-ID')}</td><td>Pendapatan</td>`;
+            tbody.appendChild(trOmzet);
+
+            dataMasterBarang.forEach(b => {
+                let tr = document.createElement('tr'); tr.innerHTML = `<td class="col-nama text-start">${b.nama}</td><td>Rp ${b.harga.toLocaleString('id-ID')}</td>`;
+                let totalQty = 0;
+                for (let d = 1; d <= 31; d++) {
+                    let qty = dataOps.filter(o => o.barang === b.nama && o.tanggal === `${bulanPilihan}-${d<10?'0'+d:d}`).reduce((acc, curr) => acc + parseInt(curr.jumlah), 0);
+                    let validQty = isNaN(qty) ? 0 : qty; 
+                    tr.innerHTML += `<td>${validQty > 0 ? validQty : ''}</td>`; totalQty += validQty;
+                }
+                let totalBiaya = totalQty * b.harga; 
+                totalBebanBulanan += totalBiaya;
+                tr.innerHTML += `<td>Rp ${totalBiaya.toLocaleString('id-ID')}</td><td>Qty: ${totalQty}</td>`;
+                tbody.appendChild(tr);
+            });
+
+            dataKaryawan.forEach(k => {
+                let tr = document.createElement('tr'); 
+                // Otomatis berikan kelas d-none agar baris ini ter-minimize saat dimuat di web browser
+                tr.className = "table-info row-matriks-karyawan" + (statusKaryawanMinimizeWeb ? " d-none" : ""); 
+                let labelTipe = k.tipe === 'full' ? 'Full' : 'Harian';
+                tr.innerHTML = `<td class="col-nama text-start">💰 ${k.nama} (${labelTipe})</td><td>Rate</td>`;
+                let totalGajiKaryawan = 0;
+                for (let d = 1; d <= 31; d++) {
+                    let gajiHariIni = dataAbsenLog.filter(a => a.karyawan_id === k.id && a.tanggal === `${bulanPilihan}-${d<10?'0'+d:d}`).reduce((acc, curr) => acc + curr.gaji, 0);
+                    tr.innerHTML += `<td>${gajiHariIni > 0 ? gajiHariIni.toLocaleString('id-ID') : ''}</td>`;
+                    totalGajiKaryawan += gajiHariIni;
+                }
+                totalBebanBulanan += totalGajiKaryawan;
+                tr.innerHTML += `<td>Rp ${totalGajiKaryawan.toLocaleString('id-ID')}</td><td>Beban Kerja</td>`;
+                tbody.appendChild(tr);
+            });
+
+            let repOmzet = document.getElementById('rep-omzet'); if(repOmzet) repOmzet.innerText = "Rp " + totalOmzetBulanan.toLocaleString('id-ID');
+            let repTotal = document.getElementById('rep-total'); if(repTotal) repTotal.innerText = "Rp " + totalBebanBulanan.toLocaleString('id-ID');
+            let labaBersih = totalOmzetBulanan - totalBebanBulanan;
+            let bersihEl = document.getElementById('rep-bersih');
+            if(bersihEl) {
+                bersihEl.innerText = "Rp " + labaBersih.toLocaleString('id-ID');
+                bersihEl.className = labaBersih >= 0 ? "fw-bold text-primary mb-0" : "fw-bold text-danger mb-0";
+            }
+        }
+
+        function cekAksesAdmin() {
+            if ((localStorage.getItem('login_admin_sukses') || "tidak") === "ya") {
+                document.getElementById('login-admin-box').classList.add('d-none'); document.getElementById('konten-admin').classList.remove('d-none');
+                tampilkanMasterBarang(); tampilkanMasterKaryawan(); tampilkanTabelEditorAbsenAdmin(); perbaruiPilihanBarang(); tampilkanTabelEditorBelanjaAdmin(); tumpilkanTabelKoreksiOmzetAdmin();
+            } else { document.getElementById('login-admin-box').classList.remove('d-none'); document.getElementById('konten-admin').classList.add('d-none'); }
+        }
+        function verifikasiAdmin() {
+            if (document.getElementById('pass-admin').value === passAdminSistem) { localStorage.setItem('login_admin_sukses', "ya"); cekAksesAdmin(); } else { alert("Sandi Admin Salah!"); }
+        }
+        function logoutAdmin() { localStorage.setItem('login_admin_sukses', "tidak"); cekAksesAdmin(); }
+
+        document.getElementById('form-master-barang').addEventListener('submit', function(e){
+            e.preventDefault();
+            dataMasterBarang.push({ id: Date.now(), nama: document.getElementById('mst-nama').value, harga: parseInt(document.getElementById('mst-harga').value) });
+            db.ref('laundry_mst_brg').set(dataMasterBarang);
+            this.reset();
+        });
+
+        function tampilkanMasterBarang() {
+            let html = '';
+            dataMasterBarang.forEach((item) => {
+                html += `<tr><td>${item.nama}</td><td>Rp ${item.harga.toLocaleString('id-ID')}</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahHargaBarangAdmin(${item.id})">✏️ Harga</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataMasterBarang = dataMasterBarang.filter(b => b.id !== ${item.id}); db.ref('laundry_mst_brg').set(dataMasterBarang); })">Hapus</button></td></tr>`;
+            });
+            let tbody = document.querySelector('#tabel-master-barang tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="3">Kosong</td></tr>';
+        }
+
+        document.getElementById('form-karyawan').addEventListener('submit', function(e){
+            e.preventDefault();
+            let tipe = document.getElementById('kar-tipe').value;
+            let gajiBulanan = parseInt(document.getElementById('kar-gaji-bulanan').value);
+            let totalJamKerjaSebulan = (tipe === 'full') ? (26 * 12) : (26 * 6);
+            let ratePerJamPilihan = Math.round(gajiBulanan / totalJamKerjaSebulan);
+
+            let uangMakan = parseInt(prompt("Nominal Uang Makan/hari:", "15000")) || 0;
+            let uangBensin = parseInt(prompt("Nominal Uang Bensin/hari:", "10000")) || 0;
+            let rateLembur = parseInt(prompt("Nominal Gaji Lembur/jam:", "5000")) || 0;
+
+            dataKaryawan.push({ 
+                id: Date.now(), nama: document.getElementById('kar-nama').value, tipe: tipe, gaji: ratePerJamPilihan, pin: "1234",
+                benefit: { uang_makan: uangMakan, uang_bensin: uangBensin, rate_lembur: rateLembur }
+            });
+            db.ref('laundry_kar').set(dataKaryawan);
+            this.reset(); sesuaikanPlaceholderGaji();
+        });
+
+        function tampilkanMasterKaryawan() {
+            let html = '';
+            dataKaryawan.forEach((item) => {
+                let labelTipe = item.tipe === 'full' ? 'Full (12j)' : 'Harian (6j)';
+                html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahGajiKaryawanAdmin(${item.id})">✏️ Gaji</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button></td></tr>`;
+            });
+            let tbody = document.querySelector('#tabel-master-karyawan tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
+        }
+
+        function ubahGajiKaryawanAdmin(id) {
+            verifikasiSandiAksi(() => {
+                let idx = dataKaryawan.findIndex(k => k.id === id);
+                if (idx !== -1) {
+                    let karyawan = dataKaryawan[idx];
+                    let gajiBulananBaru = prompt(`Masukkan Gaji Bulanan Baru [${karyawan.nama}]:`, "1800000");
+                    if (gajiBulananBaru && !isNaN(gajiBulananBaru)) {
+                        let totalJamKerjaSebulan = (karyawan.tipe === 'full') ? (26 * 12) : (26 * 6);
+                        dataKaryawan[idx].gaji = Math.round(parseInt(gajiBulananBaru) / totalJamKerjaSebulan);
+                        db.ref('laundry_kar').set(dataKaryawan);
+                    }
+                }
+            });
+        }
+
+        function perbaruiPilihanBarang() {
+            let select = document.getElementById('ops-barang'); if(!select) return;
+            select.innerHTML = '<option value="">-- Pilih Barang --</option>';
+            dataMasterBarang.forEach(b => { select.innerHTML += `<option value="${b.nama}">${b.nama}</option>`; });
+        }
+
+        document.getElementById('form-pengeluaran').addEventListener('submit', function(e){
+            e.preventDefault();
+            dataOps.push({ barang: document.getElementById('ops-barang').value, jumlah: parseInt(document.getElementById('ops-jumlah').value), tanggal: document.getElementById('ops-tanggal').value });
+            db.ref('laundry_ops').set(dataOps);
+            this.reset(); document.getElementById('ops-tanggal').value = hariIni;
+        });
+
+        function tampilkanPengeluaran() {
+            let html = '';
+            [...dataOps].reverse().slice(0, 10).forEach(item => {
+                let masterB = dataMasterBarang.find(b => b.nama === item.barang);
+                html += `<tr><td>${item.tanggal.substring(5, 10)}</td><td>${item.barang}</td><td>${item.jumlah}</td><td>Rp ${((masterB?masterB.harga:0)*parseInt(item.jumlah)).toLocaleString('id-ID')}</td></tr>`;
+            });
+            let tbody = document.querySelector('#tabel-pengeluaran tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
+        }
+
+        inisialisasiHeaderMatriks();
+    </script>
+</body>
+</html>
