@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BizTrack Secure by zlink</title>
+    <title>Absensi & Inventory (Cloud Version)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -118,14 +118,14 @@
 
     <div class="container py-3" style="max-width: 100%;">
         <div class="text-center mb-3 p-2 rounded" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(2px); max-width: 600px; margin: auto;">
-            <img id="brand-logo" src="https://cdn-icons-png.flaticon.com/512/2954/2954350.png" alt="Logo Brand" onclick="pemicuKlikRahasiaAdmin()" onerror="this.src='https://raw.githubusercontent.com/Zlinkhub/datalaundry/refs/heads/main/powered%20by.png'">
-            <h3 id="brand-name" class="mb-1">BizTrack Secure</h3>
+            <img id="brand-logo" src="https://cdn-icons-png.flaticon.com/512/2954/2954350.png" alt="Logo Brand" onclick="pemicuKlikRahasiaAdmin()" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2954/2954350.png'">
+            <h3 id="brand-name" class="mb-1">🧺 Laundry Pro-Secure</h3>
             <p class="text-center text-muted small mb-1">Sistem Absensi Kehadiran & Panel Manajemen Terpusat</p>
         </div>
 
         <ul class="nav nav-pills nav-fill mb-3 bg-white p-2 rounded shadow-sm" id="pills-tab" role="tablist" style="max-width: 800px; margin: auto;">
             <li class="nav-item">
-                <button class="nav-link active small" id="tab-absensi" data-bs-toggle="pill" data-bs-target="#absensi" onclick="cekStatusTampilanAbsen()">🪪 Absen</button>
+                <button class="nav-link active small" id="tab-absensi" data-bs-toggle="pill" data-bs-target="#absensi" onclick="cekStatusTampilanAbsen()">👥 Absen</button>
             </li>
             <li class="nav-item">
                 <button class="nav-link small" id="tab-operasional" data-bs-toggle="pill" data-bs-target="#operasional">📦 Belanja</button>
@@ -741,7 +741,7 @@
         function sesuaikanPlaceholderGaji() {
             let tipe = document.getElementById('kar-tipe').value;
             let inputGajiBulanan = document.getElementById('kar-gaji-bulanan');
-            if(tipe === 'full') { inputGajiBulanan.value = "1800000"; } else { inputGajiBulanan.value = "1300000"; }
+            if(tipe === 'full') { inputGajiBulanan.value = "1800000"; } else { inputGajiBulanan.value = "1000000"; }
         }
 
         function perbaruiDropdownLoginKaryawan() {
@@ -857,6 +857,10 @@
             `;
         }
 
+
+
+
+
         function prosesAbsenMasuk(id, nama) {
     // 1. Ambil tombol yang diklik
     const btn = event.target;
@@ -884,6 +888,11 @@
 }
 
 
+
+
+
+
+
         function simpanLogAbsenCloud(id, nama, lokasiMap) {
     const jamMasukSekarang = new Date().toTimeString().split(' ')[0];
 
@@ -898,6 +907,32 @@
         kirimNotifikasiGrupWA(nama, jamMasukSekarang);
     });
 }
+
+
+
+
+
+
+
+
+function toggleLoadingUI(btnElement, isLoading) {
+    if (isLoading) {
+        btnElement.disabled = true;
+        btnElement.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Memproses...';
+    } else {
+        btnElement.disabled = false;
+        btnElement.innerHTML = 'Tap Masuk Kerja 🟢';
+    }
+}
+
+
+
+
+
+
+
+
+
 
 function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
     const tokenAPI = "72xuNGqpPwG3VcfsTf84"; 
@@ -968,36 +1003,47 @@ function kirimNotifikasiGrupWA(namaKaryawan, jamMasuk) {
     }
 }
 
-// 5. FUNGSI BARU KHUSUS UNTUK KIRIM NOTIFIKASI PULANG KE WA
 function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
-    const tokenAPI = "72xuNGqpPwG3VcfsTf84"; // Token Fonnte Anda
-    const targetGrupID = "120363299777969852@g.us"; // ID Grup WhatsApp Anda
+    const tokenAPI = "72xuNGqpPwG3VcfsTf84"; 
+    const targetGrupID = "120363299777969852@g.us"; 
 
-    // Struktur pesan teks WhatsApp menggunakan format Markdown (*teks tebal*)
     const isiPesan = `🛑 *NOTIFIKASI ABSENSI LAUNDRY (PULANG)*\n\n` +
                      `Karyawan: *${namaKaryawan}*\n` +
                      `Waktu Pulang: *${jamPulang} WIB*\n` +
                      `Total Durasi: *${durasiKerja}*\n\n` +
-                     `Status: Selesai tugas hari ini. Terima kasih atas kerja kerasnya! ✨`;
-
-    const myHeaders = new Headers();
-    myHeaders.append("Authorization", tokenAPI);
+                     `Status: Selesai tugas hari ini.`;
 
     const formdata = new FormData();
     formdata.append("target", targetGrupID);
     formdata.append("message", isiPesan);
 
-    // Kirim request ke API Fonnte
+    console.log("Mencoba kirim WA ke:", targetGrupID); // CEK DI CONSOLE
+
     fetch("https://api.fonnte.com/send", {
         method: 'POST',
-        headers: myHeaders,
-        body: formdata,
-        redirect: 'follow'
+        headers: { "Authorization": tokenAPI },
+        body: formdata
     })
     .then(response => response.json())
-    .then(result => console.log("Notifikasi Pulang WA Terkirim:", result))
-    .catch(error => console.error("Gagal mengirim WA Pulang:", error));
+    .then(result => {
+        console.log("Hasil Fonnte:", result); // SANGAT PENTING: Lihat apa jawaban dari server
+        if (result.status === false) {
+            alert("Gagal kirim WA: " + result.reason);
+        }
+    })
+    .catch(error => {
+        console.error("Eror Koneksi:", error);
+        alert("Eror koneksi ke Fonnte!");
+    });
 }
+
+
+
+
+
+
+
+
 
 
         function ajukanLemburWhatsApp(id, nama) {
@@ -1310,7 +1356,7 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
             let totalJamKerjaSebulan = (tipe === 'full') ? (26 * 12) : (26 * 6);
             let ratePerJamPilihan = Math.round(gajiBulanan / totalJamKerjaSebulan);
 
-            let uangMakan = parseInt(prompt("Nominal Uang Makan/hari:", "0")) || 0;
+            let uangMakan = parseInt(prompt("Nominal Uang Makan/hari:", "15000")) || 0;
             let uangBensin = parseInt(prompt("Nominal Uang Bensin/hari:", "0")) || 0;
             let rateLembur = parseInt(prompt("Nominal Gaji Lembur/jam:", "5000")) || 0;
 
@@ -1322,14 +1368,31 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
             this.reset(); sesuaikanPlaceholderGaji();
         });
 
-        function tampilkanMasterKaryawan() {
-            let html = '';
-            dataKaryawan.forEach((item) => {
-                let labelTipe = item.tipe === 'full' ? 'Full (12j)' : 'Harian (6j)';
-                html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahGajiKaryawanAdmin(${item.id})">✏️ Gaji</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button></td></tr>`;
-            });
-            let tbody = document.querySelector('#tabel-master-karyawan tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
-        }
+
+
+function tampilkanMasterKaryawan(){
+let html ='';
+dataKaryawan.forEach((item) => {
+let labelTipe = item.tipe ===
+'full'?'Full (12j)':'Harian (6j)';
+html +=`<tr><td>${item.nama}</
+td><td><span class="badge $
+{item.tipe==='full'?'bg-dark':'bg-secondary'}">$
+{labelTipe}</span></td><td>Rp$
+{Math.round(item.gaji).toLocaleString('id-ID')}/
+jam</td><td><button class="btn btn-warning btn-xs
+py-0 px-1 me-1" onclick="ubahGajiKaryawanAdmin($
+{item.id})">\ Gaji</button><button class="btn
+btn-danger btn-xs py-0 px-1"
+onclick="verifikasiSandiAksi(() => { dataKaryawan
+dataKaryawan.filter(k => k.id !== ${item.id});
+db.ref('laundry_kar').set(dataKaryawan);})">Hapus<
+/button></td></tr>`;
+});
+let tbody =
+document.querySelector('#tabel-master-karyawan
+tbody'); if(tbody) tbody.innerHTML = html |I
+'<tr><td colspan="4">Kosong</td></tr>';
 
         function ubahGajiKaryawanAdmin(id) {
             verifikasiSandiAksi(() => {
