@@ -1375,6 +1375,16 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
             let tbody = document.querySelector('#tabel-pengeluaran tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
         }
 
+function toggleLoadingUI(btn, isLoading, originalText = 'Tap Masuk Kerja 🟢') {
+    if (isLoading) {
+        btn.disabled = true;
+        btn.innerHTML = 'Memproses...';
+    } else {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
         inisialisasiHeaderMatriks();
     </script>
 </body>
