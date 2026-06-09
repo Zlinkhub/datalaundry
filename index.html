@@ -1303,17 +1303,7 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
             let tbody = document.querySelector('#tabel-master-barang tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="3">Kosong</td></tr>';
         }
 
-       
-
-
-
-
-
-
-
-
-
- document.getElementById('form-karyawan').addEventListener('submit', function(e){
+        document.getElementById('form-karyawan').addEventListener('submit', function(e){
             e.preventDefault();
             let tipe = document.getElementById('kar-tipe').value;
             let gajiBulanan = parseInt(document.getElementById('kar-gaji-bulanan').value);
@@ -1325,74 +1315,17 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
             let rateLembur = parseInt(prompt("Nominal Gaji Lembur/jam:", "5000")) || 0;
 
             dataKaryawan.push({ 
-                id: Date.now(), nama: document.getElementById('kar-nama').value, tipe: tipe, gaji: ratePerJamPilihan, pin: "123",
+                id: Date.now(), nama: document.getElementById('kar-nama').value, tipe: tipe, gaji: ratePerJamPilihan, pin: "1234",
                 benefit: { uang_makan: uangMakan, uang_bensin: uangBensin, rate_lembur: rateLembur }
             });
             db.ref('laundry_kar').set(dataKaryawan);
             this.reset(); sesuaikanPlaceholderGaji();
         });
 
-
-
-
-
-
-function resetAbsenKaryawan(karyawanId, namaKaryawan) {
-    // 1. Autentikasi PIN Admin
-    const PIN_ADMIN = "123"; // Sesuaikan dengan PIN Anda
-    let inputPin = prompt("Masukkan PIN Admin untuk Reset:");
-
-    if (inputPin !== PIN_ADMIN) {
-        alert("❌ PIN Salah! Akses ditolak.");
-        return;
-    }
-
-    // 2. Konfirmasi tindakan
-    if (confirm(`Yakin ingin mengaktifkan kembali tombol 'Masuk' untuk ${namaKaryawan}?`)) {
-        let tglHariIni = new Date().toISOString().split('T')[0]; 
-        
-        // 3. Cari data log absen karyawan tersebut hari ini
-        let indeksData = dataAbsenLog.findIndex(log => 
-            log.karyawan_id == karyawanId && log.tanggal === tglHariIni
-        );
-        
-        if (indeksData !== -1) {
-            // Hapus data dari array lokal
-            dataAbsenLog.splice(indeksData, 1);
-            
-            // 4. Update ke Firebase
-            db.ref('laundry_abs_log').set(dataAbsenLog)
-            .then(() => {
-                alert(`✅ Tombol masuk ${namaKaryawan} sudah aktif kembali!`);
-            })
-            .catch((error) => {
-                alert("❌ Gagal terhubung ke database.");
-            });
-        } else {
-            alert("⚠️ Karyawan belum melakukan absen masuk hari ini.");
-        }
-    }
-}
-
-
-
-
         function tampilkanMasterKaryawan() {
             let html = '';
             dataKaryawan.forEach((item) => {
                 let labelTipe = item.tipe === 'full' ? 'Full (12j)' : 'Harian (6j)';
-
-
-// Di dalam loop tampilkanMasterKaryawan
-html += `<tr>
-    <td>${item.nama}</td>
-    <td>
-        <button class="btn btn-warning btn-sm" onclick="resetAbsenKaryawan('${item.id}', '${item.nama}')">
-            🔄 Reset Masuk
-        </button>
-    </td>
-</tr>`;
-
                 html += `<tr><td>${item.nama}</td><td><span class="badge ${item.tipe==='full'?'bg-dark':'bg-secondary'}">${labelTipe}</span></td><td>Rp ${Math.round(item.gaji).toLocaleString('id-ID')}/jam</td><td><button class="btn btn-warning btn-xs py-0 px-1 me-1" onclick="ubahGajiKaryawanAdmin(${item.id})">✏️ Gaji</button><button class="btn btn-danger btn-xs py-0 px-1" onclick="verifikasiSandiAksi(() => { dataKaryawan = dataKaryawan.filter(k => k.id !== ${item.id}); db.ref('laundry_kar').set(dataKaryawan); })">Hapus</button></td></tr>`;
             });
             let tbody = document.querySelector('#tabel-master-karyawan tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
