@@ -785,32 +785,7 @@
             }
         }
 
-        
-function renderMatriksInsentif() {
-    const tbody = document.getElementById('tabel-insentif-owner');
-    tbody.innerHTML = '';
-
-    dataAbsenLog.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)).forEach(item => {
-        let status = hitungStatusLembur(item.tipe, item.jam_masuk, item.jam_pulang);
-        
-        // Panggil variabel 'biayaLemburPerJam' yang sudah ada di kode Anda
-        // Pastikan variabel ini dapat diakses (global)
-        let nominalInsentif = status.isLembur ? (Math.floor(status.durasiLembur / 60) * biayaLemburPerJam) : 5000;
-
-        tbody.innerHTML += `
-            <tr class="${status.isLembur ? 'table-warning' : ''}">
-                <td>${item.tanggal}</td>
-                <td>${item.nama}</td>
-                <td>${status.keterangan}</td>
-                <td><strong>Rp ${nominalInsentif.toLocaleString()}</strong></td>
-                <td>
-                    <button class="btn btn-sm btn-primary" onclick="bukaEditorAdmin('${item.id}')">Koreksi</button>
-                </td>
-            </tr>
-        `;
-    });
-}
-
+    
 
         
         function sesuaikanPlaceholderGaji() {
