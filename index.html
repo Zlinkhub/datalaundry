@@ -1182,6 +1182,7 @@ function tambahAbsenManual() {
         let idKar = document.getElementById('add-abs-karyawan').value;
         let jamMasuk = document.getElementById('add-abs-masuk').value;
         let jamPulang = document.getElementById('add-abs-pulang').value;
+        let lokasi = prompt("Masukkan lokasi/keterangan (atau kosongkan untuk 'Manual Admin'):", "Manual Admin");
 
         if(!tgl || !idKar || !jamMasuk) { alert("Lengkapi data (Tanggal, Nama, Jam Masuk)!"); return; }
 
