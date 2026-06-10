@@ -1357,8 +1357,24 @@ function tambahAbsenManual() {
             }
         }
 
+
+
+
+
+
+
+
+
+
+
         function cekAksesAdmin() {
             if ((localStorage.getItem('login_admin_sukses') || "tidak") === "ya") {
+let select = document.getElementById('add-abs-karyawan');
+        select.innerHTML = '<option value="">Pilih Karyawan</option>';
+        dataKaryawan.forEach(k => {
+            select.innerHTML += `<option value="${k.id}">${k.nama}</option>`;
+        });
+    } 
                 document.getElementById('login-admin-box').classList.add('d-none'); document.getElementById('konten-admin').classList.remove('d-none');
                 tampilkanMasterBarang(); tampilkanMasterKaryawan(); tampilkanTabelEditorAbsenAdmin(); perbaruiPilihanBarang(); tampilkanTabelEditorBelanjaAdmin(); tumpilkanTabelKoreksiOmzetAdmin();
             } else { document.getElementById('login-admin-box').classList.remove('d-none'); document.getElementById('konten-admin').classList.add('d-none'); }
