@@ -1172,6 +1172,54 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
             });
         }
 
+
+
+
+
+function tambahAbsenManual() {
+    verifikasiSandiAksi(() => {
+        let tgl = document.getElementById('add-abs-tanggal').value;
+        let idKar = document.getElementById('add-abs-karyawan').value;
+        let jamMasuk = document.getElementById('add-abs-masuk').value;
+        let jamPulang = document.getElementById('add-abs-pulang').value;
+
+        if(!tgl || !idKar || !jamMasuk) { alert("Lengkapi data (Tanggal, Nama, Jam Masuk)!"); return; }
+
+        let kObj = dataKaryawan.find(k => k.id === parseInt(idKar));
+        let absBaru = {
+            tanggal: tgl,
+            karyawan_id: parseInt(idKar),
+            nama: kObj.nama,
+            jam_masuk: jamMasuk,
+            jam_pulang: jamPulang || null,
+            lokasi: "Manual Admin",
+            status: jamPulang ? "Koreksi Manual" : "Sedang Kerja"
+        };
+
+        // Hitung Gaji jika ada jam pulang
+        if(jamPulang) {
+            let [jM, mM] = jamMasuk.split(':').map(Number);
+            let [jP, mP] = jamPulang.split(':').map(Number);
+            let durasi = parseFloat(((jP*60)+mP - (jM*60+mM))/60);
+            absBaru.status = `${durasi.toFixed(2)} Jam Kerja`;
+            absBaru.gaji = Math.round(durasi * kObj.gaji);
+        } else {
+            absBaru.gaji = 0;
+        }
+
+        dataAbsenLog.push(absBaru);
+        db.ref('laundry_abs_log').set(dataAbsenLog).then(() => {
+            alert("Data absen manual berhasil ditambah!");
+        });
+    });
+}
+
+
+
+
+
+
+
         function tampilkanLogbookOwnerRealtime() {
             let tbody = document.querySelector('#logbook-realtime-owner tbody'); if(!tbody) return; tbody.innerHTML = '';
             let daftarTanggal = [...new Set(dataAbsenLog.map(a => a.tanggal).concat(dataOps.map(o => o.tanggal)).concat(dataOmzetHarian.map(om => om.tanggal)))].sort().reverse();
