@@ -1568,6 +1568,11 @@ const select = document.getElementById('add-abs-karyawan');
             let tbody = document.querySelector('#tabel-pengeluaran tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
         }
 
+        function updateRingkasanTotal() {
+    let totalLemburHariIni = hitungTotalLemburHariIni(); // Fungsi custom Anda
+    document.getElementById('total-pengeluaran-lembur').innerText = `Total Lembur: Rp ${totalLemburHariIni.toLocaleString()}`;
+        }
+
 function toggleLoadingUI(btn, isLoading, originalText = 'Tap Masuk Kerja 🟢') {
     if (isLoading) {
         btn.disabled = true;
