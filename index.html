@@ -795,7 +795,7 @@ function renderMatriksInsentif() {
         
         // Panggil variabel 'biayaLemburPerJam' yang sudah ada di kode Anda
         // Pastikan variabel ini dapat diakses (global)
-        let nominalInsentif = status.isLembur ? (Math.floor(status.durasiLembur / 60) * biayaLemburPerJam) : 0;
+        let nominalInsentif = status.isLembur ? (Math.floor(status.durasiLembur / 60) * biayaLemburPerJam) : 5000;
 
         tbody.innerHTML += `
             <tr class="${status.isLembur ? 'table-warning' : ''}">
@@ -1215,6 +1215,24 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
                             <button class="btn btn-xs btn-outline-danger p-0 px-1" onclick="hapusResetAbsenAdmin(${realIndex})">Hapus</button>
                         </td>
                     </tr>`;
+                let dataTampil = dataAbsenLog.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+                dataTampil.forEach(item => {
+    // Logika sederhana: Jika kerja > 8 jam, tandai lembur
+    let statusLembur = hitungDurasi(item.jam_masuk, item.jam_pulang) => 7 jam tandai lembur 
+                       '<span class="badge bg-warning text-dark">Lembur</span>' : '-';
+
+    // Render baris tabel
+    tabelBody.innerHTML += `
+        <tr>
+            <td>${item.tanggal}</td>
+            <td>${item.nama}</td>
+            <td>${item.jam_masuk}</td>
+            <td>${item.jam_pulang || '-'}</td>
+            <td>${statusLembur}</td> <td>${item.gaji}</td>
+        </tr>
+    `;
+});
+                
             });
         }
 
