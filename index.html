@@ -889,7 +889,22 @@
                     ${btnAksi}
                 </div>
             `;
+            let jamSekarang = new Date().getHours();
+    let bisaAbsen = jamSekarang >= 6; 
+
+    if(!logHariIni) {
+        if(bisaAbsen) {
+            btnAksi = `<button class="btn btn-success btn-sm w-100 mb-2" onclick="prosesAbsenMasuk(${karyawan.id}, '${karyawan.nama}')">Tap Masuk Kerja 🟢</button>`;
+        } else {
+            btnAksi = `<div class="alert alert-warning small">Sistem absen belum dibuka. Silakan absen setelah jam 06:00 pagi.</div>`;
         }
+    } 
+
+
+
+
+
+            
 
         function prosesAbsenMasuk(id, nama) {
     const btn = event.target;
