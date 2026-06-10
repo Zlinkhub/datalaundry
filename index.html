@@ -1533,23 +1533,6 @@ const select = document.getElementById('add-abs-karyawan');
             this.reset(); document.getElementById('ops-tanggal').value = hariIni;
         });
 
-        function hitungStatusLembur(karyawanTipe, jamMasuk, jamPulang) {
-    if (!jamPulang) return 'Sedang Bekerja';
-    
-    const targetKerja = (karyawanTipe === 'full') ? 720 : 360; // dalam menit
-    const durasiAktual = jamKeMenit(jamPulang) - jamKeMenit(jamMasuk);
-    
-    // Jika lebih dari 1 jam (60 menit) dari target normal
-    if (durasiAktual > (targetKerja + 60)) {
-        let menitLembur = durasiAktual - targetKerja;
-        return {
-            isLembur: true,
-            keterangan: `Lembur ${Math.floor(menitLembur/60)} jam`,
-            durasiLembur: menitLembur
-        };
-    }
-    return { isLembur: false, keterangan: '-', durasiLembur: 0 };
-}
         
         function tampilkanPengeluaran() {
             let html = '';
