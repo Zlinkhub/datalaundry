@@ -865,53 +865,31 @@
         }
 
         function buatKartuKaryawanPrivate(karyawan) {
-    let logHariIni = dataAbsenLog.find(a => a.karyawan_id === karyawan.id && a.tanggal === hariIni);
-    let kontainer = document.getElementById('kontainer-kartu-karyawan');
-    if(!kontainer) return;
-
-    let btnAksi = '';
-    let jamSekarang = new Date().getHours();
-    let bisaAbsen = jamSekarang >= 6;
-
-    // JIKA BELUM ABSEN MASUK SAMA SEKALI HARI INI
-    if (!logHariIni) {
-        if (bisaAbsen) {
-            btnAksi = `<button class="btn btn-success btn-sm w-100 mb-2" onclick="prosesAbsenMasuk('${karyawan.id}', '${karyawan.nama}')">Absen Masuk</button>`;
-        } else {
-            btnAksi = `<div class="alert alert-warning small">Sistem absen belum dibuka. Silakan absen setelah jam 06:00 pagi.</div>`;
+            let logHariIni = dataAbsenLog.find(a => a.karyawan_id === karyawan.id && a.tanggal === hariIni);
+            let kontainer = document.getElementById('kontainer-kartu-karyawan'); if(!kontainer) return;
+            let btnAksi = '';
+            if(!logHariIni) {
+                btnAksi = `<button class="btn btn-success btn-sm w-100 mb-2" onclick="prosesAbsenMasuk(${karyawan.id}, '${karyawan.nama}')">Tap Masuk Kerja 🟢</button>`;
+            } else if(logHariIni && !logHariIni.jam_pulang) {
+                btnAksi = `
+                    <div class="alert alert-info py-2 small mb-2 text-center">
+                        Jam Masuk: <strong>${logHariIni.jam_masuk}</strong><br>
+                        Durasi Berjalan: <strong id="live-durasi-kerja">${hitungSelisihJamRealtime(logHariIni.jam_masuk)} Jam</strong>
+                    </div>
+                    <button class="btn btn-danger btn-sm w-100 mb-2" onclick="prosesPulang(${karyawan.id})">Tap Pulang Kerja 🔴</button>
+                    <button class="btn btn-warning btn-sm w-100 small" onclick="ajukanLemburWhatsApp(${karyawan.id}, '${karyawan.nama}')">⚡ Ajukan Lembur ke Owner</button>
+                `;
+            } else {
+                btnAksi = `<div class="alert alert-success py-2 small text-center mb-0">Selesai Kerja Hari Ini 🎉 (${logHariIni.status})</div>`;
+            }
+            kontainer.innerHTML = `
+                <div class="karyawan-card p-3">
+                    <h5 class="fw-bold mb-1 text-center">${karyawan.nama}</h5>
+                    <p class="text-muted text-center small mb-3">Tipe: ${karyawan.tipe === 'full' ? 'Full Kerja (12 Jam)' : 'Harian (6 Jam)'} <br> Rate Efektif: Rp ${Math.round(karyawan.gaji).toLocaleString('id-ID')}/jam</p>
+                    ${btnAksi}
+                </div>
+            `;
         }
-    } 
-    // JIKA SUDAH ABSEN MASUK, TAPI BELUM ABSEN PULANG
-    else if (logHariIni && !logHariIni.jam_pulang) {
-        btnAksi = `
-            <div class="alert alert-info py-2 small mb-2 text-center">
-                Jam Masuk: <strong>${logHariIni.jam_masuk}</strong><br>
-                Durasi Berjalan: <strong id="live-durasi-kerja">${hitungSelisihJamRealtime(logHariIni.jam_masuk)}</strong>
-            </div>
-            <button class="btn btn-danger btn-sm w-100 mb-2" onclick="prosesAbsenPulang('${karyawan.id}')">Tap Pulang Kerja</button>
-            <button class="btn btn-warning btn-sm w-100 small" onclick="ajukanLemburWhatsApp('${karyawan.id}', '${karyawan.nama}')">Ajukan Lembur</button>
-        `;
-    } 
-    // JIKA SUDAH ABSEN MASUK DAN SUDAH ABSEN PULANG
-    else {
-        btnAksi = `<div class="alert alert-success py-2 small text-center mb-0">Selesai Kerja Hari Ini 🎉 (${logHariIni.jam_masuk} - ${logHariIni.jam_pulang})</div>`;
-    }
-
-    // Tampilkan ke HTML
-    kontainer.innerHTML = `
-        <div class="karyawan-card p-3">
-            <h5 class="fw-bold mb-1 text-center">${karyawan.nama}</h5>
-            <p class="text-muted text-center small mb-3">Tipe: ${karyawan.tipe === 'full' ? 'Full Kerja (12 Jam)' : 'Part Time'}</p>
-            ${btnAksi}
-        </div>
-    `;
-}
-
-
-
-
-
-            
 
         function prosesAbsenMasuk(id, nama) {
     const btn = event.target;
@@ -1204,8 +1182,7 @@ function tambahAbsenManual() {
         let idKar = document.getElementById('add-abs-karyawan').value;
         let jamMasuk = document.getElementById('add-abs-masuk').value;
         let jamPulang = document.getElementById('add-abs-pulang').value;
-        let urlMap = `https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`;
-                simpanLogAbsenCloud(id, nama, urlMap);
+
         if(!tgl || !idKar || !jamMasuk) { alert("Lengkapi data (Tanggal, Nama, Jam Masuk)!"); return; }
 
         let kObj = dataKaryawan.find(k => k.id === parseInt(idKar));
