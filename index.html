@@ -485,27 +485,6 @@
                                 </table>
                             </div>
                         </div>
-
-
-                        <div class="card shadow-sm mt-3">
-    <div class="card-header bg-dark text-white">Matriks Insentif Karyawan (Realtime)</div>
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>Tanggal</th>
-                    <th>Nama</th>
-                    <th>Status</th>
-                    <th>Insentif</th>
-                </tr>
-            </thead>
-            <tbody id="tabel-insentif-owner"></tbody>
-        </table>
-    </div>
-</div>
-
-
-                        
                     </div>
 
                 </div>
@@ -784,9 +763,6 @@
             }
         }
 
-    
-
-        
         function sesuaikanPlaceholderGaji() {
             let tipe = document.getElementById('kar-tipe').value;
             let inputGajiBulanan = document.getElementById('kar-gaji-bulanan');
@@ -1189,24 +1165,6 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
                             <button class="btn btn-xs btn-outline-danger p-0 px-1" onclick="hapusResetAbsenAdmin(${realIndex})">Hapus</button>
                         </td>
                     </tr>`;
-                let dataTampil = dataAbsenLog.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
-                dataTampil.forEach(item => {
-    // Logika sederhana: Jika kerja > 8 jam, tandai lembur
-    let statusLembur = hitungDurasi(item.jam_masuk, item.jam_pulang) => 7 jam tandai lembur 
-                       '<span class="badge bg-warning text-dark">Lembur</span>' : '-';
-
-    // Render baris tabel
-    tabelBody.innerHTML += `
-        <tr>
-            <td>${item.tanggal}</td>
-            <td>${item.nama}</td>
-            <td>${item.jam_masuk}</td>
-            <td>${item.jam_pulang || '-'}</td>
-            <td>${statusLembur}</td> <td>${item.gaji}</td>
-        </tr>
-    `;
-});
-                
             });
         }
 
@@ -1533,7 +1491,6 @@ const select = document.getElementById('add-abs-karyawan');
             this.reset(); document.getElementById('ops-tanggal').value = hariIni;
         });
 
-        
         function tampilkanPengeluaran() {
             let html = '';
             [...dataOps].reverse().slice(0, 10).forEach(item => {
@@ -1541,11 +1498,6 @@ const select = document.getElementById('add-abs-karyawan');
                 html += `<tr><td>${item.tanggal.substring(5, 10)}</td><td>${item.barang}</td><td>${item.jumlah}</td><td>Rp ${((masterB?masterB.harga:0)*parseInt(item.jumlah)).toLocaleString('id-ID')}</td></tr>`;
             });
             let tbody = document.querySelector('#tabel-pengeluaran tbody'); if(tbody) tbody.innerHTML = html || '<tr><td colspan="4">Kosong</td></tr>';
-        }
-
-        function updateRingkasanTotal() {
-    let totalLemburHariIni = hitungTotalLemburHariIni(); // Fungsi custom Anda
-    document.getElementById('total-pengeluaran-lembur').innerText = `Total Lembur: Rp ${totalLemburHariIni.toLocaleString()}`;
         }
 
 function toggleLoadingUI(btn, isLoading, originalText = 'Tap Masuk Kerja 🟢') {
