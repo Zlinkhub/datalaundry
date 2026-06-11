@@ -1251,6 +1251,9 @@ function tambahAbsenManual() {
         }
 
         dataAbsenLog.push(absBaru);
+        // --- TAMBAHKAN INI DI SINI ---
+        dataAbsenLog.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+        // -----------------------------
         db.ref('laundry_abs_log').set(dataAbsenLog).then(() => {
             alert("Data absen manual berhasil ditambah!");
         });
