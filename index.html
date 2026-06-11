@@ -162,7 +162,7 @@
     <div class="container py-3" style="max-width: 100%;">
         <div class="text-center mb-3 p-2 rounded" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(2px); max-width: 600px; margin: auto;">
             <img id="brand-logo" src="https://i.imgur.com/MTdXvQZ.png" alt="Logo Brand" onclick="pemicuKlikRahasiaAdmin()" onerror="this.src='https://raw.githubusercontent.com/Zlinkhub/datalaundry/refs/heads/main/powered%20by.png'">
-            <h3 id="brand-name" class="mb-1">Loading...</h3>
+            <h3 id="brand-name" class="mb-1">Loading</h3>
             <p class="text-center text-muted small mb-1">Real-Time Attendance & Operations System</p>
         </div>
 
@@ -621,7 +621,7 @@
             const settings = snapshot.val();
             if (settings) {
                 if (settings.brand_name) {
-                    document.getElementById('brand-name').innerText = "🧺 " + settings.brand_name;
+                    document.getElementById('brand-name').innerText = " " + settings.brand_name;
                     document.getElementById('cfg-brand-name').value = settings.brand_name;
                     document.getElementById('footer-brand').innerText = settings.brand_name;
                 }
