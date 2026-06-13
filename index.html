@@ -703,8 +703,18 @@
         let passAdminSistem = localStorage.getItem('pass_admin') || "123";
         let passOwnerSistem = localStorage.getItem('pass_owner') || "999"; 
         let idKaryawanSesiAktif = localStorage.getItem('sesi_id_karyawan') || null;
+        
+        let dataMasterBarang = [];
+        let dataOps = [];
+        let dataKaryawan = [];
+        let dataAbsenLog = []; 
+        let dataOmzetHarian = [];
+        let statusKaryawanMinimizeWeb = true; // State default untuk minimize beban karyawan di web
+
+        let hitungKlikLogo = 0;
+        let waktuKlikTerakhir = 0;
+        
         let areaSesiKaryawan = document.getElementById('area-sesi-karyawan');
-    
     if (areaSesiKaryawan) {
         if (namaTab === 'owner' || namaTab === 'owner-panel') { 
             // Sembunyikan total saat Owner Panel aktif sesuai request gambar 23446.jpg
@@ -715,16 +725,6 @@
         }
     }
 }
-        let dataMasterBarang = [];
-        let dataOps = [];
-        let dataKaryawan = [];
-        let dataAbsenLog = []; 
-        let dataOmzetHarian = [];
-        let statusKaryawanMinimizeWeb = true; // State default untuk minimize beban karyawan di web
-
-        let hitungKlikLogo = 0;
-        let waktuKlikTerakhir = 0;
-
         function pemicuKlikRahasiaAdmin() {
             const skrg = new Date().getTime();
             if (skrg - waktuKlikTerakhir > 2000) { hitungKlikLogo = 0; }
