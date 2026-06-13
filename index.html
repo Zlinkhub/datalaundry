@@ -714,17 +714,7 @@
         let hitungKlikLogo = 0;
         let waktuKlikTerakhir = 0;
         
-        let areaSesiKaryawan = document.getElementById('area-sesi-karyawan');
-    if (areaSesiKaryawan) {
-        if (namaTab === 'owner' || namaTab === 'owner-panel') { 
-            // Sembunyikan total saat Owner Panel aktif sesuai request gambar 23446.jpg
-            areaSesiKaryawan.style.display = 'none'; 
-        } else {
-            // Tampilkan kembali jika admin/karyawan membuka tab "Absen" atau "Belanja"
-            areaSesiKaryawan.style.display = 'block'; 
-        }
-    }
-}
+        
         function pemicuKlikRahasiaAdmin() {
             const skrg = new Date().getTime();
             if (skrg - waktuKlikTerakhir > 2000) { hitungKlikLogo = 0; }
@@ -1839,8 +1829,24 @@ setInterval(() => {
                 }
             }
         }, 1000);
+
+        document.querySelectorAll('.nav-link').forEach(tab => {
+    tab.addEventListener('click', function() {
+        let areaSesi = document.getElementById('area-kartu-private'); // Sesuaikan ID
+        let target = this.getAttribute('data-bs-target');
+        
+        if (areaSesi) {
+            if (target === '#owner') {
+                areaSesi.style.display = 'none'; // Sembunyikan saat di Owner Panel
+            } else {
+                areaSesi.style.display = 'block'; // Tampilkan di tab lain
+            }
+        }
+    });
+});
         
         inisialisasiHeaderMatriks();
     </script>
+    
 </body>
 </html>
