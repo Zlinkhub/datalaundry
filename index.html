@@ -179,7 +179,7 @@
         
         <div class="text-center mb-3 p-2 rounded" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(2px); max-width: 600px; margin: auto;">
             <img id="brand-logo" src="https://i.imgur.com/MTdXvQZ.png" alt="Logo Brand" onclick="pemicuKlikRahasiaAdmin()" onerror="this.src='https://raw.githubusercontent.com/Zlinkhub/datalaundry/refs/heads/main/powered%20by.png'">
-            <h3 id="brand-name" class="mb-1">Loading</h3>
+            <h3 id="brand-name" class="mb-0.5">Loading</h3>
             <p class="text-center text-muted small mb-1">Real-Time Attendance & Inventory Operations System</p>
         </div>
 
@@ -203,7 +203,15 @@
             <div class="tab-pane fade show active" id="absensi" style="max-width: 600px; margin: auto;">
                 <div class="card shadow-sm mb-3">
                     <div class="card-body p-3">
-                        <h6 class="fw-bold mb-4 text-primary">📊 Status Aktivitas Kerja (Hari Ini)</h6>
+                        <h6 class="fw-bold mb-4 rounded p-2 border shadow-sm"
+    style="
+        background: rgba(255,255,255,0.12);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: #0d6efd;
+    ">
+    📊 Status Aktivitas Kerja (Hari Ini)
+</h6>
                         <div id="matriks-aktivitas-kerja" class="row g-2"></div>
                     </div>
                 </div>
@@ -232,6 +240,8 @@
                         <button type="button" class="btn btn-primary btn-sm w-100" onclick="prosesLoginKaryawan()">Masuk ke Kartu Saya</button>
                     </div>
                 </div>
+
+                
 
                 <div id="papan-pengumuman-box" class="card shadow-sm mb-3 mx-auto border-info" style="max-width: 400px;">
                     <div class="card-header bg-info text-white py-1 text-center">
