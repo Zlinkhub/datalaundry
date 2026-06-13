@@ -32,32 +32,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Animasi Mining/Glow */
-.mining-glow {
-    animation: pulse 1.5s infinite;
-    border: 2px solid #198754 !important;
-}
-@keyframes pulse {
-    0% { box-shadow: 0 0 5px #198754; }
-    50% { box-shadow: 0 0 15px #198754; }
-    100% { box-shadow: 0 0 5px #198754; }
-}
-
-        /* --- CSS Slideshow Telegram --- */
-        .slide-item {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* Gunakan cover agar pas di dalam card */
-            position: absolute;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            transition: opacity 1s ease-in-out;
-        }
-        .slide-item.active {
-            opacity: 1;
-        }
-
         
     <style>
         /* CSS Variables untuk Kustomisasi Tema Dinamis */
@@ -161,7 +135,32 @@
             /* Pastikan baris karyawan terlihat saat diprint meskipun sedang di-minimize di web */
             .row-matriks-karyawan.d-none { display: table-row !important; visibility: visible !important; }
         }
+        .mining-glow {
+    animation: pulse 1.5s infinite;
+    border: 2px solid #198754 !important;
+}
+@keyframes pulse {
+    0% { box-shadow: 0 0 5px #198754; }
+    50% { box-shadow: 0 0 15px #198754; }
+    100% { box-shadow: 0 0 5px #198754; }
+}
+
+        /* --- CSS Slideshow Telegram --- */
+        .slide-item {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Gunakan cover agar pas di dalam card */
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+        .slide-item.active {
+            opacity: 1;
+        }
     </style>
+    
 </head>
 <div class="text-dark">
     <div class="container py-3" style="max-width: 100%;">
