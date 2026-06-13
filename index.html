@@ -917,78 +917,108 @@
             }
         });
 
-        // --- LOGIKA SLIDESHOW TELEGRAM (VERSI PROXY SCRAPING) ---
-        async function muatSlideshowTelegram() {
-            const channelName = 'zlink_devlog';
-            // Menggunakan proxy gratis untuk membypass blokir CORS dari browser
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://t.me/s/' + channelName)}`;
-            
-            const wrapper = document.getElementById('slideshow-wrapper');
-            const loadingText = document.getElementById('loading-text');
 
+        <script>
+    async function muatSlideshowTelegram() {
+        const channelName = 'zlink_devlog'; 
+        const waktuSekarang = new Date().getTime();
+        const urlTelegram = `https://t.me/s/${channelName}?t=${waktuSekarang}`;
+        
+        const wrapper = document.getElementById('slideshow-wrapper');
+        const loadingText = document.getElementById('loading-text');
+
+        // DAFTAR PROXY: Jika satu gagal, otomatis mencoba yang lain
+        const proxies = [
+            `https://api.allorigins.win/get?url=${encodeURIComponent(urlTelegram)}`,
+            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlTelegram)}`
+        ];
+
+        let htmlContent = null;
+
+        // Mencoba proxy satu per satu
+        for (let i = 0; i < proxies.length; i++) {
             try {
-                const response = await fetch(proxyUrl);
-                const data = await response.json();
-
-                if (!data.contents) throw new Error("Gagal mengambil data web Telegram.");
-
-                // Ubah teks HTML mentah menjadi elemen yang bisa dibaca JS
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(data.contents, "text/html");
-
-                // Cari semua class CSS yang digunakan Telegram untuk gambar postingan
-                const imageElements = doc.querySelectorAll('.tgme_widget_message_photo_image');
-                let daftarFoto = [];
-
-                imageElements.forEach(el => {
-                    // Gambar Telegram biasanya disimpan di atribut 'style' (background-image)
-                    const bgStyle = el.style.backgroundImage;
-                    if (bgStyle) {
-                        // Memotong teks "url('LINK_GAMBAR')" untuk mengambil link aslinya saja
-                        const imageUrl = bgStyle.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
-                        if (imageUrl) daftarFoto.push(imageUrl);
-                    }
-                });
-
-                if (daftarFoto.length === 0) {
-                    loadingText.innerHTML = "Belum ada gambar terbaru di channel ini.";
-                    return;
-                }
-
-                // Dibalik agar gambar paling bawah (terbaru) muncul duluan
-                daftarFoto.reverse();
+                const response = await fetch(proxies[i]);
                 
-                loadingText.style.display = 'none';
-
-                wrapper.innerHTML = daftarFoto.map((url, index) => {
-                    const activeClass = index === 0 ? 'active' : '';
-                    return `<img class="slide-item ${activeClass}" src="${url}" alt="Devlog Update">`;
-                }).join('');
-
-                jalankanAnimasiSlideshow();
-
+                if (proxies[i].includes('allorigins')) {
+                    const data = await response.json();
+                    if (data.contents) {
+                        htmlContent = data.contents;
+                        break; // Sukses, keluar dari loop
+                    }
+                } else {
+                    // Proxy codetabs mengembalikan teks HTML mentah langsung
+                    const textData = await response.text();
+                    if (textData && textData.includes('tgme_widget')) {
+                        htmlContent = textData;
+                        break; // Sukses, keluar dari loop
+                    }
+                }
             } catch (error) {
-                console.error("Telegram Slideshow Error:", error);
-                loadingText.innerHTML = "Gagal memuat gambar dari Telegram.";
+                console.warn(`Proxy ${i + 1} gagal, mencoba proxy selanjutnya...`);
             }
         }
 
-        function jalankanAnimasiSlideshow() {
-            const slides = document.querySelectorAll('#slideshow-wrapper .slide-item');
-            if (slides.length <= 1) return;
-
-            let currentIndex = 0;
-            setInterval(() => {
-                slides[currentIndex].classList.remove('active');
-                currentIndex = (currentIndex + 1) % slides.length;
-                slides[currentIndex].classList.add('active');
-            }, 4000); 
+        // Jika semua proxy gagal
+        if (!htmlContent) {
+            loadingText.innerHTML = "Server sibuk. Silakan muat ulang beberapa saat lagi.";
+            return;
         }
 
-        // Panggil fungsi saat web selesai dimuat
-        window.addEventListener('DOMContentLoaded', muatSlideshowTelegram);
+        try {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, "text/html");
 
+            const imageElements = doc.querySelectorAll('.tgme_widget_message_photo_wrap, .tgme_widget_message_photo_image');
+            let daftarFoto = [];
 
+            imageElements.forEach(el => {
+                const bgStyle = el.style.backgroundImage;
+                if (bgStyle) {
+                    const imageUrl = bgStyle.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
+                    if (imageUrl) daftarFoto.push(imageUrl);
+                }
+            });
+
+            if (daftarFoto.length === 0) {
+                loadingText.innerHTML = "Belum ada gambar terbaru di channel ini.";
+                return;
+            }
+
+            daftarFoto.reverse();
+            loadingText.style.display = 'none';
+
+            wrapper.innerHTML = daftarFoto.map((url, index) => {
+                const activeClass = index === 0 ? 'active' : '';
+                return `<img class="slide-item ${activeClass}" src="${url}" alt="Update Laundry">`;
+            }).join('');
+
+            jalankanAnimasiSlideshow();
+
+        } catch (error) {
+            console.error("Error memproses data HTML:", error);
+            loadingText.innerHTML = "Terjadi kesalahan saat menyusun gambar.";
+        }
+    }
+
+    function jalankanAnimasiSlideshow() {
+        const slides = document.querySelectorAll('#slideshow-wrapper .slide-item');
+        if (slides.length <= 1) return; 
+
+        // Hentikan animasi sebelumnya jika ada (mencegah bug saat reload cepat)
+        if (window.slideshowInterval) clearInterval(window.slideshowInterval);
+
+        let currentIndex = 0;
+        window.slideshowInterval = setInterval(() => {
+            slides[currentIndex].classList.remove('active');
+            currentIndex = (currentIndex + 1) % slides.length;
+            slides[currentIndex].classList.add('active');
+        }, 3500); 
+    }
+
+    window.addEventListener('DOMContentLoaded', muatSlideshowTelegram);
+
+        
         function jalankanAnimasiSlideshow() {
             const slides = document.querySelectorAll('#slideshow-wrapper .slide-item');
             if (slides.length <= 1) return;
