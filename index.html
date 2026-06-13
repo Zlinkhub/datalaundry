@@ -10,7 +10,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-</head>
+
     <style>
         #loader {
             position: fixed;
@@ -30,9 +30,36 @@
             height: 30px;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); 
-        } 
-    }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Animasi Mining/Glow */
+.mining-glow {
+    animation: pulse 1.5s infinite;
+    border: 2px solid #198754 !important;
+}
+@keyframes pulse {
+    0% { box-shadow: 0 0 5px #198754; }
+    50% { box-shadow: 0 0 15px #198754; }
+    100% { box-shadow: 0 0 5px #198754; }
+}
+
+        /* --- CSS Slideshow Telegram --- */
+        .slide-item {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Gunakan cover agar pas di dalam card */
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+        .slide-item.active {
+            opacity: 1;
+        }
+
+        
+    <style>
         /* CSS Variables untuk Kustomisasi Tema Dinamis */
         :root {
             --theme-color: #0d6efd;
@@ -134,51 +161,107 @@
             /* Pastikan baris karyawan terlihat saat diprint meskipun sedang di-minimize di web */
             .row-matriks-karyawan.d-none { display: table-row !important; visibility: visible !important; }
         }
-        .mining-glow {
-    animation: pulse 1.5s infinite;
-    border: 2px solid #198754 !important;
-}
-@keyframes pulse {
-    0% { box-shadow: 0 0 5px #198754; }
-    50% { box-shadow: 0 0 15px #198754; }
-    100% { box-shadow: 0 0 5px #198754; }
-}
-
-        /* --- CSS Slideshow Telegram --- */
-        .slide-item {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* Gunakan cover agar pas di dalam card */
-            position: absolute;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            transition: opacity 1s ease-in-out;
-        }
-        .slide-item.active {
-            opacity: 1;
-        }
-
-    #slideshow-wrapper .slide-item {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover; /* Agar gambar tidak gepeng */
-        opacity: 0;
-        transition: opacity 1s ease-in-out;
-    }
-    #slideshow-wrapper .slide-item.active {
-        opacity: 1;
-    }
-        
     </style>
-    
 </head>
 
-<body>
-<div class="text-dark">
+<script>
+    async function muatSlideshowTelegram() {
+        const channelName = 'zlink_devlog'; 
+        
+        // Menambahkan waktu acak agar tidak terkena cache lama
+        const waktuSekarang = new Date().getTime();
+        const urlTelegram = `https://t.me/s/${channelName}?t=${waktuSekarang}`;
+        
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(urlTelegram)}`;
+        
+        const wrapper = document.getElementById('slideshow-wrapper');
+        const loadingText = document.getElementById('loading-text');
+
+        try {
+            const response = await fetch(proxyUrl);
+            const data = await response.json();
+
+            if (!data.contents) throw new Error("Gagal mengambil data web Telegram.");
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(data.contents, "text/html");
+
+            // PERBAIKAN: Mencari di kedua kemungkinan class gambar Telegram
+            const imageElements = doc.querySelectorAll('.tgme_widget_message_photo_wrap, .tgme_widget_message_photo_image');
+            let daftarFoto = [];
+
+            imageElements.forEach(el => {
+                const bgStyle = el.style.backgroundImage;
+                if (bgStyle) {
+                    // Membersihkan teks URL dari tanda kutip dan kurung
+                    const imageUrl = bgStyle.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
+                    if (imageUrl) daftarFoto.push(imageUrl);
+                }
+            });
+
+            if (daftarFoto.length === 0) {
+                loadingText.innerHTML = "Belum ada gambar terbaru di channel ini.";
+                return;
+            }
+
+            // Membalik urutan agar gambar terbaru muncul lebih dulu
+            daftarFoto.reverse();
+            
+            loadingText.style.display = 'none';
+
+            // Memasukkan gambar ke dalam slideshow
+            wrapper.innerHTML = daftarFoto.map((url, index) => {
+                const activeClass = index === 0 ? 'active' : '';
+                return `<img class="slide-item ${activeClass}" src="${url}" alt="Update Laundry">`;
+            }).join('');
+
+            jalankanAnimasiSlideshow();
+
+        } catch (error) {
+            console.error("Error memuat Telegram:", error);
+            loadingText.innerHTML = "Gagal memuat sistem gambar.";
+        }
+    }
+
+    function jalankanAnimasiSlideshow() {
+        const slides = document.querySelectorAll('#slideshow-wrapper .slide-item');
+        if (slides.length <= 1) return; 
+
+        let currentIndex = 0;
+        setInterval(() => {
+            slides[currentIndex].classList.remove('active');
+            currentIndex = (currentIndex + 1) % slides.length;
+            slides[currentIndex].classList.add('active');
+        }, 3500); 
+    }
+
+    window.addEventListener('DOMContentLoaded', muatSlideshowTelegram);
+</script>
+
+    
+
+    <body>
+
+    <div id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container py-3">
+        ...
+    </div>
+
+    <script>
+        window.addEventListener('load', function() {
+            var loader = document.getElementById('loader');
+            loader.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
+
+    
+<body class="text-dark">
+
     <div class="container py-3" style="max-width: 100%;">
         <div class="text-center mb-3 p-2 rounded" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(2px); max-width: 600px; margin: auto;">
             <img id="brand-logo" src="https://i.imgur.com/MTdXvQZ.png" alt="Logo Brand" onclick="pemicuKlikRahasiaAdmin()" onerror="this.src='https://raw.githubusercontent.com/Zlinkhub/datalaundry/refs/heads/main/powered%20by.png'">
@@ -199,28 +282,9 @@
             <li class="nav-item" id="nav-owner">
                 <button class="nav-link small btn-outline-danger" id="tab-owner" data-bs-toggle="pill" data-bs-target="#owner" onclick="cekAksesOwner()">👑 Owner Panel</button>
             </li>
-        </ul>  
+        </ul>
 
-        
-    </div>
-    <div id="loader">
-        <div class="spinner"></div>
-    </div>
-
-    <div class="container py-3">
-        ...
-    </div>
-
-    <script>
-        window.addEventListener('load', function() {
-            var loader = document.getElementById('loader');
-            loader.style.display = 'none';
-        });
-    </script>
-</head>
-
-</body>
-  <div class="tab-content" id="pills-tabContent">
+        <div class="tab-content" id="pills-tabContent">
             <div class="tab-pane fade show active" id="absensi" style="max-width: 600px; margin: auto;">
                 <div class="card shadow-sm mb-3">
                     <div class="card-body p-3">
@@ -258,7 +322,21 @@
                     </div>
                 </div>
 
-                                
+                                <style>
+    #slideshow-wrapper .slide-item {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Agar gambar tidak gepeng */
+        opacity: 0;
+        transition: opacity 1s ease-in-out;
+    }
+    #slideshow-wrapper .slide-item.active {
+        opacity: 1;
+    }
+</style>
 
 <div class="card shadow-sm mb-3 mx-auto border-primary" style="max-width: 400px;">
     <div class="card-header bg-primary text-white py-1 text-center">
@@ -589,8 +667,6 @@
         </div>
     </div>
 
-    </body>
-
     <button type="button" class="btn btn-warning floating-print-btn text-dark fw-bold" onclick="window.print()">
         <i class="bi bi-printer-fill me-1"></i> Cetak PDF
     </button>
@@ -778,85 +854,8 @@
             if(!pesanBaru.trim()) { alert("Isi pengumuman terlebih dahulu!"); return; }
             db.ref('laundry_announcement').set(pesanBaru);
             alert("📢 Pengumuman berhasil disebarkan secara realtime!");
-        };
-    </body>
-        
-<script>
-    
-    async function muatSlideshowTelegram() {
-        const channelName = 'zlink_devlog'; 
-        
-        // Menambahkan waktu acak agar tidak terkena cache lama
-        const waktuSekarang = new Date().getTime();
-        const urlTelegram = `https://t.me/s/${channelName}?t=${waktuSekarang}`;
-        
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(urlTelegram)}`;
-        
-        const wrapper = document.getElementById('slideshow-wrapper');
-        const loadingText = document.getElementById('loading-text');
-
-        try {
-            const response = await fetch(proxyUrl);
-            const data = await response.json();
-
-            if (!data.contents) throw new Error("Gagal mengambil data web Telegram.");
-
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(data.contents, "text/html");
-
-            // PERBAIKAN: Mencari di kedua kemungkinan class gambar Telegram
-            const imageElements = doc.querySelectorAll('.tgme_widget_message_photo_wrap, .tgme_widget_message_photo_image');
-            let daftarFoto = [];
-
-            imageElements.forEach(el => {
-                const bgStyle = el.style.backgroundImage;
-                if (bgStyle) {
-                    // Membersihkan teks URL dari tanda kutip dan kurung
-                    const imageUrl = bgStyle.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
-                    if (imageUrl) daftarFoto.push(imageUrl);
-                }
-            });
-
-            if (daftarFoto.length === 0) {
-                loadingText.innerHTML = "Belum ada gambar terbaru di channel ini.";
-                return;
-            }
-
-            // Membalik urutan agar gambar terbaru muncul lebih dulu
-            daftarFoto.reverse();
-            
-            loadingText.style.display = 'none';
-
-            // Memasukkan gambar ke dalam slideshow
-            wrapper.innerHTML = daftarFoto.map((url, index) => {
-                const activeClass = index === 0 ? 'active' : '';
-                return `<img class="slide-item ${activeClass}" src="${url}" alt="Update Laundry">`;
-            }).join('');
-
-            jalankanAnimasiSlideshow();
-
-        } catch (error) {
-            console.error("Error memuat Telegram:", error);
-            loadingText.innerHTML = "Gagal memuat sistem gambar.";
         }
-    }
 
-    function jalankanAnimasiSlideshow() {
-        const slides = document.querySelectorAll('#slideshow-wrapper .slide-item');
-        if (slides.length <= 1) return; 
-
-        let currentIndex = 0;
-        setInterval(() => {
-            slides[currentIndex].classList.remove('active');
-            currentIndex = (currentIndex + 1) % slides.length;
-            slides[currentIndex].classList.add('active');
-        }, 3500); 
-    }
-
-    window.addEventListener('DOMContentLoaded', muatSlideshowTelegram);
-        }
-    });
-}
         function prosesGantiSandiSistem() {
             verifikasiSandiAksi(() => {
                 const adminBaru = document.getElementById('key-admin-baru').value;
