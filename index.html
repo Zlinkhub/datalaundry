@@ -10,7 +10,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
+</head>
     <style>
         #loader {
             position: fixed;
@@ -30,10 +30,9 @@
             height: 30px;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        
-    <style>
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); 
+        } 
+    }
         /* CSS Variables untuk Kustomisasi Tema Dinamis */
         :root {
             --theme-color: #0d6efd;
@@ -159,9 +158,26 @@
         .slide-item.active {
             opacity: 1;
         }
+
+    #slideshow-wrapper .slide-item {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Agar gambar tidak gepeng */
+        opacity: 0;
+        transition: opacity 1s ease-in-out;
+    }
+    #slideshow-wrapper .slide-item.active {
+        opacity: 1;
+    }
+        
     </style>
     
 </head>
+
+<body>
 <div class="text-dark">
     <div class="container py-3" style="max-width: 100%;">
         <div class="text-center mb-3 p-2 rounded" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(2px); max-width: 600px; margin: auto;">
@@ -231,12 +247,8 @@
                         <div class="mb-3"><input type="password" id="login-pin-karyawan" class="form-control form-control-sm text-center" placeholder="Masukkan PIN Anda (Awal: 1234)"></div>
                         <button type="button" class="btn btn-primary btn-sm w-100" onclick="prosesLoginKaryawan()">Masuk ke Kartu Saya</button>
                     </div>
-                </div>  
-</body> 
+                </div>
 
-
-        
-    </html>
                 <div id="papan-pengumuman-box" class="card shadow-sm mb-3 mx-auto border-info" style="max-width: 400px;">
                     <div class="card-header bg-info text-white py-1 text-center">
                         <h6 class="mb-0 fw-bold"><i class="bi bi-megaphone-fill me-2"></i>📢 Papan Pengumuman Owner</h6>
@@ -246,21 +258,7 @@
                     </div>
                 </div>
 
-                                <style>
-    #slideshow-wrapper .slide-item {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover; /* Agar gambar tidak gepeng */
-        opacity: 0;
-        transition: opacity 1s ease-in-out;
-    }
-    #slideshow-wrapper .slide-item.active {
-        opacity: 1;
-    }
-</style>
+                                
 
 <div class="card shadow-sm mb-3 mx-auto border-primary" style="max-width: 400px;">
     <div class="card-header bg-primary text-white py-1 text-center">
@@ -591,6 +589,8 @@
         </div>
     </div>
 
+    </body>
+
     <button type="button" class="btn btn-warning floating-print-btn text-dark fw-bold" onclick="window.print()">
         <i class="bi bi-printer-fill me-1"></i> Cetak PDF
     </button>
@@ -778,10 +778,11 @@
             if(!pesanBaru.trim()) { alert("Isi pengumuman terlebih dahulu!"); return; }
             db.ref('laundry_announcement').set(pesanBaru);
             alert("📢 Pengumuman berhasil disebarkan secara realtime!");
-        }
-
+        };
+    </body>
         
 <script>
+    
     async function muatSlideshowTelegram() {
         const channelName = 'zlink_devlog'; 
         
