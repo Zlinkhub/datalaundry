@@ -324,8 +324,6 @@
                     </div>
                     <div id="kontainer-kartu-karyawan"></div>
                 </div>
-            </div>
-
                 
                 <div id="login-karyawan-portal" class="card shadow-sm mb-3 mx-auto" style="max-width: 400px;">
                     <div class="card-body p-4 text-center">
@@ -705,7 +703,18 @@
         let passAdminSistem = localStorage.getItem('pass_admin') || "123";
         let passOwnerSistem = localStorage.getItem('pass_owner') || "999"; 
         let idKaryawanSesiAktif = localStorage.getItem('sesi_id_karyawan') || null;
-
+        let areaSesiKaryawan = document.getElementById('area-sesi-karyawan');
+    
+    if (areaSesiKaryawan) {
+        if (namaTab === 'owner' || namaTab === 'owner-panel') { 
+            // Sembunyikan total saat Owner Panel aktif sesuai request gambar 23446.jpg
+            areaSesiKaryawan.style.display = 'none'; 
+        } else {
+            // Tampilkan kembali jika admin/karyawan membuka tab "Absen" atau "Belanja"
+            areaSesiKaryawan.style.display = 'block'; 
+        }
+    }
+}
         let dataMasterBarang = [];
         let dataOps = [];
         let dataKaryawan = [];
