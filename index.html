@@ -924,7 +924,7 @@
             });
         }
 
-        function buatKartuKaryawanPrivate(karyawan) {
+                function buatKartuKaryawanPrivate(karyawan) {
             let logHariIni = dataAbsenLog.find(a => a.karyawan_id === karyawan.id && a.tanggal === hariIni);
             let kontainer = document.getElementById('kontainer-kartu-karyawan'); if(!kontainer) return;
             let isAktif = logHariIni && !logHariIni.jam_pulang;
@@ -934,24 +934,34 @@
                 btnAksi = `<button class="btn btn-success btn-sm w-100 mb-2" onclick="prosesAbsenMasuk(${karyawan.id}, '${karyawan.nama}', event)">Tap Masuk Kerja 🟢</button>`;
             } else if(isAktif) {
                 btnAksi = `
-                    <div class="alert alert-success py-2 small mb-2 text-center mining-glow">
+                    <div class="alert alert-success py-2 small mb-2 text-center border border-success">
                         <strong>⚡ Sedang Bekerja</strong><br>
-                        Jam Masuk: ${logHariIni.jam_masuk}<br>
-                        Durasi: <span id="live-durasi-kerja" class="fw-bold">00:00:00</span>
+                        Rate: Rp ${Math.round(karyawan.gaji).toLocaleString('id-ID')} / Jam<br>
+                        <hr class="my-1 border-success">
+                        Durasi: <span id="live-durasi-kerja" class="fw-bold text-dark font-monospace" style="font-size:14px;">00:00:00</span><br>
+                        Estimasi Gaji: <span id="live-pendapatan-kerja" class="fw-bold text-success" style="font-size:15px;">Rp 0</span>
                     </div>
                     <button class="btn btn-danger btn-sm w-100 mb-2" onclick="prosesPulang(${karyawan.id}, event)">Tap Pulang Kerja 🔴</button>
                     <button class="btn btn-warning btn-sm w-100 small" onclick="ajukanLemburWhatsApp(${karyawan.id}, '${karyawan.nama}')">⚡ Ajukan Lembur</button>`;
             } else {
-                btnAksi = `<div class="alert alert-secondary py-2 small text-center mb-0">Selesai Kerja Hari Ini 🎉</div>`;
+                btnAksi = `
+                    <div class="alert alert-secondary py-2 small text-center mb-0">
+                        Selesai Kerja Hari Ini 🎉<br>
+                        <span class="d-block mt-1 pt-1 border-top border-secondary">
+                            Pendapatan Final: <strong class="text-dark fs-6">Rp ${(logHariIni.gaji || 0).toLocaleString('id-ID')}</strong>
+                        </span>
+                    </div>`;
             }
 
+            // Menyuntikkan class 'mining-glow' jika karyawan sedang status aktif bekerja
             kontainer.innerHTML = `
                 <div class="karyawan-card p-3 ${isAktif ? 'mining-glow' : ''}">
                     <h5 class="fw-bold mb-1 text-center">${karyawan.nama}</h5>
-                    <p class="text-muted text-center small mb-3">Tipe: ${karyawan.tipe === 'full' ? 'Full (12 Jam)' : 'Harian (6 Jam)'}</p>
+                    <p class="text-muted text-center small mb-2">Tipe: ${karyawan.tipe === 'full' ? 'Full (12 Jam)' : 'Harian (6 Jam)'}</p>
                     ${btnAksi}
                 </div>`;
         }
+
 
         function prosesAbsenMasuk(id, nama, event) {
             const btn = event.target;
