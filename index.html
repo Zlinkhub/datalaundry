@@ -828,42 +828,47 @@
             }
         });
 
-
-                // --- LOGIKA SLIDESHOW TELEGRAM ---
+        // --- LOGIKA SLIDESHOW TELEGRAM (VERSI PROXY SCRAPING) ---
         async function muatSlideshowTelegram() {
             const channelName = 'zlink_devlog';
-            const rssUrl = `https://rsshub.app/telegram/channel/${channelName}`;
-            const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+            // Menggunakan proxy gratis untuk membypass blokir CORS dari browser
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://t.me/s/' + channelName)}`;
             
             const wrapper = document.getElementById('slideshow-wrapper');
             const loadingText = document.getElementById('loading-text');
 
             try {
-                const response = await fetch(apiUrl);
+                const response = await fetch(proxyUrl);
                 const data = await response.json();
 
-                if (data.status !== 'ok') throw new Error("Gagal mengambil data API.");
+                if (!data.contents) throw new Error("Gagal mengambil data web Telegram.");
 
+                // Ubah teks HTML mentah menjadi elemen yang bisa dibaca JS
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data.contents, "text/html");
+
+                // Cari semua class CSS yang digunakan Telegram untuk gambar postingan
+                const imageElements = doc.querySelectorAll('.tgme_widget_message_photo_image');
                 let daftarFoto = [];
 
-                data.items.forEach(item => {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = item.content;
-                    const images = tempDiv.querySelectorAll('img');
-                    
-                    images.forEach(img => {
-                        // Filter gambar avatar / emoji
-                        if (img.src && !img.src.includes('emoji') && !img.src.includes('avatar')) {
-                            daftarFoto.push(img.src);
-                        }
-                    });
+                imageElements.forEach(el => {
+                    // Gambar Telegram biasanya disimpan di atribut 'style' (background-image)
+                    const bgStyle = el.style.backgroundImage;
+                    if (bgStyle) {
+                        // Memotong teks "url('LINK_GAMBAR')" untuk mengambil link aslinya saja
+                        const imageUrl = bgStyle.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
+                        if (imageUrl) daftarFoto.push(imageUrl);
+                    }
                 });
 
                 if (daftarFoto.length === 0) {
-                    loadingText.innerHTML = "Belum ada foto update hari ini.";
+                    loadingText.innerHTML = "Belum ada gambar terbaru di channel ini.";
                     return;
                 }
 
+                // Dibalik agar gambar paling bawah (terbaru) muncul duluan
+                daftarFoto.reverse();
+                
                 loadingText.style.display = 'none';
 
                 wrapper.innerHTML = daftarFoto.map((url, index) => {
@@ -875,9 +880,25 @@
 
             } catch (error) {
                 console.error("Telegram Slideshow Error:", error);
-                loadingText.innerHTML = "Gagal memuat progress.";
+                loadingText.innerHTML = "Gagal memuat gambar dari Telegram.";
             }
         }
+
+        function jalankanAnimasiSlideshow() {
+            const slides = document.querySelectorAll('#slideshow-wrapper .slide-item');
+            if (slides.length <= 1) return;
+
+            let currentIndex = 0;
+            setInterval(() => {
+                slides[currentIndex].classList.remove('active');
+                currentIndex = (currentIndex + 1) % slides.length;
+                slides[currentIndex].classList.add('active');
+            }, 4000); 
+        }
+
+        // Panggil fungsi saat web selesai dimuat
+        window.addEventListener('DOMContentLoaded', muatSlideshowTelegram);
+
 
         function jalankanAnimasiSlideshow() {
             const slides = document.querySelectorAll('#slideshow-wrapper .slide-item');
