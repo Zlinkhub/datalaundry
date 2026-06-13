@@ -31,7 +31,17 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
+
+        /* Animasi Mining/Glow */
+.mining-glow {
+    animation: pulse 1.5s infinite;
+    border: 2px solid #198754 !important;
+}
+@keyframes pulse {
+    0% { box-shadow: 0 0 5px #198754; }
+    50% { box-shadow: 0 0 15px #198754; }
+    100% { box-shadow: 0 0 5px #198754; }
+}
 
         /* --- CSS Slideshow Telegram --- */
         .slide-item {
@@ -1144,31 +1154,38 @@
         }
 
         function buatKartuKaryawanPrivate(karyawan) {
-            let logHariIni = dataAbsenLog.find(a => a.karyawan_id === karyawan.id && a.tanggal === hariIni);
-            let kontainer = document.getElementById('kontainer-kartu-karyawan'); if(!kontainer) return;
-            let btnAksi = '';
-            if(!logHariIni) {
-                btnAksi = `<button class="btn btn-success btn-sm w-100 mb-2" onclick="prosesAbsenMasuk(${karyawan.id}, '${karyawan.nama}')">Tap Masuk Kerja 🟢</button>`;
-            } else if(logHariIni && !logHariIni.jam_pulang) {
-                btnAksi = `
-                    <div class="alert alert-info py-2 small mb-2 text-center">
-                        Jam Masuk: <strong>${logHariIni.jam_masuk}</strong><br>
-                        Durasi Berjalan: <strong id="live-durasi-kerja">${hitungSelisihJamRealtime(logHariIni.jam_masuk)} Jam</strong>
-                    </div>
-                    <button class="btn btn-danger btn-sm w-100 mb-2" onclick="prosesPulang(${karyawan.id})">Tap Pulang Kerja 🔴</button>
-                    <button class="btn btn-warning btn-sm w-100 small" onclick="ajukanLemburWhatsApp(${karyawan.id}, '${karyawan.nama}')">⚡ Ajukan Lembur ke Owner</button>
-                `;
-            } else {
-                btnAksi = `<div class="alert alert-success py-2 small text-center mb-0">Selesai Kerja Hari Ini 🎉 (${logHariIni.status})</div>`;
-            }
-            kontainer.innerHTML = `
-                <div class="karyawan-card p-3">
-                    <h5 class="fw-bold mb-1 text-center">${karyawan.nama}</h5>
-                    <p class="text-muted text-center small mb-3">Tipe: ${karyawan.tipe === 'full' ? 'Full Kerja (12 Jam)' : 'Harian (6 Jam)'} <br> Rate Efektif: Rp ${Math.round(karyawan.gaji).toLocaleString('id-ID')}/jam</p>
-                    ${btnAksi}
-                </div>
-            `;
-        }
+    let logHariIni = dataAbsenLog.find(a => a.karyawan_id === karyawan.id && a.tanggal === hariIni);
+    let kontainer = document.getElementById('kontainer-kartu-karyawan'); 
+    if(!kontainer) return;
+
+    let isAktif = logHariIni && !logHariIni.jam_pulang;
+    
+    let btnAksi = '';
+    if(!logHariIni) {
+        btnAksi = `<button class="btn btn-success btn-sm w-100 mb-2" onclick="prosesAbsenMasuk(${karyawan.id}, '${karyawan.nama}')">Tap Masuk Kerja 🟢</button>`;
+    } else if(isAktif) {
+        btnAksi = `
+            <div class="alert alert-success py-2 small mb-2 text-center mining-glow">
+                <strong>⚡ Sedang Bekerja</strong><br>
+                Jam Masuk: ${logHariIni.jam_masuk}<br>
+                Durasi: <span id="live-durasi-kerja" class="fw-bold">00:00:00</span>
+            </div>
+            <button class="btn btn-danger btn-sm w-100 mb-2" onclick="prosesPulang(${karyawan.id})">Tap Pulang Kerja 🔴</button>
+            <button class="btn btn-warning btn-sm w-100 small" onclick="ajukanLemburWhatsApp(${karyawan.id}, '${karyawan.nama}')">⚡ Ajukan Lembur</button>
+        `;
+    } else {
+        btnAksi = `<div class="alert alert-secondary py-2 small text-center mb-0">Selesai Kerja Hari Ini 🎉</div>`;
+    }
+
+    kontainer.innerHTML = `
+        <div class="karyawan-card p-3 ${isAktif ? 'mining-glow' : ''}">
+            <h5 class="fw-bold mb-1 text-center">${karyawan.nama}</h5>
+            <p class="text-muted text-center small mb-3">Tipe: ${karyawan.tipe === 'full' ? 'Full (12 Jam)' : 'Harian (6 Jam)'}</p>
+            ${btnAksi}
+        </div>
+    `;
+}
+
 
         function prosesAbsenMasuk(id, nama) {
     const btn = event.target;
@@ -1768,7 +1785,27 @@ function toggleLoadingUI(btn, isLoading, originalText = 'Tap Masuk Kerja 🟢') 
         btn.innerHTML = originalText;
     }
 }
+    
+setInterval(() => {
+            let skrg = new Date();
+            // Update jam digital header
+            let strJam = `${String(skrg.getHours()).padStart(2, '0')}:${String(skrg.getMinutes()).padStart(2, '0')}:${String(skrg.getSeconds()).padStart(2, '0')}`;
+            let clockEl = document.getElementById('live-clock-karyawan');
+            if(clockEl) clockEl.innerText = strJam;
 
+            // Update durasi kerja realtime
+            let durasiEl = document.getElementById('live-durasi-kerja');
+            if (durasiEl && idKaryawanSesiAktif) {
+                let log = dataAbsenLog.find(a => a.karyawan_id === parseInt(idKaryawanSesiAktif) && a.tanggal === hariIni && !a.jam_pulang);
+                if (log) {
+                    let [jM, mM, sM] = log.jam_masuk.split(':').map(Number);
+                    let mulai = new Date(); mulai.setHours(jM, mM, sM || 0);
+                    let selisih = new Date(skrg - mulai);
+                    durasiEl.innerText = `${String(selisih.getUTCHours()).padStart(2,'0')}:${String(selisih.getUTCMinutes()).padStart(2,'0')}:${String(selisih.getUTCSeconds()).padStart(2,'0')}`;
+                }
+            }
+        }, 1000);
+        
         inisialisasiHeaderMatriks();
     </script>
 </body>
