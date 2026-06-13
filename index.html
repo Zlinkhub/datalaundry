@@ -163,81 +163,6 @@
         }
     </style>
 </head>
-
-<script>
-    async function muatSlideshowTelegram() {
-        const channelName = 'zlink_devlog'; 
-        
-        // Menambahkan waktu acak agar tidak terkena cache lama
-        const waktuSekarang = new Date().getTime();
-        const urlTelegram = `https://t.me/s/${channelName}?t=${waktuSekarang}`;
-        
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(urlTelegram)}`;
-        
-        const wrapper = document.getElementById('slideshow-wrapper');
-        const loadingText = document.getElementById('loading-text');
-
-        try {
-            const response = await fetch(proxyUrl);
-            const data = await response.json();
-
-            if (!data.contents) throw new Error("Gagal mengambil data web Telegram.");
-
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(data.contents, "text/html");
-
-            // PERBAIKAN: Mencari di kedua kemungkinan class gambar Telegram
-            const imageElements = doc.querySelectorAll('.tgme_widget_message_photo_wrap, .tgme_widget_message_photo_image');
-            let daftarFoto = [];
-
-            imageElements.forEach(el => {
-                const bgStyle = el.style.backgroundImage;
-                if (bgStyle) {
-                    // Membersihkan teks URL dari tanda kutip dan kurung
-                    const imageUrl = bgStyle.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
-                    if (imageUrl) daftarFoto.push(imageUrl);
-                }
-            });
-
-            if (daftarFoto.length === 0) {
-                loadingText.innerHTML = "Belum ada gambar terbaru di channel ini.";
-                return;
-            }
-
-            // Membalik urutan agar gambar terbaru muncul lebih dulu
-            daftarFoto.reverse();
-            
-            loadingText.style.display = 'none';
-
-            // Memasukkan gambar ke dalam slideshow
-            wrapper.innerHTML = daftarFoto.map((url, index) => {
-                const activeClass = index === 0 ? 'active' : '';
-                return `<img class="slide-item ${activeClass}" src="${url}" alt="Update Laundry">`;
-            }).join('');
-
-            jalankanAnimasiSlideshow();
-
-        } catch (error) {
-            console.error("Error memuat Telegram:", error);
-            loadingText.innerHTML = "Gagal memuat sistem gambar.";
-        }
-    }
-
-    function jalankanAnimasiSlideshow() {
-        const slides = document.querySelectorAll('#slideshow-wrapper .slide-item');
-        if (slides.length <= 1) return; 
-
-        let currentIndex = 0;
-        setInterval(() => {
-            slides[currentIndex].classList.remove('active');
-            currentIndex = (currentIndex + 1) % slides.length;
-            slides[currentIndex].classList.add('active');
-        }, 3500); 
-    }
-
-    window.addEventListener('DOMContentLoaded', muatSlideshowTelegram);
-</script>
-
     
 
     <body>
@@ -799,6 +724,80 @@
                 }
             }
         });
+
+
+async function muatSlideshowTelegram() {
+        const channelName = 'zlink_devlog'; 
+        
+        // Menambahkan waktu acak agar tidak terkena cache lama
+        const waktuSekarang = new Date().getTime();
+        const urlTelegram = `https://t.me/s/${channelName}?t=${waktuSekarang}`;
+        
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(urlTelegram)}`;
+        
+        const wrapper = document.getElementById('slideshow-wrapper');
+        const loadingText = document.getElementById('loading-text');
+
+        try {
+            const response = await fetch(proxyUrl);
+            const data = await response.json();
+
+            if (!data.contents) throw new Error("Gagal mengambil data web Telegram.");
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(data.contents, "text/html");
+
+            // PERBAIKAN: Mencari di kedua kemungkinan class gambar Telegram
+            const imageElements = doc.querySelectorAll('.tgme_widget_message_photo_wrap, .tgme_widget_message_photo_image');
+            let daftarFoto = [];
+
+            imageElements.forEach(el => {
+                const bgStyle = el.style.backgroundImage;
+                if (bgStyle) {
+                    // Membersihkan teks URL dari tanda kutip dan kurung
+                    const imageUrl = bgStyle.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
+                    if (imageUrl) daftarFoto.push(imageUrl);
+                }
+            });
+
+            if (daftarFoto.length === 0) {
+                loadingText.innerHTML = "Belum ada gambar terbaru di channel ini.";
+                return;
+            }
+
+            // Membalik urutan agar gambar terbaru muncul lebih dulu
+            daftarFoto.reverse();
+            
+            loadingText.style.display = 'none';
+
+            // Memasukkan gambar ke dalam slideshow
+            wrapper.innerHTML = daftarFoto.map((url, index) => {
+                const activeClass = index === 0 ? 'active' : '';
+                return `<img class="slide-item ${activeClass}" src="${url}" alt="Update Laundry">`;
+            }).join('');
+
+            jalankanAnimasiSlideshow();
+
+        } catch (error) {
+            console.error("Error memuat Telegram:", error);
+            loadingText.innerHTML = "Gagal memuat sistem gambar.";
+        }
+    }
+
+    function jalankanAnimasiSlideshow() {
+        const slides = document.querySelectorAll('#slideshow-wrapper .slide-item');
+        if (slides.length <= 1) return; 
+
+        let currentIndex = 0;
+        setInterval(() => {
+            slides[currentIndex].classList.remove('active');
+            currentIndex = (currentIndex + 1) % slides.length;
+            slides[currentIndex].classList.add('active');
+        }, 3500); 
+    }
+
+    window.addEventListener('DOMContentLoaded', muatSlideshowTelegram);
+
 
         function muatVideoPlayerIklan(urlVideo) {
             const wrapper = document.getElementById('video-container-wrapper');
