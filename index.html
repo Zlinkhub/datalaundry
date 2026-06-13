@@ -1610,7 +1610,22 @@ function tambahAbsenManual() {
                 document.getElementById('login-owner-box').classList.add('d-none'); document.getElementById('konten-owner').classList.remove('d-none');
                 tampilkanLogbookOwnerRealtime(); muatLaporanMatriks();
             } else { document.getElementById('login-owner-box').classList.remove('d-none'); document.getElementById('konten-owner').classList.add('d-none'); }
-        }
+            let areaSesi = document.getElementById('area-tampilan-karyawan'); // Pastikan ID ini sesuai dengan ID pembungkus Anda
+            if ((localStorage.getItem('login_owner_sukses') || "tidak") === "ya") {
+        document.getElementById('login-owner-box').classList.add('d-none'); 
+        document.getElementById('konten-owner').classList.remove('d-none');
+        
+        // Sembunyikan area sesi karyawan saat masuk ke panel owner
+        if (areaSesi) areaSesi.classList.add('d-none'); 
+        
+        tampilkanLogbookOwnerRealtime(); 
+        muatLaporanMatriks();
+    } else { 
+        document.getElementById('login-owner-box').classList.remove('d-none'); 
+        document.getElementById('konten-owner').classList.add('d-none'); 
+    }
+}
+        
         function verifikasiOwner() {
             if (document.getElementById('pass-owner').value === passOwnerSistem) { localStorage.setItem('login_owner_sukses', "ya"); cekAksesOwner(); } else { alert("Sandi Owner Salah!"); }
         }
