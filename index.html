@@ -155,15 +155,20 @@
 </head>
 
 <script>
-    async function muatSlideshowTelegram() {
-        // Ganti dengan username channel Anda jika berbeda
-        const channelName = 'zlink_devlog'; 
-        
-        // Menggunakan proxy gratis untuk melewati pemblokiran browser (CORS)
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://t.me/s/' + channelName)}`;
-        
-        const wrapper = document.getElementById('slideshow-wrapper');
-        const loadingText = document.getElementById('loading-text');
+            // --- LOGIKA SLIDESHOW TELEGRAM ---
+        async function muatSlideshowTelegram() {
+            const channelName = 'zlink_devlog'; 
+            
+            // Tambahkan waktu (timestamp) agar proxy selalu mengambil data terbaru, bukan cache lama
+            const waktuSekarang = new Date().getTime();
+            const urlTelegram = `https://t.me/s/${channelName}?t=${waktuSekarang}`;
+            
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(urlTelegram)}`;
+            
+            const wrapper = document.getElementById('slideshow-wrapper');
+            const loadingText = document.getElementById('loading-text');
+
+            // ... (Kode ke bawahnya TETAP SAMA seperti sebelumnya) ...
 
         try {
             const response = await fetch(proxyUrl);
