@@ -10,8 +10,12 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
 
-    <style>
+
+
+
+<style>
         #loader {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -58,8 +62,6 @@
             opacity: 1;
         }
 
-        
-    <style>
         /* CSS Variables untuk Kustomisasi Tema Dinamis */
         :root {
             --theme-color: #0d6efd;
@@ -161,11 +163,30 @@
             /* Pastikan baris karyawan terlihat saat diprint meskipun sedang di-minimize di web */
             .row-matriks-karyawan.d-none { display: table-row !important; visibility: visible !important; }
         }
+    
+    #slideshow-wrapper .slide-item {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Agar gambar tidak gepeng */
+        opacity: 0;
+        transition: opacity 1s ease-in-out;
+    }
+    #slideshow-wrapper .slide-item.active {
+        opacity: 1;
+    }
+    
     </style>
 </head>
-    
 
-    <body>
+
+
+
+
+    
+<body>
 
     <div id="loader">
         <div class="spinner"></div>
@@ -175,12 +196,7 @@
         ...
     </div>
 
-    <script>
-        window.addEventListener('load', function() {
-            var loader = document.getElementById('loader');
-            loader.style.display = 'none';
-        });
-    </script>
+    
 </body>
 </html>
 
@@ -246,22 +262,6 @@
                         <div id="text-pengumuman-karyawan" class="small text-dark style-pre-line text-center fw-medium">📌 Belum ada pengumuman hari ini. Tetap semangat bekerja!</div>
                     </div>
                 </div>
-
-                                <style>
-    #slideshow-wrapper .slide-item {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover; /* Agar gambar tidak gepeng */
-        opacity: 0;
-        transition: opacity 1s ease-in-out;
-    }
-    #slideshow-wrapper .slide-item.active {
-        opacity: 1;
-    }
-</style>
 
 <div class="card shadow-sm mb-3 mx-auto border-primary" style="max-width: 400px;">
     <div class="card-header bg-primary text-white py-1 text-center">
@@ -591,15 +591,8 @@
 
         </div>
     </div>
+</body>    
 
-    <button type="button" class="btn btn-warning floating-print-btn text-dark fw-bold" onclick="window.print()">
-        <i class="bi bi-printer-fill me-1"></i> Cetak PDF
-    </button>
-
-    <footer class="text-center py-3 bg-white mt-auto border-top w-100">
-        <p class="mb-0 text-muted small">© 2026 <span id="footer-brand">Laundry Pro-Secure</span>. All Rights Reserved.</p>
-        <div id="social-footer-container" class="mt-1 small"></div>
-    </footer>
 
     <script>
         const WA_OWNER = "6287853561541"; 
@@ -1386,7 +1379,7 @@ function kirimNotifikasiPulangGrupWA(namaKaryawan, jamPulang, durasiKerja) {
                             <button class="btn btn-xs btn-success py-0 px-2" onclick="simpanKoreksiBelanjaAdmin(${realIndex})">💾</button>
                             <button class="btn btn-xs btn-outline-danger py-0 px-1" onclick="hapusBelanjaAdmin(${realIndex})">Hapus</button>
                         </td>
-                    </tr>`;
+                    </tr>`; 
             });
         }
 
@@ -1804,8 +1797,24 @@ setInterval(() => {
                 }
             }
         }, 1000);
+
+
+        window.addEventListener('load', function() {
+            var loader = document.getElementById('loader');
+            loader.style.display = 'none';
+        });
         
         inisialisasiHeaderMatriks();
     </script>
+
+<button type="button" class="btn btn-warning floating-print-btn text-dark fw-bold" onclick="window.print()">
+        <i class="bi bi-printer-fill me-1"></i> Cetak PDF
+    </button>
+
+    <footer class="text-center py-3 bg-white mt-auto border-top w-100">
+        <p class="mb-0 text-muted small">© 2026 <span id="footer-brand">Laundry Pro-Secure</span>. All Rights Reserved.</p>
+        <div id="social-footer-container" class="mt-1 small"></div>
+    </footer>
+
 </body>
 </html>
