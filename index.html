@@ -695,7 +695,7 @@
             }
         }
 
-        // === CENTRAL CLOCK TIMER SYNC ENGINE ===
+                // === CENTRAL CLOCK TIMER SYNC ENGINE ===
         setInterval(() => {
             let skrg = new Date();
             let strJam = `${String(skrg.getHours()).padStart(2, '0')}:${String(skrg.getMinutes()).padStart(2, '0')}:${String(skrg.getSeconds()).padStart(2, '0')}`;
@@ -703,13 +703,33 @@
             if(clockEl) clockEl.innerText = strJam;
 
             let durasiEl = document.getElementById('live-durasi-kerja');
+            let pendapatanEl = document.getElementById('live-pendapatan-kerja');
+
             if (durasiEl && idKaryawanSesiAktif) {
                 let log = dataAbsenLog.find(a => a.karyawan_id === parseInt(idKaryawanSesiAktif) && a.tanggal === hariIni && !a.jam_pulang);
-                if (log) {
+                let kObj = dataKaryawan.find(k => k.id === parseInt(idKaryawanSesiAktif));
+
+                if (log && kObj) {
                     let [jM, mM, sM] = log.jam_masuk.split(':').map(Number);
-                    let mulai = new Date(); mulai.setHours(jM, mM, sM || 0);
-                    let selisih = new Date(skrg - mulai);
-                    durasiEl.innerText = `${String(selisih.getUTCHours()).padStart(2,'0')}:${String(selisih.getUTCMinutes()).padStart(2,'0')}:${String(selisih.getUTCSeconds()).padStart(2,'0')}`;
+                    let mulai = new Date(); 
+                    mulai.setHours(jM, mM, sM || 0, 0); // Reset milidetik
+                    
+                    let selisihMs = skrg - mulai;
+                    if (selisihMs < 0) selisihMs = 0;
+
+                    // Konversi Milidetik ke Format 00:00:00 mutlak
+                    let h = Math.floor(selisihMs / 3600000);
+                    let m = Math.floor((selisihMs % 3600000) / 60000);
+                    let s = Math.floor((selisihMs % 60000) / 1000);
+
+                    durasiEl.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+                    // Kalkulasi Pendapatan Live (Durasi Desimal Jam x Gaji per Jam)
+                    if (pendapatanEl) {
+                        let durasiDesimal = selisihMs / 3600000;
+                        let pendapatanBerjalan = Math.round(durasiDesimal * kObj.gaji);
+                        pendapatanEl.innerText = "Rp " + pendapatanBerjalan.toLocaleString('id-ID');
+                    }
                 }
             }
             
@@ -719,6 +739,7 @@
                 if(jMasukStr) span.innerText = hitungSelisihJamRealtime(jMasukStr);
             });
         }, 1000);
+
 
         function hitungSelisihJamRealtime(jamMasukStr) {
             let [jM, mM, sM] = jamMasukStr.split(':').map(Number);
