@@ -32,6 +32,19 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* Efek Glow Mining Berdenyut */
+.mining-glow {
+    border: 2px solid #198754 !important;
+    animation: pulse-glow 2s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 5px #198754; }
+    50% { box-shadow: 0 0 20px #198754; }
+    100% { box-shadow: 0 0 5px #198754; }
+}
+
+
         /* Animasi Mining/Glow */
 .mining-glow {
     animation: pulse 1.5s infinite;
@@ -219,7 +232,7 @@
                     </div>
                 </div>
                 <div id="area-kartu-private" class="d-none">
-                    <div class="d-flex justify-content-between align-items-center p-2 mb-2 bg-white rounded shadow-sm border">
+                    <div class="d-flex justify-content-evenly align-items-center p-2 mb-2 bg-white rounded shadow-sm border">
                         <span class="small text-muted">Sesi: <strong id="nama-sesi-aktif" class="text-dark"></strong></span>
                         <span class="badge bg-dark live-clock-badge text-warning" id="live-clock-karyawan">00:00:00</span>
                         <button class="btn btn-xs btn-outline-danger py-0 px-2 small" onclick="logoutKaryawan()">Keluar 🔒</button>
@@ -1110,24 +1123,32 @@ async function muatSlideshowTelegram() {
         }
 
         function tampilkanMatriksAktivitasKerja() {
-            let container = document.getElementById('matriks-aktivitas-kerja'); if(!container) return;
-            container.innerHTML = '';
-            let karyawanAktifHariIni = dataAbsenLog.filter(a => a.tanggal === hariIni && !a.jam_pulang);
-            if(karyawanAktifHariIni.length === 0) {
-                container.innerHTML = `<div class="col-12 text-center text-muted small py-2">😴 Belum ada karyawan yang aktif bekerja.</div>`;
-                return;
-            }
-            karyawanAktifHariIni.forEach(abs => {
-                container.innerHTML += `
-                    <div class="col-6 col-md-4">
-                        <div class="p-2 border rounded bg-white shadow-sm border-success text-center">
-                            <span class="d-block fw-bold text-dark small">${abs.nama}</span>
-                            <span class="badge bg-success my-1">⚡ Aktif</span>
-                            <small class="d-block text-muted" style="font-size:10px;">Masuk: ${abs.jam_masuk}</small>
-                        </div>
-                    </div>`;
-            });
-        }
+    let container = document.getElementById('matriks-aktivitas-kerja'); 
+    if(!container) return;
+    container.innerHTML = '';
+    
+    let karyawanAktifHariIni = dataAbsenLog.filter(a => a.tanggal === hariIni && !a.jam_pulang);
+    
+    if(karyawanAktifHariIni.length === 0) {
+        container.innerHTML = `<div class="col-12 text-center text-muted small py-2">😴 Belum ada karyawan yang aktif.</div>`;
+        return;
+    }
+
+    karyawanAktifHariIni.forEach(abs => {
+        container.innerHTML += `
+            <div class="col-6 col-md-4">
+                <div class="p-2 border rounded bg-white shadow-sm mining-glow text-center">
+                    <span class="d-block fw-bold text-dark small">${abs.nama}</span>
+                    <span class="badge bg-success my-1">⚡ Aktif</span>
+                    <small class="d-block text-muted" style="font-size:10px;">Masuk: ${abs.jam_masuk}</small>
+                    <div class="mt-1 fw-bold text-primary" style="font-size: 13px;">
+                        <span class="durasi-realtime" data-masuk="${abs.jam_masuk}">0.00</span> Jam
+                    </div>
+                </div>
+            </div>`;
+    });
+}
+
 
         function cekStatusTampilanAbsen() {
             tampilkanMatriksAktivitasKerja();
